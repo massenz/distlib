@@ -1,0 +1,24 @@
+# Git Ignore file
+
+# Configuration directories
+.idea/
+.cproject
+.project
+.settings/
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+gen/
+
+# Recommended build directory
+build/
+Debug/
+
+# Compiler intermediate files
+.o
+.so
+.la
+

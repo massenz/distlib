@@ -1,0 +1,12 @@
+// This file is (c) 2016 AlertAvert.com.  All rights reserved.
+// Created by M. Massenzio, 2016-03-05
+
+// This file contains configuration settings from CMakeLists
+
+#define RELEASE_MAJOR @RELEASE_MAJOR@
+#define RELEASE_MINOR @RELEASE_MINOR@
+#define RELEASE_PATCH @RELEASE_PATCH@
+
+#define BUILD_ID "@BUILD_ID@"
+
+#define RELEASE_STR "@RELEASE_STRING@"
