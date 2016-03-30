@@ -46,8 +46,7 @@ include_directories(${SOURCE_DIR}
 set(SOURCE_FILES
         ${SOURCE_DIR}/brick.cpp
         ${SOURCE_DIR}/Bucket.cpp
-        ${SOURCE_DIR}/View.cpp
-        ${SOURCE_DIR}/MerkleNode.cpp)
+        ${SOURCE_DIR}/View.cpp)
 
 add_executable(brick ${SOURCE_FILES} ${SOURCE_DIR}/main.cpp)
 target_link_libraries(brick ssl crypto glog)

@@ -28,3 +28,18 @@ TEST(MerkleNodeTests, CanCreateTwoLeaves) {
   EXPECT_FALSE(std::get<0>(root.getChildren()) == nullptr);
   EXPECT_TRUE(root.validate());
 }
+
+TEST(MerkleNodeTests, Equals) {
+  MerkleNode<string> a(hash_str("test"), MD5_DIGEST_LENGTH);
+  MerkleNode<string> b(hash_str("test"), MD5_DIGEST_LENGTH);
+
+  // First, must be equal to itself.
+  EXPECT_EQ(a, a);
+
+  // Then equal to an identical constructed other.
+  EXPECT_EQ(a, b);
+
+  // Then, non-equal to a different one.
+  MerkleNode<string> c(hash_str("not a test"), MD5_DIGEST_LENGTH);
+  EXPECT_NE(a, c);
+}
