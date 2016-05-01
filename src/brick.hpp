@@ -1,7 +1,6 @@
 // Copyright (c) 2016 Marco Massenzio.  All rights reserved.
 
-#ifndef BRICK_HPP
-#define BRICK_HPP
+#pragma once
 
 #include <string>
 #include <openssl/md5.h>
@@ -71,6 +70,3 @@ float consistent_hash(const std::string &msg);
  * @return the size of the digest buffer.
  */
 size_t basic_hash(const char* value, size_t len, unsigned char** hash_value);
-
-
-#endif
