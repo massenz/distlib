@@ -42,17 +42,17 @@ string hash_str(const string &msg) {
 
 
 float consistent_hash(const string &msg) {
-
   unsigned char* digest;
-  basic_hash(msg.c_str(), strlen(msg.c_str()), &digest);
-
   unsigned long sum = 0;
   unsigned long base = 1;
+
+  basic_hash(msg.c_str(), strlen(msg.c_str()), &digest);
   for (int i = 0; i < MD5_DIGEST_LENGTH - 1; i += 2) {
     sum += base * (unsigned long) (digest[i] + digest[i+1] * 16);
     base *= BASE;
   }
-  delete digest;
+  delete[](digest);
+
   return float(sum % MODULO) / MODULO;
 }
 

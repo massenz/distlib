@@ -13,6 +13,7 @@
 
 #include "brick.hpp"
 
+
 /**
  * Abstract base class to model a Merkle Tree, whose nodes' values are the hash of the
  * concatenated values of their descendants' hashes.
@@ -31,7 +32,8 @@
 template <typename T, char* (hash_func)(const T&), size_t hash_len>
 class MerkleNode {
 protected:
-  const std::shared_ptr<const MerkleNode> left_, right_;
+
+  const MerkleNode *left_, *right_;
   const char* hash_;
   const std::shared_ptr<const T> value_;
 
@@ -59,7 +61,7 @@ public:
    * We assume ownership of the pointer returned by the `hash_func()` which we assume has been
    * freshly allocated, and will be released upon destruction of this node.
    */
-  MerkleNode(const T& value) : value_(new T(value)), left_(nullptr), right_(nullptr) {
+  MerkleNode(const T& value) : value_(new T(value)), left_(), right_() {
     hash_ = hash_func(value);
   }
 
@@ -69,7 +71,7 @@ public:
   MerkleNode(const MerkleNode<T, hash_func, hash_len>& left,
              const MerkleNode<T, hash_func, hash_len>& right) :
       left_(&left), right_(&right), value_(nullptr) {
-    hash_ = computeHash();
+//    hash_ = computeHash();
   }
 
   /**
@@ -78,7 +80,8 @@ public:
    * free the allocated memory) remember to override this destructor's behavior too.
    */
   virtual ~MerkleNode() {
-    if (hash_) delete hash_;
+    if (hash_) delete[] hash_;
+    hash_ = nullptr;
   }
 
   /**
@@ -101,13 +104,14 @@ public:
    */
   const char* hash() const { return hash_; }
 
-  std::tuple<std::shared_ptr<const MerkleNode<T, hash_func, hash_len>>,
-             std::shared_ptr<const MerkleNode<T, hash_func, hash_len>>> getChildren() const {
+  std::tuple<const MerkleNode*, const MerkleNode*> getChildren() const {
     return std::make_tuple(left_, right_);
   };
 
-  template<typename E, char* (func)(const T&), size_t len>
-  friend bool operator==(const MerkleNode<E, func, len>& lhs, const MerkleNode<E, func, len>& rhs);
+  bool hasChildren() const {
+    return left_ != nullptr && right_ != nullptr;
+  }
+
 };
 
 
@@ -141,17 +145,25 @@ bool operator==(const MerkleNode<T, hash_func, hash_len>& lhs,
     return true;
   }
 
-  // Compare children:
-  auto lhsChildren = lhs.getChildren();
-  auto rhsChildren = rhs.getChildren();
+  if (lhs.hasChildren()) {
+    // Compare children:
+    auto lhsChildren = lhs.getChildren();
+    if (rhs.hasChildren()) {
+      auto rhsChildren = rhs.getChildren();
 
-  if ((*std::get<0>(lhsChildren) != *std::get<0>(rhsChildren)) ||
-      (*std::get<1>(lhsChildren) != *std::get<1>(rhsChildren))) {
-    return false;
+      if ((*std::get<0>(lhsChildren) != *std::get<0>(rhsChildren)) ||
+          (*std::get<1>(lhsChildren) != *std::get<1>(rhsChildren))) {
+        return false;
+      }
+    }
+  } else {
+    if (rhs.hasChildren()) {
+      return false;
+    }
   }
 
   // Finally, the hash values themselves:
-  return memcmp(lhs.hash_, rhs.hash_, hash_len);
+  return memcmp(lhs.hash(), rhs.hash(), hash_len);
 }
 
 
@@ -175,7 +187,7 @@ char* hash_str_func(const std::string& value) {
 
 class MD5StringMerkleNode : public MerkleNode<std::string, hash_str_func, MD5_DIGEST_LENGTH> {
 protected:
-  const char* computeHash() const {
+  virtual const char* computeHash() const {
     char *buffer = new char[2 * MD5_DIGEST_LENGTH];
     unsigned char *computedHash;
 
@@ -191,7 +203,9 @@ protected:
 public:
   MD5StringMerkleNode(const std::string& value) : MerkleNode(value) {}
   MD5StringMerkleNode(const MD5StringMerkleNode& lhs, const MD5StringMerkleNode& rhs) :
-      MerkleNode(lhs, rhs) {}
+      MerkleNode(lhs, rhs) {
+    hash_ = computeHash();
+  }
 
   virtual ~MD5StringMerkleNode() {}
 };

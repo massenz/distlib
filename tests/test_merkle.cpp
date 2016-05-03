@@ -16,22 +16,35 @@ TEST(MerkleNodeTests, CanCreate) {
   ASSERT_TRUE(leaf.validate());
 }
 
-TEST(MerkleNodeTests, CanCreateTwoLeaves) {
-  std::string sl[] = { "leaves", "winter" };
-  MD5StringMerkleNode* leaves[2];
+TEST(MerkleNodeTests, CanCreateTree) {
+  std::string sl[] = { "leaves", "winter", "spring", "flowers" };
+  MD5StringMerkleNode* leaves[4];
 
-  for (int i = 0; i < 2; ++i) {
+  for (int i = 0; i < 4; ++i) {
     leaves[i] = new MD5StringMerkleNode(sl[i]);
   }
 
-  MD5StringMerkleNode root(*leaves[0], *leaves[1]);
-  EXPECT_FALSE(std::get<0>(root.getChildren()) == nullptr);
+  MD5StringMerkleNode a(*leaves[0], *leaves[1]);
+  MD5StringMerkleNode b(*leaves[2], *leaves[3]);
+  MD5StringMerkleNode root(a, b);
+
+  EXPECT_TRUE(root.hasChildren());
+  EXPECT_FALSE(std::get<0>(b.getChildren()) == nullptr);
   EXPECT_TRUE(root.validate());
 }
 
+TEST(MerkleNodeTests, hasChildren) {
+  MD5StringMerkleNode a("test");
+  EXPECT_FALSE(a.hasChildren());
+
+  MD5StringMerkleNode b("another node");
+  MD5StringMerkleNode parent(a, b);
+  EXPECT_TRUE(parent.hasChildren());
+}
+
 //TEST(MerkleNodeTests, Equals) {
-//  MerkleNode<string> a(hash_str("test"), MD5_DIGEST_LENGTH);
-//  MerkleNode<string> b(hash_str("test"), MD5_DIGEST_LENGTH);
+//  MD5StringMerkleNode a("test");
+//  MD5StringMerkleNode b("test");
 //
 //  // First, must be equal to itself.
 //  EXPECT_EQ(a, a);
@@ -40,6 +53,6 @@ TEST(MerkleNodeTests, CanCreateTwoLeaves) {
 //  EXPECT_EQ(a, b);
 //
 //  // Then, non-equal to a different one.
-//  MerkleNode<string> c(hash_str("not a test"), MD5_DIGEST_LENGTH);
+//  MD5StringMerkleNode c("not a test");
 //  EXPECT_NE(a, c);
 //}
