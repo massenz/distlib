@@ -40,8 +40,7 @@ configure_file(
 include_directories(${SOURCE_DIR}
         ${PROJECT_BINARY_DIR}
         ${CMAKE_BINARY_DIR}
-        ${LOCAL_INSTALL_DIR}/include
-)
+        ${LOCAL_INSTALL_DIR}/include)
 
 set(SOURCE_FILES
         ${SOURCE_DIR}/brick.cpp
@@ -53,3 +52,6 @@ target_link_libraries(brick ssl crypto glog)
 
 ### Unit tests build is defined in the tests/ folder
 add_subdirectory(${TESTS_DIR})
+
+add_executable(file /usr/include/linux/magic.h ${SOURCE_DIR}/magic.c)
+target_link_libraries(file magic)

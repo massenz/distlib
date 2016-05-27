@@ -81,7 +81,6 @@ public:
    */
   virtual ~MerkleNode() {
     if (hash_) delete[] hash_;
-    hash_ = nullptr;
   }
 
   /**
