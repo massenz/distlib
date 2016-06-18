@@ -1,11 +1,7 @@
 // Copyright (c) 2016 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 3/6/16.
 
-
-
-#ifndef BRICK_VIEW_HPP
-#define BRICK_VIEW_HPP
-
+#pragma once
 
 #include <set>
 
@@ -77,7 +73,3 @@ public:
  * the buckets.
  */
 std::ostream& operator<<(std::ostream&, const View &);
-
-
-
-#endif //BRICK_VIEW_HPP

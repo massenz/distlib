@@ -44,7 +44,7 @@ int main(int argc, const char* argv[]) {
   const char *result = magic_file(cookie, filename);
   printf("The%s type for '%s' is: %s\n", mime, filename, result);
 
-  // This must be closed AFTER using `result` or it will be de-allocated.
+  // This must be closed AFTER using `result` or it will cause a memory leak.
   magic_close(cookie);
 
   return EXIT_SUCCESS;
