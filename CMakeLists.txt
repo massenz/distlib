@@ -11,7 +11,7 @@ include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 
 # Version number
 set(RELEASE_MAJOR 0)
-set(RELEASE_MINOR 3)
+set(RELEASE_MINOR 4)
 set(RELEASE_PATCH 0)
 
 IF (${COMMONS_FILE} STREQUAL NOTFOUND)
@@ -20,6 +20,10 @@ IF (${COMMONS_FILE} STREQUAL NOTFOUND)
 ELSE (${COMMONS_FILE} STREQUAL NOTFOUND)
     get_build_id(BUILD_ID)
 ENDIF (${COMMONS_FILE} STREQUAL NOTFOUND)
+
+# Conan Packaging support
+include(.conan/conanbuildinfo.cmake)
+conan_basic_setup()
 
 set(RELEASE_STRING "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}-${BUILD_ID}")
 message(STATUS "Building Release: ${RELEASE_STRING}")
@@ -39,8 +43,7 @@ configure_file(
 
 include_directories(${SOURCE_DIR}
         ${PROJECT_BINARY_DIR}
-        ${CMAKE_BINARY_DIR}
-        ${LOCAL_INSTALL_DIR}/include)
+        ${CMAKE_BINARY_DIR})
 
 set(SOURCE_FILES
         ${SOURCE_DIR}/brick.cpp
@@ -48,10 +51,29 @@ set(SOURCE_FILES
         ${SOURCE_DIR}/View.cpp)
 
 add_executable(brick ${SOURCE_FILES} ${SOURCE_DIR}/main.cpp)
-target_link_libraries(brick ssl crypto glog)
+target_link_libraries(brick ${CONAN_LIBS})
 
 ### Unit tests build is defined in the tests/ folder
 add_subdirectory(${TESTS_DIR})
 
+# My trivial re-implementation of the `file` Linux command.
+# Uses the libmagic magic file detection system library.
 add_executable(file /usr/include/linux/magic.h ${SOURCE_DIR}/magic.c)
 target_link_libraries(file magic)
+
+#set(TEST_FILES
+#        ${TESTS_DIR}/test_brick.cpp
+#        ${TESTS_DIR}/test_view.cpp
+#        ${TESTS_DIR}/test_merkle.cpp)
+#
+#add_executable(test_brick
+#        ${SOURCE_FILES}
+#        ${TEST_FILES})
+#
+#target_link_libraries(test_brick
+#        gtest_main
+#        pthread
+#        ${CONAN_LIBS}
+#        )
+
+#add_test(${TEST_TARGET} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_TARGET})

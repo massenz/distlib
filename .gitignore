@@ -16,6 +16,7 @@ gen/
 # Recommended build directory
 build/
 Debug/
+.conan/
 
 # Compiler intermediate files
 .o
