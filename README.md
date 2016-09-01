@@ -28,7 +28,6 @@ listed in `conanfile.text`:
 
 ```
 [requires]
-gtest/1.7.0@lasote/stable
 glog/0.3.4@dwerner/testing
 OpenSSL/1.0.2g@lasote/stable
 cryptopp/5.6.3@riebl/testing
@@ -38,7 +37,7 @@ zmqcpp/4.1.1@memsharded/stable
 This is done as follows:
 
 ```bash
-$ sudo pip install conan
+$ sudo -H pip install -U conan
 $ mkdir .conan && cd .conan
 $ conan install .. -s compiler=clang -s compiler.version=3.6 \
     -s compiler.libcxx=libstdc++ --build=missing
@@ -50,19 +49,31 @@ version 3.6 installed).
 
 See also `CMakeLists.txt` for the changes necessary to add Conan's builds to the targets.
 
+### Google Tests
+
+The `gtest` package in Conan is broken, so we need to manually donwload, build and install `gtest`.
+This is pretty trivial, but you will need to add include files (`gtest/...`) and libraries 
+(`libgtest.a` and `libgtest_main.a`) in the following directories, respectively:
+
+    ${INSTALL_DIR}/include
+    ${INSTALL_DIR}/lib
+    
+and then define the `INSTALL_DIR` variable when invoking `cmake` via `-DINSTALL_DIR` (see next 
+section).
+
 ## Build & testing
 
 To build the project, it is the usual `cmake` routine:
 
     $ mkdir build && cd build
-    $ cmake -DPROTO_INSTALL_DIR=/path/to/usr/local \
+    $ cmake -DINSTALL_DIR=/path/to/install/local \
             -DCMAKE_CXX_COMPILER=/usr/local/bin/clang++ \
             -DCOMMON_UTILS_DIR=/path/to/commons.cmake ..
     $ cmake --build .
 
 Finally, to run the tests:
 
-    .tests/bin/brick_tests
+    ./tests/bin/brick_tests
 
 See also the other binaries in the `build/bin` folder for more options.
 

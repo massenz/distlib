@@ -11,7 +11,7 @@ include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 
 # Version number
 set(RELEASE_MAJOR 0)
-set(RELEASE_MINOR 4)
+set(RELEASE_MINOR 5)
 set(RELEASE_PATCH 0)
 
 IF (${COMMONS_FILE} STREQUAL NOTFOUND)
@@ -42,6 +42,7 @@ configure_file(
 )
 
 include_directories(${SOURCE_DIR}
+        ${INSTALL_DIR}/include
         ${PROJECT_BINARY_DIR}
         ${CMAKE_BINARY_DIR})
 
@@ -60,20 +61,3 @@ add_subdirectory(${TESTS_DIR})
 # Uses the libmagic magic file detection system library.
 add_executable(file /usr/include/linux/magic.h ${SOURCE_DIR}/magic.c)
 target_link_libraries(file magic)
-
-#set(TEST_FILES
-#        ${TESTS_DIR}/test_brick.cpp
-#        ${TESTS_DIR}/test_view.cpp
-#        ${TESTS_DIR}/test_merkle.cpp)
-#
-#add_executable(test_brick
-#        ${SOURCE_FILES}
-#        ${TEST_FILES})
-#
-#target_link_libraries(test_brick
-#        gtest_main
-#        pthread
-#        ${CONAN_LIBS}
-#        )
-
-#add_test(${TEST_TARGET} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_TARGET})
