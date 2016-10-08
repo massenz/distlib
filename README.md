@@ -73,7 +73,7 @@ To build the project, it is the usual `cmake` routine:
 
 Finally, to run the tests:
 
-    ./tests/bin/brick_tests
+    ./tests/bin/test_brick
 
 See also the other binaries in the `build/bin` folder for more options.
 
@@ -81,11 +81,17 @@ See also the other binaries in the `build/bin` folder for more options.
 
 ## Consistent Hashing
 
-See the [Consistent Hash paper](http://www.cs.princeton.edu/courses/archive/fall07/cos518/papers/chash.pdf) for more details.
+See the [Consistent Hash paper](http://www.cs.princeton.edu/courses/archive/fall07/cos518/papers/chash.pdf) 
+for more details.
 
 The code implementation here is a simple example of how to implement a set of `buckets` so that
 nodes in a distributed systems could use the consistent hashing algorithm to allow nodes to
 join/leave the ring, without causing massive reshuffles of the partitioned data.
+
+A `View` is then a collection of `Buckets`, which define how the unity circle is divided, via the
+`consistent_hashing()` method and every partitioned item is allocated to a (named) `Bucket`: see
+the [tests](tests/test_view.cpp) for an example of adding/removing buckets and how this only
+causes a fraction of the items to be re-shuffled.
 
 
 ## Merkle Trees
