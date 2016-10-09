@@ -34,7 +34,7 @@ set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests)
 set(PROTO_DIR ${PROJECT_SOURCE_DIR}/proto)
 set(PROJECT_BINARY_DIR ${PROJECT_SOURCE_DIR}/build)
-
+set(ZMQ_LIBRARIES zmq)
 
 # Configure a header file to pass settings into source code
 configure_file(
@@ -46,12 +46,15 @@ configure_file(
 # NOTE -- the variable Protobuf_INCLUDE_DIR must be in that case or CLion will
 # fail to build (command line cmake works just fine with the ALL_UPPERCASE value too).
 set(Protobuf_INCLUDE_DIR ${INSTALL_DIR}/include)
-set(Protobuf_LIBRARY ${INSTALL_DIR}/lib/libprotobuf.so)
 
 find_package(Protobuf REQUIRED)
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_DIR}/swim.proto)
 
-message(STATUS "Generated Protocol Buffer Headers: ${PROTO_HDRS}, Sources: ${PROTO_SRCS}")
+IF(${PROTOBUF_FOUND})
+    message(STATUS "Generated Protocol Buffer Headers: ${PROTO_HDRS}, Sources: ${PROTO_SRCS}")
+ELSE(${PROTOBUF_FOUND})
+    message(ERROR "Could not find Google Protocol Buffers libraries")
+ENDIF(${PROTOBUF_FOUND})
 
 include_directories(
         ${SOURCE_DIR}
@@ -73,11 +76,17 @@ target_link_libraries(brick ${CONAN_LIBS})
 
 # Adding a target demo server that will use the SWIM protocol to derive
 # a list of healthy server from a configured pool.
+
+link_directories(${INSTALL_DIR}/lib)
 add_executable(server
         ${PROTO_SRCS}
         ${SOURCE_DIR}/server_demo.cpp
 )
-target_link_libraries(server ${PROTOBUF_LIBRARIES})
+target_link_libraries(server
+        protobuf
+        zmq
+        glog
+)
 
 
 ### Unit tests build is defined in the tests/ folder
