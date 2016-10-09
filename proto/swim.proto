@@ -1,0 +1,29 @@
+// Copyright (c) 2016 AlertAvert.com.  All rights reserved.
+// Licensed under the Apache 2 License terms.
+
+package swim;
+
+message Forwarder {
+    required string forwarder_hostname = 1;
+    required int64 timestamp = 2;
+}
+
+// Simple status message exchanged between servers participating in
+// the SWIM protocol.
+// See: https://www.dropbox.com/s/hi5ft7y1o0gtm53/swim-Gossip-Protocol.pdf
+message SwimStatus {
+    enum State {
+        STARTING = 1;
+        RUNNING = 2;
+        BLOCKED = 3;
+        STOPPING = 4;
+    }
+
+    required string hostname = 1;
+    optional string ip = 2;
+    required int32 port = 3 [default = 80];
+    required State state = 4 [default = RUNNING];
+    optional string description = 5;
+    required int64 timestamp = 6;
+    optional Forwarder forwarder = 7;
+}

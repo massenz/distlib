@@ -12,7 +12,7 @@ include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 # Version number
 set(RELEASE_MAJOR 0)
 set(RELEASE_MINOR 5)
-set(RELEASE_PATCH 0)
+set(RELEASE_PATCH 1)
 
 IF (${COMMONS_FILE} STREQUAL NOTFOUND)
     message(WARNING "Not using CMake utilities")
@@ -32,6 +32,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests)
+set(PROTO_DIR ${PROJECT_SOURCE_DIR}/proto)
 set(PROJECT_BINARY_DIR ${PROJECT_SOURCE_DIR}/build)
 
 
@@ -41,18 +42,43 @@ configure_file(
     ${PROJECT_BINARY_DIR}/config.h
 )
 
-include_directories(${SOURCE_DIR}
+# Building Protocol Buffers.
+# NOTE -- the variable Protobuf_INCLUDE_DIR must be in that case or CLion will
+# fail to build (command line cmake works just fine with the ALL_UPPERCASE value too).
+set(Protobuf_INCLUDE_DIR ${INSTALL_DIR}/include)
+set(Protobuf_LIBRARY ${INSTALL_DIR}/lib/libprotobuf.so)
+
+find_package(Protobuf REQUIRED)
+PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_DIR}/swim.proto)
+
+message(STATUS "Generated Protocol Buffer Headers: ${PROTO_HDRS}, Sources: ${PROTO_SRCS}")
+
+include_directories(
+        ${SOURCE_DIR}
         ${INSTALL_DIR}/include
         ${PROJECT_BINARY_DIR}
-        ${CMAKE_BINARY_DIR})
+        ${CMAKE_BINARY_DIR}
+        ${PROTOBUF_INCLUDE_DIRS}
+        ${PROTO_HDRS}
+)
 
 set(SOURCE_FILES
         ${SOURCE_DIR}/brick.cpp
         ${SOURCE_DIR}/Bucket.cpp
-        ${SOURCE_DIR}/View.cpp)
+        ${SOURCE_DIR}/View.cpp
+)
 
 add_executable(brick ${SOURCE_FILES} ${SOURCE_DIR}/main.cpp)
 target_link_libraries(brick ${CONAN_LIBS})
+
+# Adding a target demo server that will use the SWIM protocol to derive
+# a list of healthy server from a configured pool.
+add_executable(server
+        ${PROTO_SRCS}
+        ${SOURCE_DIR}/server_demo.cpp
+)
+target_link_libraries(server ${PROTOBUF_LIBRARIES})
+
 
 ### Unit tests build is defined in the tests/ folder
 add_subdirectory(${TESTS_DIR})
