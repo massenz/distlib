@@ -142,14 +142,14 @@ References:
  client sending a one-off status update to a `destination` TCP socket.
  
  Starting the listening server is done like this:
- 
+ ```
     ./bin/server receive 3003
-    
+ ```
  and it will cause it to listen for incoming [`SwimStatus`](proto/swim.proto) messages on port 
  `3003`; a client can then send a message update using:
- 
+ ```
     ./bin/server send tcp://localhost:3003
-    
+ ```
 (obviously, change the hostname if you are running the two on separate machines/VMs/containers).
 
 
