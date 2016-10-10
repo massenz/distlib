@@ -3,10 +3,16 @@
 
 package swim;
 
-message Forwarder {
-    required string forwarder_hostname = 1;
-    required int64 timestamp = 2;
+
+// A running SWIM service is uniquely identified by the hostname:port combination.
+// The optional IP address is only provided to help in those deployment where DNS
+// resolution is either not available, feasible or too expensive computationally.
+message Server {
+    required string hostname = 1;
+    required int32 port = 2;
+    optional string ip_addr = 3;
 }
+
 
 // Simple status message exchanged between servers participating in
 // the SWIM protocol.
@@ -19,11 +25,19 @@ message SwimStatus {
         STOPPING = 4;
     }
 
-    required string hostname = 1;
-    optional string ip = 2;
-    required int32 port = 3 [default = 80];
-    required State state = 4 [default = RUNNING];
-    optional string description = 5;
-    required int64 timestamp = 6;
-    optional Forwarder forwarder = 7;
+    required Server server = 1;
+    required State state = 2 [default = RUNNING];
+
+    // An optional service description, to further disambiguate server processes.
+    optional string description = 3;
+
+    // UTC-based UNIX time (seconds from epoch, 1/1/1970) of when this
+    // message was created and can be reasonably assumed (but not guaranteed)
+    // that it also represents the time at which the `server` state was
+    // accurately described by `state`.
+    required int64 timestamp = 4;
+
+    // If the status is sent on behalf of another server,
+    // the forwarder should enter its identity here.
+    optional Server forwarder = 5;
 }

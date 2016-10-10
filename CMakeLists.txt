@@ -80,6 +80,7 @@ target_link_libraries(brick ${CONAN_LIBS})
 link_directories(${INSTALL_DIR}/lib)
 add_executable(server
         ${PROTO_SRCS}
+        ${SOURCE_DIR}/network.cpp
         ${SOURCE_DIR}/server_demo.cpp
 )
 target_link_libraries(server
@@ -87,6 +88,7 @@ target_link_libraries(server
         zmq
         glog
 )
+
 
 
 ### Unit tests build is defined in the tests/ folder

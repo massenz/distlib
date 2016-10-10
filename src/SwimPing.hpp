@@ -8,17 +8,28 @@
 
 #include "swim.pb.h"
 
-using swim::Forwarder;
+using swim::Server;
 using swim::SwimStatus;
 
 class SwimPing {
 
-  Forwarder forwarder_;
+  Server server_;
 
 public:
-  SwimPing(const Forwarder& fwd) : forwarder_(fwd)  {}
-  void send(const SwimStatus &msg);
 
+  /**
+   * Builds a status update message to be sent to the `server`.
+   *
+   * @param server where to send the message to.
+   */
+  SwimPing(const Server& server) : server_(server)  {}
+
+  /**
+   * Sends the status update.
+   *
+   * @param msg this server's status.
+   */
+  void send(const SwimStatus &msg);
 };
 
 

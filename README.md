@@ -4,11 +4,9 @@
  distlib| --
 :-------|---------------------------------:
 Author  | [M. Massenzio](https://www.linkedin.com/in/mmassenzio)
-Version | 0.5.0
-Updated | 2016-08-02
+Version | 0.5.1
+Updated | 2016-10-09
 
-
-[![badge](https://img.shields.io/badge/conan.io-gtest%2F1.7.0-green.svg?logo=data:image/png;base64%2CiVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAAA1VBMVEUAAABhlctjlstkl8tlmMtlmMxlmcxmmcxnmsxpnMxpnM1qnc1sn85voM91oM11oc1xotB2oc56pNF6pNJ2ptJ8ptJ8ptN9ptN8p9N5qNJ9p9N9p9R8qtOBqdSAqtOAqtR%2BrNSCrNJ/rdWDrNWCsNWCsNaJs9eLs9iRvNuVvdyVv9yXwd2Zwt6axN6dxt%2Bfx%2BChyeGiyuGjyuCjyuGly%2BGlzOKmzOGozuKoz%2BKqz%2BOq0OOv1OWw1OWw1eWx1eWy1uay1%2Baz1%2Baz1%2Bez2Oe02Oe12ee22ujUGwH3AAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfgBQkREyOxFIh/AAAAiklEQVQI12NgAAMbOwY4sLZ2NtQ1coVKWNvoc/Eq8XDr2wB5Ig62ekza9vaOqpK2TpoMzOxaFtwqZua2Bm4makIM7OzMAjoaCqYuxooSUqJALjs7o4yVpbowvzSUy87KqSwmxQfnsrPISyFzWeWAXCkpMaBVIC4bmCsOdgiUKwh3JojLgAQ4ZCE0AMm2D29tZwe6AAAAAElFTkSuQmCC)](http://www.conan.io/source/gtest/1.7.0/lasote/stable)
 
 [![badge](https://img.shields.io/badge/conan.io-glog%2F0.3.4-green.svg?logo=data:image/png;base64%2CiVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAAA1VBMVEUAAABhlctjlstkl8tlmMtlmMxlmcxmmcxnmsxpnMxpnM1qnc1sn85voM91oM11oc1xotB2oc56pNF6pNJ2ptJ8ptJ8ptN9ptN8p9N5qNJ9p9N9p9R8qtOBqdSAqtOAqtR%2BrNSCrNJ/rdWDrNWCsNWCsNaJs9eLs9iRvNuVvdyVv9yXwd2Zwt6axN6dxt%2Bfx%2BChyeGiyuGjyuCjyuGly%2BGlzOKmzOGozuKoz%2BKqz%2BOq0OOv1OWw1OWw1eWx1eWy1uay1%2Baz1%2Baz1%2Bez2Oe02Oe12ee22ujUGwH3AAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfgBQkREyOxFIh/AAAAiklEQVQI12NgAAMbOwY4sLZ2NtQ1coVKWNvoc/Eq8XDr2wB5Ig62ekza9vaOqpK2TpoMzOxaFtwqZua2Bm4makIM7OzMAjoaCqYuxooSUqJALjs7o4yVpbowvzSUy87KqSwmxQfnsrPISyFzWeWAXCkpMaBVIC4bmCsOdgiUKwh3JojLgAQ4ZCE0AMm2D29tZwe6AAAAAElFTkSuQmCC)](http://www.conan.io/source/glog/0.3.4/dwerner/testing)
 
@@ -52,14 +50,43 @@ See also `CMakeLists.txt` for the changes necessary to add Conan's builds to the
 ### Google Tests
 
 The `gtest` package in Conan is broken, so we need to manually donwload, build and install `gtest`.
-This is pretty trivial, but you will need to add include files (`gtest/...`) and libraries 
-(`libgtest.a` and `libgtest_main.a`) in the following directories, respectively:
 
-    ${INSTALL_DIR}/include
-    ${INSTALL_DIR}/lib
+The code here has been tested using 
+[Google Gtest 1.7.0](https://github.com/google/googletest/releases/tag/release-1.7.0): download 
+and untar into a folder (assume it's called `$GTEST_DIR`):
+
+    cd $GTEST_DIR
+    mkdir build && cd build
+    cmake ..
+    make
     
+Then the gtest libraries (`libgtest.a` and `libgtest_main.a`) need to be copied into the 
+installation folder along with a symlink to the header files:
+
+    cp libgtest.a libgtest_main.a ${INSTALL_DIR}/lib
+    ln -sf ${GTEST_DIR}/include/gtest ${INSTALL_DIR}/include/gtest
+
 and then define the `INSTALL_DIR` variable when invoking `cmake` via `-DINSTALL_DIR` (see next 
 section).
+
+### Google Protocol Buffers
+
+The [SWIM gossip protocol implementation](#SWIM Gossip and Consensus algorithm) makes use of 
+Protobuf as the serialization protocol to exchange status messages between servers.
+
+The code in this project has been tested using 
+[Protocol Buffers 2.6.1](https://github.com/google/protobuf/releases/tag/v2.6.1).
+
+After downloading and unpacking the tarball, you will need to build it and install it to the
+same `${INSTALL_DIR}` as defined when invoking `cmake` (see next section).
+
+    cd $PROTOBUF_DIR
+    ./configure --prefix $INSTALL_DIR
+    make
+    make install
+    
+This will make it so that all headers will be installed to `$INSTALL_DIR/include` and the various
+`libprotobuf*` libraries in `$INSTALL_DIR/lib` - this is what the `CMakeLists.txt` expects.
 
 ## Build & testing
 
@@ -76,6 +103,7 @@ Finally, to run the tests:
     ./tests/bin/test_brick
 
 See also the other binaries in the `build/bin` folder for more options.
+
 
 # Projects
 
@@ -108,7 +136,21 @@ References:
 
  ### PING server
 
- This is based on [ZeroMQ C++ bindings](http://api.zeromq.org/2-1:zmq-cpp).````
+ This is based on [ZeroMQ C++ bindings](http://api.zeromq.org/2-1:zmq-cpp).
+ 
+ There are currently two types of servers: one continuously listening on a given `port` and a
+ client sending a one-off status update to a `destination` TCP socket.
+ 
+ Starting the listening server is done like this:
+ 
+    ./bin/server receive 3003
+    
+ and it will cause it to listen for incoming [`SwimStatus`](proto/swim.proto) messages on port 
+ `3003`; a client can then send a message update using:
+ 
+    ./bin/server send tcp://localhost:3003
+    
+(obviously, change the hostname if you are running the two on separate machines/VMs/containers).
 
 
 [SWIM]: https://www.dropbox.com/s/hi5ft7y1o0gtm53/swim-Gossip-Protocol.pdf
