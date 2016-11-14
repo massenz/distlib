@@ -153,6 +153,6 @@ References:
 (obviously, change the hostname if you are running the two on separate machines/VMs/containers).
 
 
-[SWIM]: https://www.dropbox.com/s/hi5ft7y1o0gtm53/swim-Gossip-Protocol.pdf
-[unreliable failure detectors]: https://www.dropbox.com/s/ad4l8uk5g04qz1w/UnreliableFailureDetectors.pdf
-[gossip failure]: https://www.dropbox.com/s/h7owyzwobtb7nvt/GossipFailureDetection.pdf
+[SWIM]: https://goo.gl/VUn4iQ
+[unreliable failure detectors]: https://goo.gl/6yuh9T
+[gossip failure]: https://goo.gl/rxAIa6

@@ -4,7 +4,6 @@
 
 #include <ctime>
 #include <iostream>
-#include <unistd.h>
 #include <zmq.hpp>
 
 #include <glog/logging.h>
@@ -12,74 +11,14 @@
 #include "config.h"
 #include "network.h"
 
-#include "SwimPing.hpp"
+#include "SwimClient.hpp"
 
 
-#define MAXBUFSIZE 1024
 #define PORT_NUM 50050
 
 
 using namespace zmq;
-
-
-google::protobuf::int64 current_time() {
-  return time(nullptr);
-}
-
-
-std::string hostname() {
-  char name[MAXBUFSIZE];
-  int retcode = gethostname(name, MAXBUFSIZE);
-  if (retcode != 0) {
-    LOG(ERROR) << "Could not determine hostname";
-    return "UNKNOWN";
-  }
-  return std::string(name);
-}
-
-
-void send_ok_status(const std::string& destination) {
-  context_t ctx(1);
-  socket_t socket(ctx, ZMQ_REQ);
-  socket.connect(destination.c_str());
-
-  SwimStatus status;
-  status.set_state(SwimStatus::State::SwimStatus_State_RUNNING);
-  status.set_timestamp(current_time());
-  status.set_description("demo_client::single");
-
-  Server *self = status.mutable_server();
-  self->set_hostname(hostname());
-  self->set_port(PORT_NUM);
-
-  std::string msgAsStr = status.SerializeAsString();
-  char buf[msgAsStr.size()];
-  memcpy(buf, msgAsStr.data(), msgAsStr.size());
-
-  message_t msg(buf, msgAsStr.size(), NULL);
-
-  LOG(INFO) << "Sending Status Ping to server";
-  if (!socket.send(msg)) {
-    LOG(ERROR) << "Failed to send status out";
-    return;
-  }
-
-  LOG(INFO) << "Message sent, awaiting reply";
-
-  message_t reply;
-  if (!socket.recv(&reply)) {
-    LOG(ERROR) << "Failed to receive reply from server";
-    return;
-  }
-
-  LOG(INFO) << "Received: " << reply.size() << " bytes";
-
-  char response[reply.size() + 1];
-  memcpy(response, reply.data(), reply.size());
-  response[reply.size()] = '\0';
-
-  LOG(INFO) << "Response: " << response;
-}
+using namespace swim;
 
 
 #pragma clang diagnostic push
@@ -101,11 +40,11 @@ void listen_for_status(unsigned int port) {
     memset(buf, 0, msg.size() + 1);
     memcpy(buf, msg.data(), msg.size());
 
-    SwimStatus status;
-    status.ParseFromArray(buf, msg.size());
+    swim::SwimEnvelope envelope;
+    envelope.ParseFromArray(buf, msg.size());
 
-    LOG(INFO) << "Received from host '" << status.server().hostname() << "': "
-              << status.State_Name(status.state());
+    LOG(INFO) << "Received from host '" << envelope.sender().hostname() << "' at "
+              << envelope.timestamp(); // TODO: convert to human-readable format
 
     message_t reply(7);
     memcpy(reply.data(), "200 OK\n", 7);
@@ -131,15 +70,16 @@ int main(int argc, char** argv) {
 
   LOG(INFO) << "Running Demo Ping Server (SWIM) - Ver. " << RELEASE_STR;
 
-  if (argc != 3) {
+  if (argc < 3) {
     usage();
     return EXIT_FAILURE;
   }
 
 
-  if (strcmp(argv[1], "send") == 0) {
-    send_ok_status(argv[2]);
-  } else if (strcmp(argv[1], "receive") == 0) {
+  if (strcmp(argv[1], "send") == 0 && (argc == 4)) {
+    SwimClient client(argv[2], atoi(argv[3]));
+    client.ping();
+  } else if (strcmp(argv[1], "receive") == 0 && argc == 3) {
     unsigned int port = atoi(argv[2]);
     listen_for_status(port);
   } else {

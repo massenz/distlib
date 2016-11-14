@@ -71,16 +71,20 @@ set(SOURCE_FILES
         ${SOURCE_DIR}/View.cpp
 )
 
+set(SWIM_SOURCES
+        ${SOURCE_DIR}/SwimClient.cpp
+        ${SOURCE_DIR}/network.cpp
+)
+
 add_executable(brick ${SOURCE_FILES} ${SOURCE_DIR}/main.cpp)
 target_link_libraries(brick ${CONAN_LIBS})
 
 # Adding a target demo server that will use the SWIM protocol to derive
 # a list of healthy server from a configured pool.
-
 link_directories(${INSTALL_DIR}/lib)
 add_executable(server
         ${PROTO_SRCS}
-        ${SOURCE_DIR}/network.cpp
+        ${SWIM_SOURCES}
         ${SOURCE_DIR}/server_demo.cpp
 )
 target_link_libraries(server

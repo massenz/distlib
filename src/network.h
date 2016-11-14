@@ -3,10 +3,16 @@
 
 #pragma once
 
+#include <ctime>
 #include <memory>
 #include <netdb.h>
 #include <sstream>
 
+#include <glog/logging.h>
+#include <google/protobuf/stubs/common.h>
+
+
+#define MAXBUFSIZE 1024
 
 /**
  * Given a Linux {@link struct sockaddr} structure, it returns a string that
@@ -28,3 +34,18 @@ std::string inetAddress(const struct sockaddr *addr, socklen_t socklen);
  *      Or an empty string, if no suitable socket is available.
  */
 std::string sockAddr(unsigned int port);
+
+/**
+ * Returns the current time in a format suitable for use as a timestamp field
+ * in a Protobuf.
+ *
+ * @return the current time (via `std::time()`).
+ */
+google::protobuf::int64 current_time();
+
+/**
+ * Tries to find this node's hostname, as returned by the OS.
+ *
+ * @return the hostname, if available.
+ */
+std::string hostname();
