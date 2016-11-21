@@ -4,6 +4,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <iomanip>
 #include <zmq.hpp>
 
 #include <glog/logging.h>
@@ -12,9 +13,6 @@
 #include "network.h"
 
 #include "SwimClient.hpp"
-
-
-#define PORT_NUM 50050
 
 
 using namespace zmq;
@@ -28,26 +26,23 @@ void listen_for_status(unsigned int port) {
   socket_t socket(ctx, ZMQ_REP);
   socket.bind(sockAddr(port).c_str());
 
-  LOG(INFO) << "Connecting....";
+  LOG(INFO) << "Server listening on port " << port;
   while (true) {
     message_t msg;
-    if (!socket.recv(&msg))
-      LOG(FATAL) << "Error receiving from socket";
-
-    LOG(INFO) << "Received " << msg.size() << " bytes";
-
-    char buf[msg.size() + 1];
-    memset(buf, 0, msg.size() + 1);
-    memcpy(buf, msg.data(), msg.size());
-
+    if (!socket.recv(&msg)) {
+      LOG(ERROR) << "Error receiving from socket";
+      continue;
+    }
     swim::SwimEnvelope envelope;
-    envelope.ParseFromArray(buf, msg.size());
+    envelope.ParseFromArray(msg.data(), msg.size());
+
+    time_t ts = envelope.timestamp();
 
     LOG(INFO) << "Received from host '" << envelope.sender().hostname() << "' at "
-              << envelope.timestamp(); // TODO: convert to human-readable format
+              << std::put_time(std::gmtime(&ts), "%c %Z");
 
-    message_t reply(7);
-    memcpy(reply.data(), "200 OK\n", 7);
+    message_t reply(6);
+    memcpy(reply.data(), "200 OK", 6);
     socket.send(reply);
   }
 }
