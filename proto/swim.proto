@@ -106,7 +106,7 @@ message SwimEnvelope {
 
     // The local clock of the `sender`, not necessarily related in any temporal relationship
     // with the receiving server (but potentially useful in a 'Vector Clock' scheme).
-    required fixed64 timestamp = 3;
+    required int64 timestamp = 3;
 
     optional SwimReport report = 5;
     optional Server destination_server = 6;
