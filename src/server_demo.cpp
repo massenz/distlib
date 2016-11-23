@@ -1,14 +1,17 @@
 // Copyright (c) 2016 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 10/8/16.
 
-
+#include <chrono>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
 #include <iomanip>
-#include <zmq.hpp>
+#include <thread>
 
 #include <glog/logging.h>
+
+#include <zmq.hpp>
+#include <atomic>
 
 #include "config.h"
 
@@ -62,6 +65,16 @@ static void usage() {
             << "HOST is only required when sending.\n\n";
 }
 
+static std::atomic<bool> stopped(false);
+
+void start_timer(unsigned long duration_sec) {
+  std::thread t([=] {
+    std::chrono::seconds run_for_seconds(duration_sec);
+    std::this_thread::sleep_for(run_for_seconds);
+    stopped = true;
+  });
+  t.detach();
+}
 
 int main(int argc, const char* argv[]) {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -74,29 +87,44 @@ int main(int argc, const char* argv[]) {
   utils::ParseArgs parser(argv, argc);
   parser.parse();
 
-  int port = std::atoi(parser.parsed_options()["port"].c_str());
+  int port = std::atoi(parser.get("port"));
   if (port < 1024) {
-    LOG(ERROR) << "Port should be specified with the --port option and be a valid number greater "
-        "than 1024";
+    LOG(ERROR) << "Port should be specified with the --port option and be a valid number "
+               << "greater than 1024. Found: '" << parser["port"] << "'";
     usage();
     return EXIT_FAILURE;
   }
 
-  if (parser.positional_args().size() != 1) {
+  unsigned long duration = std::atol(parser.get("duration"));
+  if (duration == 0) {
+    duration = 5;
+  }
+
+  if (parser.count() != 1) {
     LOG(ERROR) << "Please specify an ACTION ('send' or 'receive')";
     return EXIT_FAILURE;
   }
-
-  std::string action = parser.positional_args()[0];
+  std::string action = parser[0];
 
   if (action == "send") {
-    SwimClient client(parser.parsed_options()["host"], port);
-    client.ping();
+    std::string host = parser["host"];
+    if (host.empty()) {
+      LOG(ERROR) << "Please specify a server to send the status to";
+      usage();
+      return EXIT_FAILURE;
+    }
+
+    SwimClient client(host, port);
+    std::chrono::milliseconds wait(1500);
+    start_timer(duration);
+    while (!stopped.load()) {
+      client.ping();
+      std::this_thread::sleep_for(wait);
+    }
   } else if (action == "receive") {
     listen_for_status(port);
   } else {
-    LOG(ERROR) << "One of {send, recevive} expected; we got instead: "
-               << parser.positional_args()[0];
+    LOG(ERROR) << "One of {send, recevive} expected; we got instead: '" << parser[0] << "'";
     usage();
     return EXIT_FAILURE;
   }

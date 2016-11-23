@@ -23,14 +23,23 @@ class ParseArgs {
 
   std::string progname_;
 
+protected:
+
+  std::map<std::string, std::string> parsed_options() const {
+    return parsed_options_;
+  }
+
+  std::vector<std::string> positional_args() const {
+    return positional_args_;
+  };
+
 public:
   ParseArgs() = delete;
   ParseArgs(const ParseArgs& other) = delete;
 
   explicit ParseArgs(const std::vector<std::string>& args) : args_(args) {}
 
-  // TODO: strip the leading path from the program name: /usr/bin/dothis should be saved as `dothis`
-  ParseArgs(const char* args[], size_t len) : progname_(args[0]){
+  ParseArgs(const char* args[], size_t len) : progname_(args[0]) {
     size_t pos = progname_.rfind("/");
     if (pos != std::string::npos) {
       progname_ = progname_.substr(pos + 1);
@@ -42,6 +51,8 @@ public:
 
   void parse() {
     std::for_each(args_.begin(), args_.end(), [this] (const std::string& s) {
+
+      // TODO: would this be simpler, faster using std::regex?
       VLOG(2) << "Parsing: " << s;
       if (std::strspn(s.c_str(), "-") == 2) {
         size_t pos = s.find('=', 2);
@@ -74,16 +85,43 @@ public:
     });
   };
 
-  std::map<std::string, std::string> parsed_options() const {
-    return parsed_options_;
-  }
-
-  std::vector<std::string> positional_args() const {
-    return positional_args_;
-  };
-
   std::string progname() const {
     return progname_;
+  }
+
+  std::string get(const std::string& name) const {
+    return parsed_options()[name];
+  }
+
+  const char* get(const char* name) const {
+    return parsed_options()[name].c_str();
+  }
+
+  std::string at(int pos) const {
+    if (pos < count()) {
+      return positional_args().at(pos);
+    }
+    return "";
+  }
+
+  int count() const {
+    return positional_args().size();
+  }
+
+  std::string operator[](int pos) const {
+    return at(pos);
+  }
+
+  std::string operator[](const std::string& name) const {
+    return get(name);
+  }
+
+  std::vector<std::string> getNames() {
+    std::vector<std::string> names;
+    for(auto elem : parsed_options_) {
+      names.push_back(elem.first);
+    }
+    return names;
   }
 };
 

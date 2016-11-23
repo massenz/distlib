@@ -91,6 +91,7 @@ target_link_libraries(server
         protobuf
         zmq
         glog
+        pthread
 )
 
 
