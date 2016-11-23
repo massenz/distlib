@@ -21,7 +21,7 @@ TEST_F(ParseArgsTest, canParseSimple) {
   parser.parse();
 
   ASSERT_STREQ("send", parser.progname().c_str());
-  ASSERT_EQ(parser.parsed_options().size(), 1);
+  ASSERT_STREQ("1023", parser.get("port"));
 }
 
 
@@ -41,14 +41,14 @@ TEST_F(ParseArgsTest, canParseMany) {
   utils::ParseArgs parser(mine, sizeof(mine) / sizeof(const char*));
   parser.parse();
 
-  EXPECT_EQ(6, parser.parsed_options().size());
-  EXPECT_STREQ("google.com", parser.parsed_options()["server"].c_str());
-  EXPECT_NE(parser.parsed_options().end(), parser.parsed_options().find("bogus"));
-  EXPECT_STREQ("off", parser.parsed_options()["amend"].c_str());
+  EXPECT_STREQ("google.com", parser.get("server"));
+  EXPECT_STREQ("", parser.get("bogus"));
+  EXPECT_STREQ("off", parser.get("amend"));
+  EXPECT_STREQ("on", parser.get("enable-no-value"));
 
-  ASSERT_EQ(2, parser.positional_args().size());
-  EXPECT_STREQ("send", parser.positional_args()[0].c_str());
-  EXPECT_STREQ("myfile.txt", parser.positional_args()[1].c_str());
+  ASSERT_EQ(2, parser.count());
+  EXPECT_STREQ("send", parser.at(0).c_str());
+  EXPECT_STREQ("myfile.txt", parser.at(1).c_str());
 
   ASSERT_STREQ("runthis", parser.progname().c_str());
 }
@@ -67,11 +67,35 @@ TEST_F(ParseArgsTest, canParseFromVector) {
   utils::ParseArgs parser(args);
   parser.parse();
 
-  EXPECT_EQ(5, parser.parsed_options().size());
-  EXPECT_STREQ("google.com", parser.parsed_options()["server"].c_str());
-  EXPECT_STREQ("off", parser.parsed_options()["amend"].c_str());
+  EXPECT_STREQ("google.com", parser.get("server"));
+  EXPECT_STREQ("off", parser.get("amend"));
 
-  ASSERT_EQ(2, parser.positional_args().size());
-  EXPECT_STREQ("send", parser.positional_args()[0].c_str());
-  EXPECT_STREQ("myfile.txt", parser.positional_args()[1].c_str());
+  ASSERT_EQ(2, parser.count());
+  EXPECT_STREQ("send", parser.at(0).c_str());
+  EXPECT_STREQ("myfile.txt", parser.at(1).c_str());
+}
+
+TEST_F(ParseArgsTest, canUseHelperMethods) {
+  std::vector<std::string> args = {
+      "--port=1023",
+      "--server=google.com",
+      "--enable-no-value",
+      "--no-amend",
+      "--zk=localhost:2181",
+      "send",
+      "myfile.txt",
+      "another.jpeg",
+      "fillme.png"
+  };
+
+  utils::ParseArgs parser(args);
+  parser.parse();
+
+  ASSERT_EQ(4, parser.count());
+  ASSERT_EQ("fillme.png", parser[3]);
+
+  ASSERT_STREQ("localhost:2181", parser["zk"].c_str());
+  ASSERT_EQ(5, parser.getNames().size());
+  ASSERT_STREQ("amend", parser.getNames()[0].c_str());
+  ASSERT_STREQ("zk", parser.getNames()[4].c_str());
 }
