@@ -23,6 +23,7 @@ set(TEST_FILES
         ${TESTS_DIR}/test_bucket.cpp
         ${TESTS_DIR}/test_merkle.cpp
         ${TESTS_DIR}/test_view.cpp
+        ${TESTS_DIR}/test_parse_args.cpp
 )
 
 add_executable(${TEST_TARGET} ${SOURCE_FILES} ${TEST_FILES})

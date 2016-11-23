@@ -14,6 +14,7 @@
 
 #define MAXBUFSIZE 1024
 
+namespace utils {
 /**
  * Given a Linux {@link struct sockaddr} structure, it returns a string that
  * represents the {@literal host:port} for the network address.
@@ -49,3 +50,5 @@ google::protobuf::int64 current_time();
  * @return the hostname, if available.
  */
 std::string hostname();
+
+} // namespace utils

@@ -72,8 +72,8 @@ set(SOURCE_FILES
 )
 
 set(SWIM_SOURCES
-        ${SOURCE_DIR}/SwimClient.cpp
-        ${SOURCE_DIR}/network.cpp
+        ${SOURCE_DIR}/swim/SwimClient.cpp
+        ${SOURCE_DIR}/utils/network.cpp
 )
 
 add_executable(brick ${SOURCE_FILES} ${SOURCE_DIR}/main.cpp)

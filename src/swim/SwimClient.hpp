@@ -6,7 +6,7 @@
 #include <zmq.hpp>
 
 #include "swim.pb.h"
-#include "network.h"
+#include "utils/network.h"
 
 
 

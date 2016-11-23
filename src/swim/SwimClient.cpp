@@ -8,6 +8,7 @@
 
 
 using namespace zmq;
+using namespace utils;
 
 namespace swim {
 

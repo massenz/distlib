@@ -2,6 +2,7 @@
 // Created by M. Massenzio (marco@alertavert.com) on 10/8/16.
 
 
+#include <cstdlib>
 #include <ctime>
 #include <iostream>
 #include <iomanip>
@@ -10,9 +11,11 @@
 #include <glog/logging.h>
 
 #include "config.h"
-#include "network.h"
 
-#include "SwimClient.hpp"
+#include "utils/network.h"
+#include "utils/ParseArgs.hpp"
+
+#include "swim/SwimClient.hpp"
 
 
 using namespace zmq;
@@ -24,7 +27,7 @@ using namespace swim;
 void listen_for_status(unsigned int port) {
   context_t ctx(1);
   socket_t socket(ctx, ZMQ_REP);
-  socket.bind(sockAddr(port).c_str());
+  socket.bind(utils::sockAddr(port).c_str());
 
   LOG(INFO) << "Server listening on port " << port;
   while (true) {
@@ -50,14 +53,17 @@ void listen_for_status(unsigned int port) {
 
 
 static void usage() {
-  std::cout << "Usage: " << program_invocation_short_name << " send DEST | receive PORT\n\n"
-            << "PORT   an int specifying the port the server will listen on;\n"
-            << "DEST   the URI to send the status to (e.g., tcp://localhost:3003\n\n"
-            << "Use PORT when receiving and DEST when sending.";
+  std::cout << "Usage: " << program_invocation_short_name << " --port=PORT [--host=HOST] ACTION\n\n"
+            << "\tPORT       an int specifying the port the server will listen on, or connect to;\n"
+            << "\tHOST       the hostname/IP to send the status to (e.g., h123.example.org or \n"
+            << "\t           192.168.1.1)\n"
+            << "\tACTION     one of `send` or `receive`; if the former, also specifiy the host to\n"
+            << "\t           send the data to.\n\n"
+            << "HOST is only required when sending.\n\n";
 }
 
 
-int main(int argc, char** argv) {
+int main(int argc, const char* argv[]) {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   google::InitGoogleLogging(argv[0]);
@@ -65,21 +71,33 @@ int main(int argc, char** argv) {
 
   LOG(INFO) << "Running Demo Ping Server (SWIM) - Ver. " << RELEASE_STR;
 
-  if (argc < 3) {
+  utils::ParseArgs parser(argv, argc);
+  parser.parse();
+
+  int port = std::atoi(parser.parsed_options()["port"].c_str());
+  if (port < 1024) {
+    LOG(ERROR) << "Port should be specified with the --port option and be a valid number greater "
+        "than 1024";
     usage();
     return EXIT_FAILURE;
   }
 
+  if (parser.positional_args().size() != 1) {
+    LOG(ERROR) << "Please specify an ACTION ('send' or 'receive')";
+    return EXIT_FAILURE;
+  }
 
-  if (strcmp(argv[1], "send") == 0 && (argc == 4)) {
-    SwimClient client(argv[2], atoi(argv[3]));
+  std::string action = parser.positional_args()[0];
+
+  if (action == "send") {
+    SwimClient client(parser.parsed_options()["host"], port);
     client.ping();
-  } else if (strcmp(argv[1], "receive") == 0 && argc == 3) {
-    unsigned int port = atoi(argv[2]);
+  } else if (action == "receive") {
     listen_for_status(port);
   } else {
+    LOG(ERROR) << "One of {send, recevive} expected; we got instead: "
+               << parser.positional_args()[0];
     usage();
-    LOG(ERROR) << "One of {send, recevive} expected; we got instead: " << argv[1];
     return EXIT_FAILURE;
   }
 
