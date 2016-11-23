@@ -68,10 +68,21 @@ public:
   /**
    * Builds a status update message to be sent to the `server`.
    *
-   * @param server where to send the message to.
+   * @param dest where to send the message to.
+   * @param self_port if this server is also listening on a port, specify it here.
+   * @param timeout an optional timeout, in milliseconds.
    */
   SwimClient(const Server &dest, int self_port, unsigned long timeout = DEFAULT_TIMEOUT_MSEC);
 
+  /**
+   * Simply calls the other constructor; see for details.
+   *
+   * @param hostname the destination host that we will try to reach.
+   * @param port the port the remote server is listening on.
+   * @param self_port an optional port where this server itself may be listening for incoming
+   *            messages.
+   * @param timeout an optional timeout.
+   */
   SwimClient(const std::string &hostname, int port, int self_port = 0,
              unsigned long timeout = DEFAULT_TIMEOUT_MSEC) :
       SwimClient(makeServer(hostname, port), self_port, timeout) {}
@@ -85,6 +96,8 @@ public:
    *
    * This can also be proactively used by `self_` if it discovers that some servers "suspect" it
    * to be in an "unhealthy" state (and must do so before the "grace period" expires).
+   *
+   * @return `true` if the server returned an `OK`.
    */
   // TODO: make it return a Future instead
   bool ping();

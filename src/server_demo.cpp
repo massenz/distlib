@@ -19,6 +19,7 @@
 #include "utils/ParseArgs.hpp"
 
 #include "swim/SwimClient.hpp"
+#include "swim/SwimServer.hpp"
 
 
 using namespace zmq;
@@ -71,7 +72,7 @@ void start_timer(unsigned long duration_sec) {
   std::thread t([=] {
     std::chrono::seconds run_for_seconds(duration_sec);
     std::this_thread::sleep_for(run_for_seconds);
-    stopped = true;
+    stopped.store(true);
   });
   t.detach();
 }
@@ -81,8 +82,6 @@ int main(int argc, const char* argv[]) {
 
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = 1;
-
-  LOG(INFO) << "Running Demo Ping Server (SWIM) - Ver. " << RELEASE_STR;
 
   utils::ParseArgs parser(argv, argc);
   parser.parse();
@@ -100,6 +99,11 @@ int main(int argc, const char* argv[]) {
     duration = 5;
   }
 
+  unsigned long timeout = std::atol(parser.get("timeout"));
+  if (timeout == 0) {
+    timeout = 5000;
+  }
+
   if (parser.count() != 1) {
     LOG(ERROR) << "Please specify an ACTION ('send' or 'receive')";
     return EXIT_FAILURE;
@@ -114,15 +118,23 @@ int main(int argc, const char* argv[]) {
       return EXIT_FAILURE;
     }
 
-    SwimClient client(host, port);
+    LOG(INFO) << "Running Demo Client - Ver. " << RELEASE_STR;
+
+    SwimClient client(host, port, 0, timeout);
     std::chrono::milliseconds wait(1500);
     start_timer(duration);
     while (!stopped.load()) {
-      client.ping();
+      if (!client.ping()) {
+        LOG(ERROR) << "Could not ping server " << host;
+        return EXIT_FAILURE;
+      }
       std::this_thread::sleep_for(wait);
     }
   } else if (action == "receive") {
-    listen_for_status(port);
+    LOG(INFO) << "Running Demo Ping Server (SWIM) - Ver. " << RELEASE_STR;
+    SwimServer server(port);
+    // TODO: this should run in a separate thread instead, and we just join() on the timer thread.
+    server.start();
   } else {
     LOG(ERROR) << "One of {send, recevive} expected; we got instead: '" << parser[0] << "'";
     usage();
