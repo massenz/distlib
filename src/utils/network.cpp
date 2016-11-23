@@ -4,6 +4,8 @@
 
 #include "network.h"
 
+namespace utils {
+
 std::string inetAddress(const struct sockaddr *addr, socklen_t socklen) {
   char host[NI_MAXHOST],
        service[NI_MAXSERV];
@@ -58,3 +60,5 @@ std::string hostname() {
   }
   return std::string(name);
 }
+
+} // namespace utils
