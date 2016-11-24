@@ -18,7 +18,6 @@ protected:
 TEST_F(ParseArgsTest, canParseSimple) {
   const char* mine[] = {"/usr/bin/send", "--port=1023"};
   utils::ParseArgs parser(mine, 2);
-  parser.parse();
 
   ASSERT_STREQ("send", parser.progname().c_str());
   ASSERT_STREQ("1023", parser.get("port"));
@@ -39,7 +38,6 @@ TEST_F(ParseArgsTest, canParseMany) {
       "myfile.txt"
   };
   utils::ParseArgs parser(mine, sizeof(mine) / sizeof(const char*));
-  parser.parse();
 
   EXPECT_STREQ("google.com", parser.get("server"));
   EXPECT_STREQ("", parser.get("bogus"));
@@ -65,7 +63,6 @@ TEST_F(ParseArgsTest, canParseFromVector) {
   };
 
   utils::ParseArgs parser(args);
-  parser.parse();
 
   EXPECT_STREQ("google.com", parser.get("server"));
   EXPECT_STREQ("off", parser.get("amend"));
@@ -89,7 +86,6 @@ TEST_F(ParseArgsTest, canUseHelperMethods) {
   };
 
   utils::ParseArgs parser(args);
-  parser.parse();
 
   ASSERT_EQ(4, parser.count());
   ASSERT_EQ("fillme.png", parser[3]);

@@ -11,7 +11,6 @@
 
 #include <glog/logging.h>
 
-// TODO: make parsing lazy: parse() should be protected and triggered lazily upon first access.
 
 namespace utils {
 
@@ -29,6 +28,8 @@ class ParseArgs {
 
   std::string progname_;
 
+  bool parsed_;
+
 protected:
 
   std::map<std::string, std::string> parsed_options() const {
@@ -39,56 +40,11 @@ protected:
     return positional_args_;
   };
 
-public:
-  ParseArgs() = delete;
-  ParseArgs(const ParseArgs& other) = delete;
-
-  /**
-   * Used to build a parser from a list of strings.
-   *
-   * <p>Identical in behavior to the other C-style constructor, but will <strong>NOT</strong> assume
-   * that the first element of the vector is the program name.
-   *
-   * @param args a list of both positional and named arguments.
-   */
-  explicit ParseArgs(const std::vector<std::string>& args) : args_(args) {}
-
-  /**
-   * Builds a command-line arguments parser.
-   *
-   * Use directly with your `main()` arguments, to parse the `--option=value` named arguments and
-   * all other "positional" arguments.
-   *
-   * <p>Example:
-   * <pre>
-   *   int main(int argc, const char* argv[]) {
-   *     utils::ParseArgs parser(argv, argc);
-   *     parser.parse();
-   *
-   *     if (parser.has("help")) {
-   *       usage();
-   *       return EXIT_SUCCESS;
-   *     }
-   *     // ...
-   *   }
-   * </pre>
-   *
-   * <p>`args[0]` is assumed to be the name of the program (see `progname()`).
-   *
-   * @param args an array of C-string values.
-   * @param len the number of elements in `args`.
-   */
-  ParseArgs(const char* args[], size_t len) : progname_(args[0]) {
-    size_t pos = progname_.rfind("/");
-    if (pos != std::string::npos) {
-      progname_ = progname_.substr(pos + 1);
-    }
-    for (int i = 1; i < len; ++i) {
-      args_.push_back(std::string(args[i]));
-    }
-  }
 
   void parse() {
+    if (parsed_)
+      return;
+
     std::for_each(args_.begin(), args_.end(), [this] (const std::string& s) {
 
       // TODO: would this be simpler, faster using std::regex?
@@ -122,8 +78,68 @@ public:
         positional_args_.push_back(s);
       }
     });
+    parsed_ = true;
   };
 
+public:
+  ParseArgs() = delete;
+  ParseArgs(const ParseArgs& other) = delete;
+
+  /**
+   * Used to build a parser from a list of strings.
+   *
+   * <p>Identical in behavior to the other C-style constructor, but will <strong>NOT</strong> assume
+   * that the first element of the vector is the program name.
+   *
+   * @param args a list of both positional and named arguments.
+   */
+  explicit ParseArgs(const std::vector<std::string>& args) : args_(args), parsed_(false) {
+    parse();
+  }
+
+  /**
+   * Builds a command-line arguments parser.
+   *
+   * Use directly with your `main()` arguments, to parse the `--option=value` named arguments and
+   * all other "positional" arguments.
+   *
+   * <p>Example:
+   * <pre>
+   *   int main(int argc, const char* argv[]) {
+   *     utils::ParseArgs parser(argv, argc);
+   *     parser.parse();
+   *
+   *     if (parser.has("help")) {
+   *       usage();
+   *       return EXIT_SUCCESS;
+   *     }
+   *     // ...
+   *   }
+   * </pre>
+   *
+   * <p>`args[0]` is assumed to be the name of the program (see `progname()`).
+   *
+   * @param args an array of C-string values.
+   * @param len the number of elements in `args`.
+   */
+  ParseArgs(const char* args[], size_t len) : progname_(args[0]), parsed_(false) {
+    size_t pos = progname_.rfind("/");
+    if (pos != std::string::npos) {
+      progname_ = progname_.substr(pos + 1);
+    }
+    for (int i = 1; i < len; ++i) {
+      args_.push_back(std::string(args[i]));
+    }
+    parse();
+  }
+
+
+  /**
+   * This is the value of `args[0]` when the parser is constructed with a list of C-strings.
+   * Otherwise it will be the emtpy string.
+   *
+   * @return `args[0]` if the parser is constructed via `ParseArgs::ParseArgs(const char* , size_t len)`.
+   */
   std::string progname() const {
     return progname_;
   }
