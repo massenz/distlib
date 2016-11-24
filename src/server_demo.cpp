@@ -86,6 +86,11 @@ int main(int argc, const char* argv[]) {
   utils::ParseArgs parser(argv, argc);
   parser.parse();
 
+  if (!parser["help"].empty()) {
+    usage();
+    return EXIT_SUCCESS;
+  }
+
   int port = std::atoi(parser.get("port"));
   if (port < 1024) {
     LOG(ERROR) << "Port should be specified with the --port option and be a valid number "
