@@ -11,9 +11,15 @@
 
 #include <glog/logging.h>
 
+// TODO: make parsing lazy: parse() should be protected and triggered lazily upon first access.
 
 namespace utils {
 
+/**
+ * Command-line options parser.
+ *
+ * @author M. Massenzio (marco@alertavert.com) 2016-11-24
+ */
 class ParseArgs {
 
   std::vector<std::string> args_;
@@ -37,8 +43,41 @@ public:
   ParseArgs() = delete;
   ParseArgs(const ParseArgs& other) = delete;
 
+  /**
+   * Used to build a parser from a list of strings.
+   *
+   * <p>Identical in behavior to the other C-style constructor, but will <strong>NOT</strong> assume
+   * that the first element of the vector is the program name.
+   *
+   * @param args a list of both positional and named arguments.
+   */
   explicit ParseArgs(const std::vector<std::string>& args) : args_(args) {}
 
+  /**
+   * Builds a command-line arguments parser.
+   *
+   * Use directly with your `main()` arguments, to parse the `--option=value` named arguments and
+   * all other "positional" arguments.
+   *
+   * <p>Example:
+   * <pre>
+   *   int main(int argc, const char* argv[]) {
+   *     utils::ParseArgs parser(argv, argc);
+   *     parser.parse();
+   *
+   *     if (parser.has("help")) {
+   *       usage();
+   *       return EXIT_SUCCESS;
+   *     }
+   *     // ...
+   *   }
+   * </pre>
+   *
+   * <p>`args[0]` is assumed to be the name of the program (see `progname()`).
+   *
+   * @param args an array of C-string values.
+   * @param len the number of elements in `args`.
+   */
   ParseArgs(const char* args[], size_t len) : progname_(args[0]) {
     size_t pos = progname_.rfind("/");
     if (pos != std::string::npos) {
@@ -89,39 +128,108 @@ public:
     return progname_;
   }
 
+  /**
+   * Gets the value of the `--name=value` option.
+   *
+   * @param name
+   * @return the value of the named option if specified, or the empty string instead.
+   */
   std::string get(const std::string& name) const {
     return parsed_options()[name];
   }
 
+  /**
+   * Alias for `get(std::string)`.
+   *
+   * @return the value of the named option if specified, or the empty string instead.
+   */
   const char* get(const char* name) const {
     return parsed_options()[name].c_str();
   }
 
+  /**
+   * @param pos the index of the positional argument
+   * @return the value of the positional argument at position `pos`, if valid.
+   * @throws `std::out_of_range` if `pos` > `count()`
+   */
   std::string at(int pos) const {
     if (pos < count()) {
       return positional_args().at(pos);
     }
-    return "";
+    throw new std::out_of_range("Not enough positional arguments");
   }
 
+  /**
+   * @return the number of positional arguments found.
+   */
   int count() const {
     return positional_args().size();
   }
 
+  /**
+   * Alias for `get(pos)`.
+   *
+   * @param pos
+   * @return the value of the positional argument at position `pos`.
+   */
   std::string operator[](int pos) const {
     return at(pos);
   }
 
+  /**
+   * Alias for `get(name)`.
+   *
+   * @param name
+   * @return the value of the named option
+   */
   std::string operator[](const std::string& name) const {
     return get(name);
   }
 
+  /**
+   * @return all the names of the options being parsed (those of the `--name=value` form).
+   */
   std::vector<std::string> getNames() {
     std::vector<std::string> names;
     for(auto elem : parsed_options_) {
       names.push_back(elem.first);
     }
     return names;
+  }
+
+  /**
+   * Converts an on/off flag into the boolean equivalent.
+   *
+   * @param name the name of the option being passed on the command line.
+   * @param ifAbsentValue if the flag has not been specified, the default value returned.
+   * @return `false` if the option is "off"; `true` otherwise.
+   */
+  bool has(const std::string& name, bool ifAbsentValue = false) {
+    std::string value = get(name);
+    if (value.empty()) return ifAbsentValue;
+    if (value == "on") {
+      return true;
+    } else if (value == "off") {
+      return false;
+    } else {
+      LOG(ERROR) << "Option '" << name << "' does not appear to be a flag (on/off): '" << value << "'";
+      return false;
+    }
+  }
+
+  /**
+   * Explicit check on a flag being disabled.
+   *
+   * @param name the name of the option being checked (e.g., "help", when checking for an
+   *        explicit "--no-help" being passed on the command line).
+   * @return `true` iff the named flag was passed as a `--no-xxx` option (where `xxx` is the
+   *        `name` of the flag).
+   */
+  bool hasDisabled(const std::string& name) {
+    std::string value = get(name);
+    if (value == "off") {
+      return true;
+    }
   }
 };
 
