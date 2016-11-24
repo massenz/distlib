@@ -5,6 +5,7 @@
 .cproject
 .project
 .settings/
+.conan/
 
 # CMake files
 CMakeCache.txt

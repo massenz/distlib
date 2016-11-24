@@ -6,6 +6,7 @@
 #include <set>
 
 #include <glog/logging.h>
+#include <map>
 
 #include "Bucket.hpp"
 
@@ -18,28 +19,27 @@
  * N intervals, where N is the smallest 2^x such that N > C log(C) and C is the number of expected
  * caches.
  *
+ * To each `interval` we assign the buckets where at least one of their `hash_points` falls into
+ * the interval: when finding the closest (ascending) bucket we only need to look into this
+ * smaller subset of buckets (see the {@link bucket(const std::string&)} method).
+ *
+ * If no buckets have been allocated yet to that interval, we continue navigating the unit circle
+ * until we find one.
+ *
  * For more details, see the paper on Consistent Hashing, referred to in the documentation for
  * the `consistent_hash()` method.
  */
 class View {
 
 private:
-  int num_intervals_;
   int num_buckets_;
 
-  std::unique_ptr<std::set<const Bucket*> []> buckets_;
-
-  /**
-   * The interval number corresponding to x (which must be in the [0, 1] range).
-   *
-   * @param the point in the unity range whose interval we are seeking.
-   * @return the value between [0, num_intervals-1] for the corresponding interval.
-   */
-  int interval(float x);
+  // Maps each bucket's partition point to the respective bucket.
+  std::map<float, const Bucket*> partition_to_bucket_;
 
   friend std::ostream& operator<<(std::ostream&, const View&);
 public:
-  View(int intervals);
+  View() : num_buckets_(0) {};
 
   virtual ~View() {}
 
@@ -48,24 +48,25 @@ public:
 
   /** Removes the given bucket from this view. */
   void remove(const Bucket *bucket);
+
   /**
    * @return the total number of buckets available in this view.
    */
   int num_buckets() const { return num_buckets_; }
 
-  /** Used for testing only, it's an implementation detail and should not be used externally */
-  int intervals() const { return num_intervals_; }
-
   /**
    * Retrieves the `Bucket` which is the nearest match for the given `key`.
    *
    * The `key` will be hashed and reduced to the [0, 1] interval (consistent hashing) and then
-   * the `Bucket` whose hash-point is nearest (largest) in the interval will be found and returned.
+   * the `Bucket` whose hash-point is the smallest partition point larger than the hash
+   * will be found and returned.
    *
    * See the "Consistent Hash" paper for a summary of why this operation is a O(1) and for
    * implementation details.
    */
   const Bucket* const bucket(const std::string& key);
+
+  std::set<const Bucket *> buckets() const;
 };
 
 /**
