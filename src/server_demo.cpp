@@ -1,6 +1,7 @@
 // Copyright (c) 2016 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 10/8/16.
 
+
 #include <chrono>
 #include <cstdlib>
 #include <ctime>
@@ -95,6 +96,7 @@ int main(int argc, const char* argv[]) {
   if (port < 1024) {
     LOG(ERROR) << "Port should be specified with the --port option and be a valid number "
                << "greater than 1024. Found: '" << parser["port"] << "'";
+
     if (parser.has("help", true)) {
       usage();
     }
@@ -121,6 +123,7 @@ int main(int argc, const char* argv[]) {
     std::string host = parser["host"];
     if (host.empty()) {
       LOG(ERROR) << "Please specify a server to send the status to";
+
       if (parser.has("help", true)) {
         usage();
       }
@@ -146,6 +149,7 @@ int main(int argc, const char* argv[]) {
     server.start();
   } else {
     LOG(ERROR) << "One of {send, recevive} expected; we got instead: '" << parser[0] << "'";
+
     if (parser.has("help", true)) {
       usage();
     }

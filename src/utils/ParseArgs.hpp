@@ -230,6 +230,7 @@ public:
     if (value == "off") {
       return true;
     }
+    return false;
   }
 };
 
