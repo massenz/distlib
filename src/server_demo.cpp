@@ -87,11 +87,19 @@ int main(int argc, const char* argv[]) {
   utils::ParseArgs parser(argv, argc);
   parser.parse();
 
+  if (parser.has("help")) {
+    usage();
+    return EXIT_SUCCESS;
+  }
+
   int port = std::atoi(parser.get("port"));
   if (port < 1024) {
     LOG(ERROR) << "Port should be specified with the --port option and be a valid number "
                << "greater than 1024. Found: '" << parser["port"] << "'";
-    usage();
+
+    if (parser.has("help", true)) {
+      usage();
+    }
     return EXIT_FAILURE;
   }
 
@@ -115,7 +123,10 @@ int main(int argc, const char* argv[]) {
     std::string host = parser["host"];
     if (host.empty()) {
       LOG(ERROR) << "Please specify a server to send the status to";
-      usage();
+
+      if (parser.has("help", true)) {
+        usage();
+      }
       return EXIT_FAILURE;
     }
 
@@ -138,7 +149,10 @@ int main(int argc, const char* argv[]) {
     server.start();
   } else {
     LOG(ERROR) << "One of {send, recevive} expected; we got instead: '" << parser[0] << "'";
-    usage();
+
+    if (parser.has("help", true)) {
+      usage();
+    }
     return EXIT_FAILURE;
   }
 

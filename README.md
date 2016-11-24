@@ -19,7 +19,7 @@ Updated | 2016-10-09
 
 ## Conan package
 
-See [http://conan.io]() for more information.
+See [http://conan.io](http://conan.io) for more information.
 
 TO build the project, you need to first donwload/build the necessary binary dependencies, as
 listed in `conanfile.text`:
@@ -93,7 +93,7 @@ This will make it so that all headers will be installed to `$INSTALL_DIR/include
 To build the project, it is the usual `cmake` routine:
 
     $ mkdir build && cd build
-    $ cmake -DINSTALL_DIR=/path/to/install/local \
+    $ cmake -DINSTALL_DIR=${INSTALL_DIR} \
             -DCMAKE_CXX_COMPILER=/usr/local/bin/clang++ \
             -DCOMMON_UTILS_DIR=/path/to/commons.cmake ..
     $ cmake --build .
