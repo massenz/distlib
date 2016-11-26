@@ -22,8 +22,6 @@ class SwimServer {
   unsigned int threads_;
   std::atomic<bool> stopped_;
 
-  std::unique_ptr<zmq::socket_t> socket_;
-
 protected:
 
   /**
@@ -109,8 +107,11 @@ public:
       port_(port), threads_(threads), stopped_(true) {}
 
   virtual ~SwimServer() {
-    if (isRunning()) {
+    while (isRunning()) {
       stop();
+      VLOG(2) << "Waiting for server to stop...";
+      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+      // TODO: really need to get the server unstuck at this point...
     }
   }
 
@@ -124,7 +125,7 @@ public:
 
   void stop() { stopped_.store(true); }
 
-  bool isRunning() const { return !stopped_.load(); }
+  bool isRunning() const { return !stopped_; }
 };
 
 } // namespace swim

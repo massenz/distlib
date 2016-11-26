@@ -14,27 +14,26 @@ using namespace zmq;
 namespace swim {
 
 void SwimServer::start() {
-  unsigned int linger = 0;
 
   context_t ctx(1);
-  stopped_ = false;
-  socket_.reset(new socket_t(ctx, ZMQ_REP));
-  if (!socket_) {
+  socket_t socket(ctx, ZMQ_REP);
+  if (!socket) {
     LOG(ERROR) << "Could not initialize the socket, this is a critical error, aborting.";
-    stopped_.store(true);
     return;
   }
 
   // No point in keeping the socket around when we exit.
-  socket_->setsockopt (ZMQ_LINGER, &linger, sizeof (unsigned int));
-  socket_->bind(utils::sockAddr(port_).c_str());
+  unsigned int linger = 0;
+  socket.setsockopt(ZMQ_LINGER, &linger, sizeof (unsigned int));
+  socket.bind(utils::sockAddr(port_).c_str());
   LOG(INFO) << "Server listening on port " << port_;
 
   // TODO: currently the server won't stop while waiting to receive incoming connection: should
   // use polling instead.
+  stopped_ = false;
   while (!stopped_) {
     message_t msg;
-    if (!socket_->recv(&msg)) {
+    if (!socket.recv(&msg)) {
       LOG(FATAL) << "Error receiving from socket";
     }
 
@@ -66,7 +65,7 @@ void SwimServer::start() {
 
     message_t reply(2);
     memcpy(reply.data(), "OK", 2);
-    socket_->send(reply);
+    socket.send(reply);
   }
   LOG(WARNING) << "SERVER STOPPED";
 }

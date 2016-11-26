@@ -72,21 +72,36 @@ protected:
   const unsigned int PORT = 3000;
 
   std::shared_ptr<SwimServer> server_;
+  std::unique_ptr<std::thread> thread_;
 
   virtual void SetUp() {
     server_.reset(new SwimServer(PORT));
   }
 
+  virtual void TearDown() {
+    LOG(INFO) << "tearing down...";
+    if (server_->isRunning()) {
+      LOG(INFO) << "stopping server...";
+      server_->stop();
+    }
+    if (thread_) {
+      LOG(INFO) << "joining thread";
+      if (thread_->joinable()) {
+        thread_->join();
+      }
+    }
+  }
+
   virtual void runServer() {
     if (server_) {
-      std::thread st([this] {
+      thread_.reset(new std::thread([this] {
         ASSERT_FALSE(server_->isRunning());
         server_->start();
-      });
-      st.detach();
+      }));
     }
   }
 };
+
 
 TEST_F(SwimServerTest, canCreate)
 {
@@ -113,6 +128,9 @@ TEST_F(SwimServerTest, canStartAndConnect)
   EXPECT_TRUE(client.ping());
 
   server_->stop();
+
+  // TODO: for now we need to get the server unstuck...
+  client.ping();
   EXPECT_FALSE(server_->isRunning());
 }
 
