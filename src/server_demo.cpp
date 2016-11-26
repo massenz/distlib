@@ -48,7 +48,21 @@ void start_timer(unsigned long duration_sec) {
   t.detach();
 }
 
-int main(int argc, const char* argv[]) {
+
+void printVersion() {
+  int major, minor, patch;
+
+  zmq::version(&major, &minor, &patch);
+  char zmq_ver[32];
+  sprintf(zmq_ver, "%d.%d.%d", major, minor, patch);
+
+  std::cout << "Demo SWIM server Ver. " << RELEASE_STR
+            << "\n- ZeroMQ ver. " << zmq_ver << "\n- Google Protocol Buffer ver. "
+            << ::google::protobuf::internal::VersionString(GOOGLE_PROTOBUF_VERSION) << std::endl;
+}
+
+
+int main(int argc, const char *argv[]) {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   google::InitGoogleLogging(argv[0]);
@@ -57,6 +71,11 @@ int main(int argc, const char* argv[]) {
   utils::ParseArgs parser(argv, argc);
   if (parser.has("help")) {
     usage();
+    return EXIT_SUCCESS;
+  }
+
+  if (parser.has("version")) {
+    printVersion();
     return EXIT_SUCCESS;
   }
 
@@ -111,7 +130,7 @@ int main(int argc, const char* argv[]) {
       std::this_thread::sleep_for(wait);
     }
   } else if (action == "receive") {
-    LOG(INFO) << "Running Demo Ping Server (SWIM) - Ver. " << RELEASE_STR;
+    printVersion();
     SwimServer server(port);
     // TODO: this should run in a separate thread instead, and we just join() on the timer thread.
     server.start();
