@@ -7,15 +7,9 @@
 
 #include "utils/ParseArgs.hpp"
 
-class ParseArgsTest : public ::testing::Test {
-protected:
 
-  virtual void SetUp() {
-
-  }
-};
-
-TEST_F(ParseArgsTest, canParseSimple) {
+TEST(ParseArgsTest, canParseSimple)
+{
   const char* mine[] = {"/usr/bin/send", "--port=1023"};
   utils::ParseArgs parser(mine, 2);
 
@@ -24,7 +18,8 @@ TEST_F(ParseArgsTest, canParseSimple) {
 }
 
 
-TEST_F(ParseArgsTest, canParseMany) {
+TEST(ParseArgsTest, canParseMany)
+{
   const char* mine[] = {
       "/usr/bin/runthis",
       "--port=1023",
@@ -51,7 +46,9 @@ TEST_F(ParseArgsTest, canParseMany) {
   ASSERT_STREQ("runthis", parser.progname().c_str());
 }
 
-TEST_F(ParseArgsTest, canParseFromVector) {
+
+TEST(ParseArgsTest, canParseFromVector)
+{
   std::vector<std::string> args = {
       "--port=1023",
       "--server=google.com",
@@ -72,7 +69,9 @@ TEST_F(ParseArgsTest, canParseFromVector) {
   EXPECT_STREQ("myfile.txt", parser.at(1).c_str());
 }
 
-TEST_F(ParseArgsTest, canUseHelperMethods) {
+
+TEST(ParseArgsTest, canUseHelperMethods)
+{
   std::vector<std::string> args = {
       "--port=1023",
       "--server=google.com",

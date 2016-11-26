@@ -136,6 +136,11 @@ public:
 
   void setMax_allowed_reports(unsigned int max_allowed_reports_);
 
+  void setSelf(const Server& other) {
+    self_.set_hostname(other.hostname());
+    self_.set_ip_addr(other.ip_addr());
+    self_.set_port(other.port());
+  }
 };
 
 } // namespace swim
