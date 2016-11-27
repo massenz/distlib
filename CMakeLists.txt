@@ -12,7 +12,7 @@ include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 # Version number
 set(RELEASE_MAJOR 0)
 set(RELEASE_MINOR 5)
-set(RELEASE_PATCH 2)
+set(RELEASE_PATCH 3)
 
 IF (${COMMONS_FILE} STREQUAL NOTFOUND)
     message(WARNING "Not using CMake utilities")
