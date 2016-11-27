@@ -98,6 +98,8 @@ protected:
         ASSERT_FALSE(server_->isRunning());
         server_->start();
       }));
+      // Wait a beat to allow the socket connection to be established.
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
   }
 };
@@ -117,14 +119,7 @@ TEST_F(SwimServerTest, canStartAndConnect)
   EXPECT_FALSE(server_->isRunning());
   runServer();
 
-  // Just make it so the other thread has a chance to run.
-  int retries = 10;
-  while (--retries > 0 && !server_->isRunning()) {
-    // We really don't want to slow down the tests unnecessarily, keep it really tight.
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-  }
   ASSERT_TRUE(server_->isRunning());
-
   EXPECT_TRUE(client.ping());
 
   server_->stop();
@@ -158,7 +153,8 @@ TEST_F(SwimServerTest, canOverrideOnUpdate)
   }
 }
 
-TEST_F(SwimServerTest, destructorStopsServer) {
+TEST_F(SwimServerTest, destructorStopsServer)
+{
   std::unique_ptr<SwimClient> client(new SwimClient("localhost", 9999));
   {
     TestServer server(9999);
@@ -172,4 +168,37 @@ TEST_F(SwimServerTest, destructorStopsServer) {
     std::this_thread::sleep_for(std::chrono::milliseconds());
 
   ASSERT_FALSE(client->ping());
+}
+
+
+TEST_F(SwimServerTest, canRestart)
+{
+  runServer();
+
+  ASSERT_TRUE(server_->isRunning());
+  SwimClient client("localhost", PORT);
+  ASSERT_TRUE(client.ping());
+
+  server_->stop();
+  // Start a timer that will fail the test if the server hasn't stopped
+  // within the timeout (200 msec).
+  std::atomic<bool> joined(false);
+
+  std::thread timeout([&joined] {
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    ASSERT_TRUE(joined);
+  });
+  timeout.detach();
+
+  if (thread_->joinable()) {
+    thread_->join();
+  }
+  joined = true;
+
+  ASSERT_FALSE(server_->isRunning());
+  ASSERT_FALSE(client.ping());
+
+  runServer();
+  ASSERT_TRUE(server_->isRunning());
+  ASSERT_TRUE(client.ping());
 }
