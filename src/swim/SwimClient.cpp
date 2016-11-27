@@ -12,8 +12,8 @@ using namespace utils;
 
 namespace swim {
 
-const unsigned long SwimClient::DEFAULT_TIMEOUT_MSEC = 250;
-const unsigned int SwimClient::DEFAULT_SOCKET_LINGER_MSEC = 150;
+const unsigned long SwimClient::DEFAULT_TIMEOUT_MSEC = 25;
+const unsigned int SwimClient::DEFAULT_SOCKET_LINGER_MSEC = 0;
 
 SwimClient::SwimClient(const Server &dest, int self_port, unsigned long timeout) :
     dest_(dest), timeout_(timeout) {
@@ -104,6 +104,7 @@ bool SwimClient::postMessage(SwimEnvelope *envelope) const {
     LOG(ERROR) << "Timed out";
     return false;
   }
+
 
   VLOG(2) << "Connected to server";
   message_t reply;

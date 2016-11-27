@@ -16,11 +16,10 @@ namespace swim {
 
 class SwimServer {
 
-  static const unsigned int NUM_THREADS = 5;
-
   unsigned int port_;
   unsigned int threads_;
   std::atomic<bool> stopped_;
+  unsigned long polling_interval_;
 
 protected:
 
@@ -30,8 +29,8 @@ protected:
    * @param client
    * @param timestamp
    */
-  void logClient(Server* client, long timestamp) {
-    VLOG(2) << "Message from '" << client->hostname() << "' at "
+  void logClient(const Server& client, long timestamp) {
+    VLOG(2) << "Message from '" << client.hostname() << "' at "
             << std::put_time(std::gmtime(&timestamp), "%c %Z");
   }
 
@@ -50,10 +49,8 @@ protected:
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
   virtual void onUpdate(Server* client, long timestamp) {
-    if (client) {
-      logClient(client, timestamp);
-      delete (client);
-    }
+    std::unique_ptr<Server> ps(client);
+    logClient(*ps, timestamp);
   }
 
   /**
@@ -73,10 +70,8 @@ protected:
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
   virtual void onReport(Server* client, SwimReport* report, long timestamp) {
-    if (client) {
-      logClient(client, timestamp);
-      delete (client);
-    }
+    std::unique_ptr<Server> ps(client);
+    logClient(*ps, timestamp);
   }
 
   /**
@@ -96,23 +91,43 @@ protected:
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
   virtual void onPingRequest(Server* client, Server* destination, long timestamp) {
-    if (client) {
-      logClient(client, timestamp);
-      delete (client);
-    }
+    std::unique_ptr<Server> ps(client);
+    logClient(*ps, timestamp);
   }
 
 public:
-  SwimServer(unsigned int port, unsigned int threads = NUM_THREADS) :
-      port_(port), threads_(threads), stopped_(true) {}
+
+  /** Number of parallel threads handling ZMQ socket requests. */
+  static const unsigned int NUM_THREADS = 5;
+
+  /**
+   * Default value for the interval in msec for the server to wait for incoming data, between checks
+   * of having been stopped.
+   *
+   * <p>This is a timeout value, so there is no adverse effect to set it at a higher value,
+   * however this will impact the time it takes for the server to stop or shutdown.
+   */
+  static const unsigned long DEFAULT_POLLING_INTERVAL_MSEC;
+
+  /**
+   * ZMQ allows the socket to linger after having been closed: currently this is set to 0
+   * to disable that.
+   */
+  static const unsigned int DEFAULT_SOCKET_LINGER_MSEC;
+
+
+  SwimServer(unsigned int port, unsigned int threads = NUM_THREADS,
+             unsigned long polling_interval = DEFAULT_POLLING_INTERVAL_MSEC) :
+      port_(port), threads_(threads), stopped_(true),
+      polling_interval_(polling_interval) {}
 
   virtual ~SwimServer() {
     while (isRunning()) {
       stop();
       VLOG(2) << "Waiting for server to stop...";
-      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-      // TODO: really need to get the server unstuck at this point...
+      std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_POLLING_INTERVAL_MSEC));
     }
+    VLOG(2) << "Server shutdown complete";
   }
 
   /**

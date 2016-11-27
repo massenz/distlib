@@ -22,7 +22,7 @@ Server parse(void *data, size_t size)
 }
 
 
-TEST(SwimServerFail, allocations)
+TEST(SwimServerProto, allocations)
 {
   Server server;
   server.set_hostname("fakehost");
@@ -79,13 +79,13 @@ protected:
   }
 
   virtual void TearDown() {
-    LOG(INFO) << "tearing down...";
+    VLOG(2) << "Tearing down...";
     if (server_->isRunning()) {
-      LOG(INFO) << "stopping server...";
+      VLOG(2) << "TearDown: stopping server...";
       server_->stop();
     }
     if (thread_) {
-      LOG(INFO) << "joining thread";
+      VLOG(2) << "TearDown: joining thread";
       if (thread_->joinable()) {
         thread_->join();
       }
@@ -128,16 +128,13 @@ TEST_F(SwimServerTest, canStartAndConnect)
   EXPECT_TRUE(client.ping());
 
   server_->stop();
-
-  // TODO: for now we need to get the server unstuck...
-  client.ping();
   EXPECT_FALSE(server_->isRunning());
 }
 
 
 TEST_F(SwimServerTest, canOverrideOnUpdate)
 {
-  std::unique_ptr<SwimClient> client(new SwimClient("localhost", 8888));
+  std::unique_ptr<SwimClient> client(new SwimClient("localhost", 8888, 20));
 
   TestServer server(8888);
   EXPECT_FALSE(server.isRunning());
@@ -146,16 +143,33 @@ TEST_F(SwimServerTest, canOverrideOnUpdate)
     server.start();
     VLOG(2) << "Test server thread exiting";
   });
-  t.detach();
-  std::this_thread::sleep_for(std::chrono::milliseconds(20));
-  ASSERT_TRUE(server.isRunning());
-  LOG(INFO) << "Server is running";
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
+  ASSERT_TRUE(server.isRunning());
   ASSERT_TRUE(client->ping());
   ASSERT_TRUE(server.wasUpdated());
-  server.stop();
 
-  // Unblock the server, or it would wait forever for an incoming connection.
-  client->ping();
+  server.stop();
   ASSERT_FALSE(server.isRunning());
+
+  if (t.joinable()) {
+    VLOG(2) << "Waiting for server to shutdown";
+    t.join();
+  }
+}
+
+TEST_F(SwimServerTest, destructorStopsServer) {
+  std::unique_ptr<SwimClient> client(new SwimClient("localhost", 9999));
+  {
+    TestServer server(9999);
+    std::thread t([&] { server.start(); });
+    t.detach();
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    ASSERT_TRUE(server.isRunning());
+    ASSERT_TRUE(client->ping());
+  }
+    std::this_thread::sleep_for(std::chrono::milliseconds());
+
+  ASSERT_FALSE(client->ping());
 }
