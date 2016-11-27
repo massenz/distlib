@@ -7,6 +7,8 @@
 // in the README doc.
 package swim;
 
+// We don't need reflection or any of the other features not supported by `MessageLite`.
+option optimize_for = LITE_RUNTIME;
 
 // A running SWIM service is uniquely identified by the hostname:port combination.
 // The optional IP address is only provided to help in those deployment where DNS

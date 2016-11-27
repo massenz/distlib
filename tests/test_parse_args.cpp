@@ -7,25 +7,19 @@
 
 #include "utils/ParseArgs.hpp"
 
-class ParseArgsTest : public ::testing::Test {
-protected:
 
-  virtual void SetUp() {
-
-  }
-};
-
-TEST_F(ParseArgsTest, canParseSimple) {
+TEST(ParseArgsTest, canParseSimple)
+{
   const char* mine[] = {"/usr/bin/send", "--port=1023"};
   utils::ParseArgs parser(mine, 2);
-  parser.parse();
 
   ASSERT_STREQ("send", parser.progname().c_str());
   ASSERT_STREQ("1023", parser.get("port"));
 }
 
 
-TEST_F(ParseArgsTest, canParseMany) {
+TEST(ParseArgsTest, canParseMany)
+{
   const char* mine[] = {
       "/usr/bin/runthis",
       "--port=1023",
@@ -39,7 +33,6 @@ TEST_F(ParseArgsTest, canParseMany) {
       "myfile.txt"
   };
   utils::ParseArgs parser(mine, sizeof(mine) / sizeof(const char*));
-  parser.parse();
 
   EXPECT_STREQ("google.com", parser.get("server"));
   EXPECT_STREQ("", parser.get("bogus"));
@@ -53,7 +46,9 @@ TEST_F(ParseArgsTest, canParseMany) {
   ASSERT_STREQ("runthis", parser.progname().c_str());
 }
 
-TEST_F(ParseArgsTest, canParseFromVector) {
+
+TEST(ParseArgsTest, canParseFromVector)
+{
   std::vector<std::string> args = {
       "--port=1023",
       "--server=google.com",
@@ -65,7 +60,6 @@ TEST_F(ParseArgsTest, canParseFromVector) {
   };
 
   utils::ParseArgs parser(args);
-  parser.parse();
 
   EXPECT_STREQ("google.com", parser.get("server"));
   EXPECT_STREQ("off", parser.get("amend"));
@@ -75,7 +69,9 @@ TEST_F(ParseArgsTest, canParseFromVector) {
   EXPECT_STREQ("myfile.txt", parser.at(1).c_str());
 }
 
-TEST_F(ParseArgsTest, canUseHelperMethods) {
+
+TEST(ParseArgsTest, canUseHelperMethods)
+{
   std::vector<std::string> args = {
       "--port=1023",
       "--server=google.com",
@@ -89,7 +85,6 @@ TEST_F(ParseArgsTest, canUseHelperMethods) {
   };
 
   utils::ParseArgs parser(args);
-  parser.parse();
 
   ASSERT_EQ(4, parser.count());
   ASSERT_EQ("fillme.png", parser[3]);
