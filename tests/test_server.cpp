@@ -120,7 +120,7 @@ TEST_F(SwimServerTest, canStartAndConnect)
   runServer();
 
   ASSERT_TRUE(server_->isRunning());
-  EXPECT_TRUE(client.ping());
+  EXPECT_TRUE(client.Ping());
 
   server_->stop();
   EXPECT_FALSE(server_->isRunning());
@@ -141,7 +141,7 @@ TEST_F(SwimServerTest, canOverrideOnUpdate)
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
   ASSERT_TRUE(server.isRunning());
-  ASSERT_TRUE(client->ping());
+  ASSERT_TRUE(client->Ping());
   ASSERT_TRUE(server.wasUpdated());
 
   server.stop();
@@ -163,11 +163,11 @@ TEST_F(SwimServerTest, destructorStopsServer)
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     ASSERT_TRUE(server.isRunning());
-    ASSERT_TRUE(client->ping());
+    ASSERT_TRUE(client->Ping());
   }
     std::this_thread::sleep_for(std::chrono::milliseconds());
 
-  ASSERT_FALSE(client->ping());
+  ASSERT_FALSE(client->Ping());
 }
 
 
@@ -177,7 +177,7 @@ TEST_F(SwimServerTest, canRestart)
 
   ASSERT_TRUE(server_->isRunning());
   SwimClient client("localhost", PORT);
-  ASSERT_TRUE(client.ping());
+  ASSERT_TRUE(client.Ping());
 
   server_->stop();
   // Start a timer that will fail the test if the server hasn't stopped
@@ -196,9 +196,9 @@ TEST_F(SwimServerTest, canRestart)
   joined = true;
 
   ASSERT_FALSE(server_->isRunning());
-  ASSERT_FALSE(client.ping());
+  ASSERT_FALSE(client.Ping());
 
   runServer();
   ASSERT_TRUE(server_->isRunning());
-  ASSERT_TRUE(client.ping());
+  ASSERT_TRUE(client.Ping());
 }

@@ -66,7 +66,7 @@ class SwimClient {
 public:
 
   /**
-   * Builds a status update message to be sent to the `server`.
+   * A client to be used to send SWIM messages to the listening remote `server`.
    *
    * @param dest where to send the message to.
    * @param self_port if this server is also listening on a port, specify it here.
@@ -100,7 +100,7 @@ public:
    * @return `true` if the server returned an `OK`.
    */
   // TODO: make it return a Future instead
-  bool ping();
+  bool Ping();
 
   /**
    * Sends a status report on all known nodes' statuses changes.
@@ -111,7 +111,7 @@ public:
    *
    * @param report
    */
-  void send(const SwimReport *report);
+  void Send(const SwimReport *report);
 
   /**
    * Requests the `dest` server to ping `other` and verify its status.
@@ -119,7 +119,7 @@ public:
    *
    * @param other the server to be pinged on behalf of this one
    */
-  void requestPing(const Server *other);
+  void RequestPing(const Server *other);
 
   /**
    * Utility method to obtain this server's coordinates.
@@ -130,11 +130,11 @@ public:
 
   unsigned long timeout() const;
 
-  void setTimeout(unsigned long timeout);
+  void set_timeout(unsigned long timeout);
 
   unsigned int max_allowed_reports() const;
 
-  void setMax_allowed_reports(unsigned int max_allowed_reports_);
+  void set_max_allowed_reports(unsigned int max_allowed_reports_);
 
   void setSelf(const Server& other) {
     self_.set_hostname(other.hostname());

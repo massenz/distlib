@@ -74,6 +74,7 @@ set(SOURCE_FILES
 set(SWIM_SOURCES
         ${SOURCE_DIR}/swim/SwimClient.cpp
         ${SOURCE_DIR}/swim/SwimServer.cpp
+        ${SOURCE_DIR}/swim/GossipFailureDetector.cpp
         ${SOURCE_DIR}/utils/network.cpp
 )
 

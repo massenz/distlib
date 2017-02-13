@@ -7,6 +7,9 @@
 #include <memory>
 
 #include <zmq.hpp>
+#include <chrono>
+#include <thread>
+#include <iomanip>
 
 #include "swim.pb.h"
 #include "utils/network.h"
@@ -35,7 +38,7 @@ protected:
   }
 
   /**
-   * Invoked when the `server` sends a `SwimEnvelope::Type::STATUS_UPDATE` message to this server.
+   * Invoked when the `client` sends a `SwimEnvelope::Type::STATUS_UPDATE` message to this server.
    *
    * <p>This is essentially a callback method that will be invoked by the server's loop, in its
    * own thread: the default implementation simply logs the request and returns.
@@ -75,7 +78,7 @@ protected:
   }
 
   /**
-   * Invoked when the `server` sends a `SwimEnvelope::Type::STATUS_REQUEST` message to this server.
+   * Invoked when the `client` sends a `SwimEnvelope::Type::STATUS_REQUEST` message to this server.
    *
    * <p>This is essentially a callback method that will be invoked by the server's loop, in its
    * own thread: the default implementation simply logs the request and returns.
@@ -122,10 +125,15 @@ public:
       polling_interval_(polling_interval) {}
 
   virtual ~SwimServer() {
-    while (isRunning()) {
+    int retry_count = 5;
+    while (isRunning() && retry_count > 0) {
       stop();
       VLOG(2) << "Waiting for server to stop...";
       std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_POLLING_INTERVAL_MSEC));
+      retry_count--;
+    }
+    if (retry_count == 0) {
+      LOG(ERROR) << "Timed out waiting for server to shut down; giving up.";
     }
     VLOG(2) << "Server shutdown complete";
   }

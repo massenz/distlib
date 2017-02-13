@@ -21,6 +21,7 @@ endif(DEFINED ${GTEST})
 set(TEST_FILES
         ${TESTS_DIR}/test_brick.cpp
         ${TESTS_DIR}/test_bucket.cpp
+        ${TESTS_DIR}/test_gossip.cpp
         ${TESTS_DIR}/test_merkle.cpp
         ${TESTS_DIR}/test_parse_args.cpp
         ${TESTS_DIR}/test_server.cpp

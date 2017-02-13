@@ -123,7 +123,7 @@ int main(int argc, const char *argv[]) {
     std::chrono::milliseconds wait(1500);
     start_timer(duration);
     while (!stopped.load()) {
-      if (!client.ping()) {
+      if (!client.Ping()) {
         LOG(ERROR) << "Could not ping server " << host;
         return EXIT_FAILURE;
       }

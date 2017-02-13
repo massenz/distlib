@@ -21,7 +21,7 @@ SwimClient::SwimClient(const Server &dest, int self_port, unsigned long timeout)
 }
 
 
-bool SwimClient::ping() {
+bool SwimClient::Ping() {
   SwimEnvelope message;
   message.set_type(SwimEnvelope::Type::SwimEnvelope_Type_STATUS_UPDATE);
 
@@ -33,7 +33,7 @@ bool SwimClient::ping() {
 }
 
 
-void SwimClient::send(const SwimReport *report) {
+void SwimClient::Send(const SwimReport *report) {
   SwimEnvelope message;
   message_t reply;
 
@@ -45,7 +45,7 @@ void SwimClient::send(const SwimReport *report) {
   }
 }
 
-void SwimClient::requestPing(const Server *other) {
+void SwimClient::RequestPing(const Server *other) {
   SwimEnvelope message;
   message.set_type(SwimEnvelope_Type_STATUS_REQUEST);
   message.set_allocated_destination_server(const_cast<Server *>(other));
@@ -59,7 +59,7 @@ unsigned long SwimClient::timeout() const {
   return timeout_;
 }
 
-void SwimClient::setTimeout(unsigned long timeout_) {
+void SwimClient::set_timeout(unsigned long timeout_) {
   SwimClient::timeout_ = timeout_;
 }
 
@@ -67,7 +67,7 @@ unsigned int SwimClient::max_allowed_reports() const {
   return max_allowed_reports_;
 }
 
-void SwimClient::setMax_allowed_reports(unsigned int max_allowed_reports_) {
+void SwimClient::set_max_allowed_reports(unsigned int max_allowed_reports_) {
   SwimClient::max_allowed_reports_ = max_allowed_reports_;
 }
 

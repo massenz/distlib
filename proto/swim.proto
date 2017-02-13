@@ -12,7 +12,7 @@ option optimize_for = LITE_RUNTIME;
 
 // A running SWIM service is uniquely identified by the hostname:port combination.
 // The optional IP address is only provided to help in those deployment where DNS
-// resolution is either not available, feasible or too expensive computationally.
+// resolution is either not available, infeasible or too expensive computationally.
 message Server {
     required string hostname = 1;
     required int32 port = 2;
@@ -63,8 +63,7 @@ message SwimReport {
     repeated SwimStatus alive = 3;
 
     // These servers are suspected to have crashed (have not responded to pings recently) but
-    // still within the grace period (`SUSPECTED_TTL` seconds) before they are declared to
-    // be `dead`.
+    // still within the grace period, before they are declared to be `dead`.
     repeated SwimStatus suspected = 4;
 
     // Finally, after enough time has elapsed without a response, these server are placed in
