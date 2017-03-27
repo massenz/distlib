@@ -105,6 +105,17 @@ Finally, to run the tests:
 See also the other binaries in the `build/bin` folder for more options.
 
 
+### Example use of Linux system function calls
+
+A trivial re-implementation of the `file` Linux command is in `magic.c`: it uses the `libmagic.so` 
+magic file detection system library.
+
+To build, use the following lines in a `CMakeLists.txt` file:
+
+    add_executable(file /usr/include/linux/magic.h ${SOURCE_DIR}/magic.c)
+    target_link_libraries(file magic)
+
+
 # Projects
 
 ## Consistent Hashing

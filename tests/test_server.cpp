@@ -3,6 +3,7 @@
 
 
 #include <memory>
+#include <random>
 #include <thread>
 
 #include <gtest/gtest.h>
@@ -69,13 +70,18 @@ public:
 
 class SwimServerTest : public ::testing::Test {
 protected:
-  const unsigned int PORT = 3000;
+  std::default_random_engine dre;
 
   std::shared_ptr<SwimServer> server_;
   std::unique_ptr<std::thread> thread_;
 
+  unsigned short randomPort() {
+    std::uniform_int_distribution<unsigned short> di(10000, 20000);
+    return di(dre);
+  }
+
   virtual void SetUp() {
-    server_.reset(new SwimServer(PORT));
+    server_.reset(new SwimServer(randomPort()));
   }
 
   virtual void TearDown() {
@@ -114,7 +120,8 @@ TEST_F(SwimServerTest, canCreate)
 
 TEST_F(SwimServerTest, canStartAndConnect)
 {
-  SwimClient client("localhost", PORT);
+  unsigned short port = server_->port();
+  SwimClient client("localhost", port);
 
   EXPECT_FALSE(server_->isRunning());
   runServer();
@@ -129,9 +136,10 @@ TEST_F(SwimServerTest, canStartAndConnect)
 
 TEST_F(SwimServerTest, canOverrideOnUpdate)
 {
-  std::unique_ptr<SwimClient> client(new SwimClient("localhost", 8888, 20));
+  unsigned short port = randomPort();
+  std::unique_ptr<SwimClient> client(new SwimClient("localhost", port, 20));
 
-  TestServer server(8888);
+  TestServer server(port);
   EXPECT_FALSE(server.isRunning());
   std::thread t([&] {
     VLOG(2) << "Test server thread started";
@@ -155,9 +163,10 @@ TEST_F(SwimServerTest, canOverrideOnUpdate)
 
 TEST_F(SwimServerTest, destructorStopsServer)
 {
-  std::unique_ptr<SwimClient> client(new SwimClient("localhost", 9999));
+  unsigned short port = randomPort();
+  std::unique_ptr<SwimClient> client(new SwimClient("localhost", port));
   {
-    TestServer server(9999);
+    TestServer server(port);
     std::thread t([&] { server.start(); });
     t.detach();
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -176,7 +185,7 @@ TEST_F(SwimServerTest, canRestart)
   runServer();
 
   ASSERT_TRUE(server_->isRunning());
-  SwimClient client("localhost", PORT);
+  SwimClient client("localhost", server_->port());
   ASSERT_TRUE(client.Ping());
 
   server_->stop();

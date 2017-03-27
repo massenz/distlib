@@ -97,11 +97,5 @@ target_link_libraries(server
 )
 
 
-
-### Unit tests build is defined in the tests/ folder
+# Unit tests build is defined in the tests/ folder
 add_subdirectory(${TESTS_DIR})
-
-# My trivial re-implementation of the `file` Linux command.
-# Uses the libmagic magic file detection system library.
-add_executable(file /usr/include/linux/magic.h ${SOURCE_DIR}/magic.c)
-target_link_libraries(file magic)

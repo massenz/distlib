@@ -19,8 +19,8 @@ namespace swim {
 
 class SwimServer {
 
-  unsigned int port_;
-  unsigned int threads_;
+  unsigned short port_;
+  unsigned int num_threads_;
   std::atomic<bool> stopped_;
   unsigned long polling_interval_;
 
@@ -119,10 +119,10 @@ public:
   static const unsigned int DEFAULT_SOCKET_LINGER_MSEC;
 
 
-  SwimServer(unsigned int port, unsigned int threads = NUM_THREADS,
-             unsigned long polling_interval = DEFAULT_POLLING_INTERVAL_MSEC) :
-      port_(port), threads_(threads), stopped_(true),
-      polling_interval_(polling_interval) {}
+  SwimServer(unsigned short port,
+             unsigned int threads = NUM_THREADS,
+             unsigned long polling_interval = DEFAULT_POLLING_INTERVAL_MSEC
+  ) : port_(port), num_threads_(threads), stopped_(true), polling_interval_(polling_interval) {}
 
   virtual ~SwimServer() {
     int retry_count = 5;
@@ -149,6 +149,8 @@ public:
   void stop() { stopped_.store(true); }
 
   bool isRunning() const { return !stopped_; }
+
+  unsigned short port() const { return port_; }
 };
 
 } // namespace swim

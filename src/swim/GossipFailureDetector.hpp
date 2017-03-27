@@ -3,13 +3,15 @@
 
 #pragma once
 
-#include <vector>
-#include <swim.pb.h>
 #include <chrono>
-#include <bits/unique_ptr.h>
+#include <memory>
+#include <set>
+
+#include <swim.pb.h>
+#include <iostream>
 #include "SwimServer.hpp"
 
-using std::vector;
+using std::set;
 using namespace std::chrono;
 
 using Timestamp = std::chrono::system_clock::time_point;
@@ -21,19 +23,73 @@ struct ServerRecord {
   Timestamp timestamp;
 
   ServerRecord(const Server& host) : server(host), timestamp(system_clock::now()) { }
+
+  /**
+   * Ordering operator for server records, uses the `Server` IP address as a total ordering
+   * criterion.  For servers on the same host (IP), the port number is used.
+   *
+   * <p>Necessary to insert records into a `set`.
+   *
+   * @param other the ServerRecord to compare against
+   * @return whether this server record is logically "less than" `other`
+   */
+  bool operator<(const ServerRecord &other) const {
+    if (server.ip_addr() == other.server.ip_addr()) {
+      return server.port() < other.server.port();
+    }
+    return server.ip_addr() < other.server.ip_addr();
+  }
 };
 
 
+/**
+ * Without this, associative containers (such as `set`) would compare the value of the pointers
+ * (as opposed to the actual value of the records) for insertion and/or retrieval.
+ *
+ * <p>See Item 20 of "Effective STL", Scott Meyers.
+ */
+struct ServerRecordPtrLess:
+    public std::binary_function<
+        const std::shared_ptr<ServerRecord>&,
+        const std::shared_ptr<ServerRecord>&,
+        bool> {
+
+  /**
+   * Comparison operator for the "less than" predicate (associative containers semantics) for
+   * containers of pointers.
+   *
+   * @param lhs the left-hand side of the operation
+   * @param rhs the right-hand side of the operation
+   * @return whether the record pointed to by `lhs` is "less than" the one pointed to by `rhs`
+   */
+  bool operator()(const std::shared_ptr<ServerRecord>& lhs,
+                  const std::shared_ptr<ServerRecord>& rhs) {
+    return *lhs < *rhs;
+  }
+};
+
+
+typedef set<std::shared_ptr<ServerRecord>, ServerRecordPtrLess> ServerRecordsSet;
+
+
+/**
+ * A failure detector that implements the SWIM protocol.
+ * See: https://goo.gl/VUn4iQ
+ */
 class GossipFailureDetector {
 
-  // The list of servers that we deem to be healthy (they responded to a ping request).
-  // The timestamp is the last time we successfully pinged the server.
-  vector<const ServerRecord*> alive_;
+  /**
+   * The list of servers that we deem to be healthy (they responded to a ping request).
+   * The timestamp is the last time we successfully pinged the server.
+   */
+  ServerRecordsSet alive_;
 
-  // The list of servers we suspect to have crashed; the timestamp was the time at which
-  // the server was placed on this list (and will dictate when we finally determine it
-  // to have crashed, after the `grace_period_` time has elapsed).
-  vector<const ServerRecord*> suspected_;
+  /**
+   * The list of servers we suspect to have crashed; the timestamp was the time at which
+   * the server was placed on this list (and will dictate when we finally determine it
+   * to have crashed, after the `grace_period_` time has elapsed).
+   */
+  ServerRecordsSet suspected_;
 
   milliseconds update_round_interval_;
   milliseconds grace_period_;
@@ -46,29 +102,36 @@ class GossipFailureDetector {
   std::unique_ptr<SwimServer> gossip_server_;
 
 public:
-  GossipFailureDetector(const long &update_round_interval,
-                        const long &grace_period, const long &ping_timeout,
-                        const long &min_ping_interval);
+  GossipFailureDetector(unsigned int port,
+                        const long update_round_interval,
+                        const long grace_period,
+                        const long ping_timeout,
+                        const long min_ping_interval) :
+      update_round_interval_(update_round_interval), grace_period_(grace_period),
+      ping_timeout_(ping_timeout), min_ping_interval_(min_ping_interval),
+      gossip_server_(new SwimServer(port))
+  {
+    std::thread t([this] { gossip_server_->start(); });
+    t.detach();
+  }
 
   virtual ~GossipFailureDetector() {}
 
-  // This is a convenience method to add more "neighbors" to this server, that will then
-  // start "gossiping" with each other.
+  /**
+   * This is a convenience method to add more "neighbors" to this server; those will then
+   * start "gossiping" with each other.
+   *
+   * @param host the host to add to this server's neighbors list
+   */
   void AddNeighbor(const Server& host) {
-    for (const ServerRecord* record : alive_) {
-      if (record->server.hostname() == host.hostname() &&
-          record->server.port() == host.port()) {
-        return;
-      }
-    }
-    alive_.push_back(new ServerRecord(host));
+    alive_.insert(std::make_shared<ServerRecord>(host));
   }
 
-  const vector<const swim::ServerRecord *>& alive() const {
+  const ServerRecordsSet& alive() const {
     return alive_;
   }
 
-  const vector<const swim::ServerRecord *>& suspected() const {
+  const ServerRecordsSet& suspected() const {
     return suspected_;
   }
 
