@@ -8,7 +8,7 @@
 #include "utils/ParseArgs.hpp"
 
 
-TEST(ParseArgsTest, canParseSimple)
+TEST(ParseArgsTests, canParseSimple)
 {
   const char* mine[] = {"/usr/bin/send", "--port=1023"};
   utils::ParseArgs parser(mine, 2);
@@ -18,7 +18,7 @@ TEST(ParseArgsTest, canParseSimple)
 }
 
 
-TEST(ParseArgsTest, canParseMany)
+TEST(ParseArgsTests, canParseMany)
 {
   const char* mine[] = {
       "/usr/bin/runthis",
@@ -47,7 +47,7 @@ TEST(ParseArgsTest, canParseMany)
 }
 
 
-TEST(ParseArgsTest, canParseFromVector)
+TEST(ParseArgsTests, canParseFromVector)
 {
   std::vector<std::string> args = {
       "--port=1023",
@@ -70,7 +70,7 @@ TEST(ParseArgsTest, canParseFromVector)
 }
 
 
-TEST(ParseArgsTest, canUseHelperMethods)
+TEST(ParseArgsTests, canUseHelperMethods)
 {
   std::vector<std::string> args = {
       "--port=1023",

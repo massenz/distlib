@@ -9,7 +9,7 @@
 #include <cmath>
 #include <ios>
 
-#include "brick.hpp"
+#include "ConsistentHash.hpp"
 
 
 std::ostream& operator<<(std::ostream& out, const Bucket &bucket) {

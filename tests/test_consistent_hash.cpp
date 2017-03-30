@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include "brick.hpp"
+#include "ConsistentHash.hpp"
 
 
 using namespace std;
@@ -18,7 +18,7 @@ TEST(HashTests, CanHashOneWord) {
 }
 
 
-TEST(Hash, CanHashComplexString) {
+TEST(HashTests, CanHashComplexString) {
   const string mesg = "A more complex ** /string +/- @55";
   const string result = hash_str(mesg);
 
@@ -26,7 +26,7 @@ TEST(Hash, CanHashComplexString) {
 }
 
 
-TEST(Hash, UseCharArrays) {
+TEST(HashTests, UseCharArrays) {
   const string base = "simple string";
   const string result = hash_str(base);
 

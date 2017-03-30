@@ -23,7 +23,7 @@ Server parse(void *data, size_t size)
 }
 
 
-TEST(SwimServerProto, allocations)
+TEST(SwimServerProtoTests, allocations)
 {
   Server server;
   server.set_hostname("fakehost");
@@ -68,7 +68,7 @@ public:
   bool wasUpdated() { return wasUpdated_; }
 };
 
-class SwimServerTest : public ::testing::Test {
+class SwimServerTests : public ::testing::Test {
 protected:
   std::default_random_engine dre;
 
@@ -111,14 +111,14 @@ protected:
 };
 
 
-TEST_F(SwimServerTest, canCreate)
+TEST_F(SwimServerTests, canCreate)
 {
   ASSERT_NE(nullptr, server_);
   ASSERT_FALSE(server_->isRunning());
 }
 
 
-TEST_F(SwimServerTest, canStartAndConnect)
+TEST_F(SwimServerTests, canStartAndConnect)
 {
   unsigned short port = server_->port();
   SwimClient client("localhost", port);
@@ -134,7 +134,7 @@ TEST_F(SwimServerTest, canStartAndConnect)
 }
 
 
-TEST_F(SwimServerTest, canOverrideOnUpdate)
+TEST_F(SwimServerTests, canOverrideOnUpdate)
 {
   unsigned short port = randomPort();
   std::unique_ptr<SwimClient> client(new SwimClient("localhost", port, 20));
@@ -161,7 +161,7 @@ TEST_F(SwimServerTest, canOverrideOnUpdate)
   }
 }
 
-TEST_F(SwimServerTest, destructorStopsServer)
+TEST_F(SwimServerTests, destructorStopsServer)
 {
   unsigned short port = randomPort();
   std::unique_ptr<SwimClient> client(new SwimClient("localhost", port));
@@ -180,7 +180,7 @@ TEST_F(SwimServerTest, destructorStopsServer)
 }
 
 
-TEST_F(SwimServerTest, canRestart)
+TEST_F(SwimServerTests, canRestart)
 {
   runServer();
 

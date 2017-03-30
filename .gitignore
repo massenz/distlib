@@ -1,7 +1,10 @@
 # Git Ignore file
 
 # Configuration directories
-.idea/
+.idea/*
+# but allow shared Run Configurations
+!.idea/runConfigurations/
+
 .cproject
 .project
 .settings/

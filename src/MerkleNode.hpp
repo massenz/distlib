@@ -11,7 +11,7 @@
 #include <iostream>
 #include <cassert>
 
-#include "brick.hpp"
+#include "ConsistentHash.hpp"
 
 
 /**

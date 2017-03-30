@@ -2,7 +2,7 @@
 // Created by M. Massenzio (marco@alertavert.com) on 3/6/16.
 
 #include "View.hpp"
-#include "brick.hpp"
+#include "ConsistentHash.hpp"
 
 #include <algorithm>
 #include <cmath>

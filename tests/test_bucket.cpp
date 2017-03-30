@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include "brick.hpp"
+#include "ConsistentHash.hpp"
 #include "Bucket.hpp"
 
 TEST(BucketTests, CanCreate) {

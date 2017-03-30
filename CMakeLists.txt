@@ -66,7 +66,7 @@ include_directories(
 )
 
 set(SOURCE_FILES
-        ${SOURCE_DIR}/brick.cpp
+        ${SOURCE_DIR}/ConsistentHash.cpp
         ${SOURCE_DIR}/Bucket.cpp
         ${SOURCE_DIR}/View.cpp
 )

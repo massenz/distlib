@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Gossip Tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" singleton="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="brick" TARGET_NAME="test_brick" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="brick" RUN_TARGET_NAME="test_brick" TEST_CLASS="GossipFailureDetectorTests" TEST_MODE="SUITE_TEST">
+    <envs />
+    <method />
+  </configuration>
+</component>

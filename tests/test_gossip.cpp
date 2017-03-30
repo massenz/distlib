@@ -15,7 +15,7 @@
 using namespace swim;
 
 
-TEST(GossipFailureDetector, create) {
+TEST(GossipFailureDetectorTests, create) {
 
   LOG(INFO) << "starting gossip...";
   GossipFailureDetector detector(5678, 10, 20, 30, 40);

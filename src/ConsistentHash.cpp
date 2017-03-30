@@ -1,6 +1,6 @@
 // Copyright (c) 2016 Marco Massenzio.  All rights reserved.
 
-#include "brick.hpp"
+#include "ConsistentHash.hpp"
 
 #include <iostream>
 #include <openssl/md5.h>

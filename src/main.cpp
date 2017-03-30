@@ -6,7 +6,7 @@
 
 #include <glog/logging.h>
 
-#include "brick.hpp"
+#include "ConsistentHash.hpp"
 #include "MerkleNode.hpp"
 
 
