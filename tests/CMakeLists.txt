@@ -1,6 +1,6 @@
 # This file (c) 2016 AlertAvert.com.  All rights reserved.
 
-project(test_brick)
+project(distlib_test)
 set(TEST_TARGET ${PROJECT_NAME})
 
 enable_testing()

@@ -78,8 +78,8 @@ set(SWIM_SOURCES
         ${SOURCE_DIR}/utils/network.cpp
 )
 
-add_executable(brick ${SOURCE_FILES} ${SOURCE_DIR}/main.cpp)
-target_link_libraries(brick ${CONAN_LIBS})
+add_executable(merkle_demo ${SOURCE_FILES} ${SOURCE_DIR}/main.cpp)
+target_link_libraries(merkle_demo ${CONAN_LIBS})
 
 # Adding a target demo server that will use the SWIM protocol to derive
 # a list of healthy server from a configured pool.

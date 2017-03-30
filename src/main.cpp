@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = 1;
 
-  if (argc == 1) {
+  if (argc < 2) {
     usage(argv[0]);
   }
 
