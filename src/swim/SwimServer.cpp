@@ -55,18 +55,17 @@ void SwimServer::start() {
         LOG(ERROR) << "Cannot serialize data to `SwimEnvelope` protocol buffer";
         continue;
       }
-      time_t ts = message.timestamp();
 
       // TODO: these should be invoked asynchronously.
       switch (message.type()) {
         case SwimEnvelope_Type_STATUS_UPDATE:
-          onUpdate(message.release_sender(), ts);
+          onUpdate(message.release_sender());
           break;
         case SwimEnvelope_Type_STATUS_REPORT:
-          onReport(message.release_sender(), message.release_report(), ts);
+          onReport(message.release_sender(), message.release_report());
           break;
         case SwimEnvelope_Type_STATUS_REQUEST:
-          onPingRequest(message.release_sender(), message.release_destination_server(), ts);
+          onPingRequest(message.release_sender(), message.release_destination_server());
           break;
         default:
           LOG(ERROR) << "Unexpected message type: '" << message.type();

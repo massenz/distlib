@@ -32,9 +32,8 @@ protected:
    * @param client
    * @param timestamp
    */
-  void logClient(const Server& client, long timestamp) {
-    VLOG(2) << "Message from '" << client.hostname() << "' at "
-            << std::put_time(std::gmtime(&timestamp), "%c %Z");
+  void logClient(const Server& client, const std::string& msg) {
+    VLOG(2) << "Received message from '" << client.hostname() << "': " << msg;
   }
 
   /**
@@ -51,9 +50,9 @@ protected:
    *        pointer and is responsible for freeing the memory.
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
-  virtual void onUpdate(Server* client, long timestamp) {
+  virtual void onUpdate(Server* client) {
     std::unique_ptr<Server> ps(client);
-    logClient(*ps, timestamp);
+    logClient(*ps, "ping");
   }
 
   /**
@@ -72,9 +71,9 @@ protected:
    *        update its membership list.
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
-  virtual void onReport(Server* client, SwimReport* report, long timestamp) {
+  virtual void onReport(Server* client, SwimReport* report) {
     std::unique_ptr<Server> ps(client);
-    logClient(*ps, timestamp);
+    logClient(*ps, "received a report");
   }
 
   /**
@@ -93,9 +92,9 @@ protected:
    *        ping and report status back.
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
-  virtual void onPingRequest(Server* client, Server* destination, long timestamp) {
+  virtual void onPingRequest(Server* client, Server* destination) {
     std::unique_ptr<Server> ps(client);
-    logClient(*ps, timestamp);
+    logClient(*ps, "request to ping " + destination->hostname());
   }
 
 public:

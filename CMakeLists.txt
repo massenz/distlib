@@ -1,18 +1,19 @@
 # This file (c) 2016 AlertAvert.com.  All rights reserved.
 
-project(brick)
+project(distlib)
 cmake_minimum_required(VERSION 3.4)
 
 
 # Include common cmake utilities:
 include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
+include(FindProtobuf)
 
 ### Setting up common configuration variables
 
 # Version number
 set(RELEASE_MAJOR 0)
 set(RELEASE_MINOR 6)
-set(RELEASE_PATCH 0)
+set(RELEASE_PATCH 1)
 
 IF (${COMMONS_FILE} STREQUAL NOTFOUND)
     message(WARNING "Not using CMake utilities")
@@ -48,12 +49,12 @@ configure_file(
 set(Protobuf_INCLUDE_DIR ${INSTALL_DIR}/include)
 
 find_package(Protobuf REQUIRED)
-PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_DIR}/swim.proto)
 
 IF(${PROTOBUF_FOUND})
-    message(STATUS "Generated Protocol Buffer Headers: ${PROTO_HDRS}, Sources: ${PROTO_SRCS}")
+    PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_DIR}/swim.proto)
+    message(STATUS "Generated Protocol Buffer\n\tHeaders: ${PROTO_HDRS}\n\tSources: ${PROTO_SRCS}")
 ELSE(${PROTOBUF_FOUND})
-    message(ERROR "Could not find Google Protocol Buffers libraries")
+    message(FATAL_ERROR "Could not find Google Protocol Buffers libraries")
 ENDIF(${PROTOBUF_FOUND})
 
 include_directories(

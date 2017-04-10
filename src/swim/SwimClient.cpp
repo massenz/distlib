@@ -75,7 +75,6 @@ bool SwimClient::postMessage(SwimEnvelope *envelope) const {
 
   envelope->mutable_sender()->set_hostname(self_.hostname());
   envelope->mutable_sender()->set_port(self_.port());
-  envelope->set_timestamp(current_time());
 
   std::string msgAsStr = envelope->SerializeAsString();
 

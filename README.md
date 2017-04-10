@@ -51,30 +51,30 @@ See also `CMakeLists.txt` for the changes necessary to add Conan's builds to the
 
 The `gtest` package in Conan is broken, so we need to manually donwload, build and install `gtest`.
 
-The code here has been tested using 
-[Google Gtest 1.7.0](https://github.com/google/googletest/releases/tag/release-1.7.0): download 
+The code here has been tested using
+[Google Gtest 1.7.0](https://github.com/google/googletest/releases/tag/release-1.7.0): download
 and untar into a folder (assume it's called `$GTEST_DIR`):
 
     cd $GTEST_DIR
     mkdir build && cd build
     cmake ..
     make
-    
-Then the gtest libraries (`libgtest.a` and `libgtest_main.a`) need to be copied into the 
+
+Then the gtest libraries (`libgtest.a` and `libgtest_main.a`) need to be copied into the
 installation folder along with a symlink to the header files:
 
     cp libgtest.a libgtest_main.a ${INSTALL_DIR}/lib
     ln -sf ${GTEST_DIR}/include/gtest ${INSTALL_DIR}/include/gtest
 
-and then define the `INSTALL_DIR` variable when invoking `cmake` via `-DINSTALL_DIR` (see next 
+and then define the `INSTALL_DIR` variable when invoking `cmake` via `-DINSTALL_DIR` (see next
 section).
 
 ### Google Protocol Buffers
 
-The [SWIM gossip protocol implementation](#SWIM Gossip and Consensus algorithm) makes use of 
+The [SWIM gossip protocol implementation](#SWIM Gossip and Consensus algorithm) makes use of
 Protobuf as the serialization protocol to exchange status messages between servers.
 
-The code in this project has been tested using 
+The code in this project has been tested using
 [Protocol Buffers 2.6.1](https://github.com/google/protobuf/releases/tag/v2.6.1).
 
 After downloading and unpacking the tarball, you will need to build it and install it to the
@@ -84,7 +84,7 @@ same `${INSTALL_DIR}` as defined when invoking `cmake` (see next section).
     ./configure --prefix $INSTALL_DIR
     make
     make install
-    
+
 This will make it so that all headers will be installed to `$INSTALL_DIR/include` and the various
 `libprotobuf*` libraries in `$INSTALL_DIR/lib` - this is what the `CMakeLists.txt` expects.
 
@@ -100,14 +100,18 @@ To build the project, it is the usual `cmake` routine:
 
 Finally, to run the tests:
 
-    ./tests/bin/test_brick
+    $ ./tests/bin/distlib_test
+
+or to simply run a subset of the tests with full debug logging:
+
+    $ GLOG_v=2 ./tests/bin/distlib_test --gtest_filter=SwimServer*
 
 See also the other binaries in the `build/bin` folder for more options.
 
 
 ### Example use of Linux system function calls
 
-A trivial re-implementation of the `file` Linux command is in `magic.c`: it uses the `libmagic.so` 
+A trivial re-implementation of the `file` Linux command is in `magic.c`: it uses the `libmagic.so`
 magic file detection system library.
 
 To build, use the following lines in a `CMakeLists.txt` file:
@@ -120,7 +124,7 @@ To build, use the following lines in a `CMakeLists.txt` file:
 
 ## Consistent Hashing
 
-See the [Consistent Hash paper](http://www.cs.princeton.edu/courses/archive/fall07/cos518/papers/chash.pdf) 
+See the [Consistent Hash paper](http://www.cs.princeton.edu/courses/archive/fall07/cos518/papers/chash.pdf)
 for more details.
 
 The code implementation here is a simple example of how to implement a set of `buckets` so that
@@ -148,15 +152,15 @@ References:
  ### PING server
 
  This is based on [ZeroMQ C++ bindings](http://api.zeromq.org/2-1:zmq-cpp).
- 
+
  There are currently two types of servers: one continuously listening on a given `port` and a
  client sending a one-off status update to a `destination` TCP socket.
- 
+
  Starting the listening server is done like this:
  ```
     ./bin/server receive 3003
  ```
- and it will cause it to listen for incoming [`SwimStatus`](proto/swim.proto) messages on port 
+ and it will cause it to listen for incoming [`SwimStatus`](proto/swim.proto) messages on port
  `3003`; a client can then send a message update using:
  ```
     ./bin/server send tcp://localhost:3003

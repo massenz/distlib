@@ -66,7 +66,7 @@ class SwimClient {
 public:
 
   /**
-   * A client to be used to send SWIM messages to the listening remote `server`.
+   * A client to be used to send SWIM messages to the listening remote `dest` server.
    *
    * @param dest where to send the message to.
    * @param self_port if this server is also listening on a port, specify it here.

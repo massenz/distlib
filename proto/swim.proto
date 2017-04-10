@@ -20,21 +20,24 @@ message Server {
 }
 
 
-// Unless otherwise stated (for example, when this message is part of the `dead` list in a
-// `SwimReport` message) this assumes that the `server` is alive and well.
-message SwimStatus {
+// A record of an event for a given server.
+message ServerRecord {
+
+    // The server this record refers to: it could either be the sender itself,
+    // when responding to a "ping request" from a neighbor, or the server that
+    // was being pinged by the `forwarder` (see below) on behalf of the receiver.
     required Server server = 1;
 
     // UTC-based UNIX time (seconds from epoch, 1/1/1970) of when this
     // message was created and can be reasonably assumed (but not guaranteed)
-    // that it also represents the time at which the `server` state was
-    // accurately described by `state`.
+    // that it also represents the time at which `server` responded to the "ping request."
     required fixed64 timestamp = 2;
 
-    // If the status is sent on behalf of another server,
+    // If this record is sent on behalf of another server,
     // the forwarder should enter its identity here.
     optional Server forwarder = 3;
 }
+
 
 // A status report disseminated "infection-style" via the SWIM protocol, reporting
 // changes in the nodes' population status: the reporter will list newly detected (since last
@@ -44,33 +47,30 @@ message SwimStatus {
 // The report here may not contain the full list, as in the SWIM protocol, to ensure
 // constant-size messages and reduce network congestion as clusters' size grows, the size of the
 // report is capped at a given max amount of servers' statuses.
+//
+// Each of these lists can be empty, but at least one of them SHOULD contain at
+// least one element.
+//
+// Collectively, they will contain no more than MAX_REPORTED servers, as configured in the
+// system.
+//
 message SwimReport {
-    required Server sender = 1;
+    // The sender and the time when this report was created.
+    required ServerRecord sender = 1;
 
-    // UTC-based UNIX time (seconds from epoch, 1/1/1970) of when this
-    // message was created and can be reasonably assumed (but not guaranteed)
-    // that it also represents the time at which the `server` state was
-    // accurately described by `state`.
-    required fixed64 timestamp = 2;
-
-    // Each of these lists can be empty, but at least one of them SHOULD contain at
-    // least one element.
-    // Collectively, they will contain no more than MAX_REPORTED servers, as configured in the
-    // system.
-    //
     // `alive` servers are those that were `suspected` to have crashed, but have subsequently
     // been found to be healthy and responding, within the configured `SUSPECTED_TTL` time.
-    repeated SwimStatus alive = 3;
+    repeated ServerRecord alive = 3;
 
     // These servers are suspected to have crashed (have not responded to pings recently) but
     // still within the grace period, before they are declared to be `dead`.
-    repeated SwimStatus suspected = 4;
+    repeated ServerRecord suspected = 4;
 
     // Finally, after enough time has elapsed without a response, these server are placed in
     // this list, from which they will never be taken out.
     //
     // TODO: revisit the "faulty detectors" paper and reconsider whether "revive" servers.
-    repeated SwimStatus dead = 5;
+    repeated ServerRecord dead = 5;
 }
 
 
@@ -80,9 +80,10 @@ message SwimReport {
 // For more details, see: https://goo.gl/VUn4iQ
 message SwimEnvelope {
     enum Type {
-        // An UPDATE is sent by a "suspected" server to its (randomly chosen) neighbors
-        // to confirm its `alive` status.  It is also used by servers during the "detection"
-        // phase, to 'ping' their neighbors and discover their state.
+        // This type of message is the one used by servers both during the "detection"
+        // phase, to 'ping' their neighbors and discover their state as well as
+        // by a "suspected" server to its (randomly chosen) neighbors
+        // to confirm its `alive` status.
         //
         // No payload is sent with this message.
         STATUS_UPDATE = 1;
@@ -104,10 +105,6 @@ message SwimEnvelope {
     // The server sending this envelope, which will also be assumed to be "healthy" by the
     // receiver who will update its membership list accordingly.
     required Server sender = 2;
-
-    // The local clock of the `sender`, not necessarily related in any temporal relationship
-    // with the receiving server (but potentially useful in a 'Vector Clock' scheme).
-    required int64 timestamp = 3;
 
     optional SwimReport report = 5;
     optional Server destination_server = 6;

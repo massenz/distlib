@@ -12,11 +12,11 @@ conan_basic_setup()
 find_library(GTEST gtest ${INSTALL_DIR}/lib)
 find_library(GTEST_MAIN gtest_main ${INSTALL_DIR}/lib)
 
-if (DEFINED ${GTEST})
-    message("Found Google Test library at ${GTEST}")
-else (DEFINED ${GTEST})
-    message(ERROR "Could not locate a valid Google Test library installed.")
-endif(DEFINED ${GTEST})
+if (${GTEST} STREQUAL GTEST-NOTFOUND)
+    message(FATAL_ERROR "Could not locate a valid Google Test library installed.")
+else (${GTEST} STREQUAL GTEST-NOTFOUND)
+    message(STATUS "Found Google Test library at: ${GTEST}")
+endif (${GTEST} STREQUAL GTEST-NOTFOUND)
 
 set(TEST_FILES
         ${TESTS_DIR}/test_consistent_hash.cpp
@@ -27,6 +27,14 @@ set(TEST_FILES
         ${TESTS_DIR}/test_swim_server.cpp
         ${TESTS_DIR}/test_view.cpp
 )
+
+# This is necessary as the .pb.cc and .pb.h files will not (yet) be present
+# when we run cmake, and thus it will fail complaining it can't find the files.
+# See http://stackoverflow.com/questions/19343018/cmake-and-findprotobuf as to
+# why this is only necessary in this file (but not the parent).
+#
+set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES
+                            GENERATED TRUE)
 
 add_executable(${TEST_TARGET}
         ${PROTO_SRCS}

@@ -4,12 +4,14 @@
 #pragma once
 
 #include <chrono>
+#include <iostream>
 #include <memory>
 #include <set>
 
-#include <swim.pb.h>
-#include <iostream>
+#include "swim.pb.h"
 #include "SwimServer.hpp"
+#include "utils/network.h"
+
 
 using std::set;
 using namespace std::chrono;
@@ -18,28 +20,18 @@ using Timestamp = std::chrono::system_clock::time_point;
 
 namespace swim {
 
-struct ServerRecord {
-  Server server;
-  Timestamp timestamp;
-
-  ServerRecord(const Server& host) : server(host), timestamp(system_clock::now()) { }
-
-  /**
-   * Ordering operator for server records, uses the `Server` IP address as a total ordering
-   * criterion.  For servers on the same host (IP), the port number is used.
-   *
-   * <p>Necessary to insert records into a `set`.
-   *
-   * @param other the ServerRecord to compare against
-   * @return whether this server record is logically "less than" `other`
-   */
-  bool operator<(const ServerRecord &other) const {
-    if (server.ip_addr() == other.server.ip_addr()) {
-      return server.port() < other.server.port();
-    }
-    return server.ip_addr() < other.server.ip_addr();
-  }
-};
+/**
+ * Ordering operator for server records, uses the `Server` IP address as a total ordering
+ * criterion.  For servers on the same host (IP), the port number is used; the timestamp is
+ * not used as a sorting criterion.
+ *
+ * <p>The sorting by IP addresses is done solely lexicographically, no meaning is assigned
+ * to the octets; it is simply a means to allow us to store `ServerRecord` objects into a `set`.
+ *
+ * @param other the ServerRecord to compare against
+ * @return whether this server record is logically "less than" `other`
+ */
+bool operator<(const ServerRecord &lhs, const ServerRecord& rhs);
 
 
 /**
@@ -124,7 +116,14 @@ public:
    * @param host the host to add to this server's neighbors list
    */
   void AddNeighbor(const Server& host) {
-    alive_.insert(std::make_shared<ServerRecord>(host));
+    std::shared_ptr<ServerRecord> record = std::make_shared<ServerRecord>();
+
+    Server *server = record->mutable_server();
+    server->set_hostname(host.hostname());
+    server->set_port(host.port());
+    record->set_timestamp(utils::current_time());
+
+    alive_.insert(record);
   }
 
   const ServerRecordsSet& alive() const {

@@ -15,16 +15,14 @@
 using namespace swim;
 
 
-Server parse(void *data, size_t size)
-{
+Server parse(void *data, size_t size) {
   Server s2;
   s2.ParseFromArray(data, size);
   return s2;
 }
 
 
-TEST(SwimServerProtoTests, allocations)
-{
+TEST(SwimServerProtoTests, allocations) {
   Server server;
   server.set_hostname("fakehost");
   server.set_port(9999);
@@ -51,13 +49,13 @@ class TestServer : public SwimServer {
   bool wasUpdated_;
 
 public:
-  TestServer(unsigned int port) : SwimServer(port, 1),
-      wasUpdated_(false) {}
+  TestServer(unsigned short port) : SwimServer(port, 1),
+                                  wasUpdated_(false) {}
 
   virtual ~TestServer() {
   }
 
-  virtual void onUpdate(Server* client, long timestamp) {
+  virtual void onUpdate(Server *client) {
     if (client) {
       VLOG(2) << "TestServer::onUpdate " << client->hostname() << ":" << client->port();
       wasUpdated_ = true;
@@ -68,25 +66,36 @@ public:
   bool wasUpdated() { return wasUpdated_; }
 };
 
-class SwimServerTests : public ::testing::Test {
-protected:
-  std::default_random_engine dre;
 
+class SwimServerTests : public ::testing::Test {
+
+  // Random number generator engine; using the default for the system, it will be
+  // seeded during static initialization and the sequence will be used by every test.
+  static std::default_random_engine DRE;
+
+protected:
+
+  std::uniform_int_distribution<unsigned short> di_;
   std::shared_ptr<SwimServer> server_;
   std::unique_ptr<std::thread> thread_;
 
-  unsigned short randomPort() {
-    std::uniform_int_distribution<unsigned short> di(15000, 30000);
-    return di(dre);
+  static void SetUpTestCase() {
+    DRE.seed(std::time(nullptr));
   }
 
-  virtual void SetUp() {
-    server_.reset(new SwimServer(randomPort()));
+  SwimServerTests() : di_(15000, 30000) {
+    unsigned short port = randomPort();
+    VLOG(2) << "TestFixture: creating server on port " << port;
+    server_.reset(new SwimServer(port));
+  }
+
+  unsigned short randomPort() {
+    return di_(DRE);
   }
 
   virtual void TearDown() {
     VLOG(2) << "Tearing down...";
-    if (server_->isRunning()) {
+    if (server_) {
       VLOG(2) << "TearDown: stopping server...";
       server_->stop();
     }
@@ -94,33 +103,41 @@ protected:
       VLOG(2) << "TearDown: joining thread";
       if (thread_->joinable()) {
         thread_->join();
+        VLOG(2) << "TearDown: server thread terminated";
       }
     }
   }
 
   virtual void runServer() {
     if (server_) {
+      ASSERT_FALSE(server_->isRunning());
       thread_.reset(new std::thread([this] {
-        ASSERT_FALSE(server_->isRunning());
         server_->start();
       }));
       // Wait a beat to allow the socket connection to be established.
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      int retries = 10;
+      while (retries-- > 0 && !server_->isRunning()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+      ASSERT_TRUE(server_->isRunning());
+    } else {
+      FAIL() << "server_ has not been allocated";
     }
   }
 };
 
+std::default_random_engine SwimServerTests::DRE;
 
-TEST_F(SwimServerTests, canCreate)
-{
+
+TEST_F(SwimServerTests, canCreate) {
   ASSERT_NE(nullptr, server_);
   ASSERT_FALSE(server_->isRunning());
 }
 
 
-TEST_F(SwimServerTests, canStartAndConnect)
-{
+TEST_F(SwimServerTests, canStartAndConnect) {
   unsigned short port = server_->port();
+  ASSERT_TRUE(port >= 15000 && port < 30000);
   SwimClient client("localhost", port);
 
   EXPECT_FALSE(server_->isRunning());
@@ -134,9 +151,10 @@ TEST_F(SwimServerTests, canStartAndConnect)
 }
 
 
-TEST_F(SwimServerTests, canOverrideOnUpdate)
-{
+TEST_F(SwimServerTests, canOverrideOnUpdate) {
   unsigned short port = randomPort();
+  ASSERT_TRUE(port >= 15000 && port < 30000);
+
   std::unique_ptr<SwimClient> client(new SwimClient("localhost", port, 20));
 
   TestServer server(port);
@@ -146,9 +164,12 @@ TEST_F(SwimServerTests, canOverrideOnUpdate)
     server.start();
     VLOG(2) << "Test server thread exiting";
   });
-  std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
+  unsigned short count = 50;
+  while (count-- > 0 && !server.isRunning()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+  }
   ASSERT_TRUE(server.isRunning());
+
   ASSERT_TRUE(client->Ping());
   ASSERT_TRUE(server.wasUpdated());
 
@@ -161,8 +182,7 @@ TEST_F(SwimServerTests, canOverrideOnUpdate)
   }
 }
 
-TEST_F(SwimServerTests, destructorStopsServer)
-{
+TEST_F(SwimServerTests, destructorStopsServer) {
   unsigned short port = randomPort();
   std::unique_ptr<SwimClient> client(new SwimClient("localhost", port));
   {
@@ -174,14 +194,13 @@ TEST_F(SwimServerTests, destructorStopsServer)
     ASSERT_TRUE(server.isRunning());
     ASSERT_TRUE(client->Ping());
   }
-    std::this_thread::sleep_for(std::chrono::milliseconds());
+  std::this_thread::sleep_for(std::chrono::milliseconds());
 
   ASSERT_FALSE(client->Ping());
 }
 
 
-TEST_F(SwimServerTests, canRestart)
-{
+TEST_F(SwimServerTests, canRestart) {
   runServer();
 
   ASSERT_TRUE(server_->isRunning());
@@ -194,7 +213,7 @@ TEST_F(SwimServerTests, canRestart)
   std::atomic<bool> joined(false);
 
   std::thread timeout([&joined] {
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     ASSERT_TRUE(joined);
   });
   timeout.detach();
