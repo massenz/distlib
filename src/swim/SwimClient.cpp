@@ -17,7 +17,8 @@ const unsigned int SwimClient::DEFAULT_SOCKET_LINGER_MSEC = 0;
 
 SwimClient::SwimClient(const Server &dest, int self_port, unsigned long timeout) :
     dest_(dest), timeout_(timeout) {
-  self_ = makeServer(hostname(), self_port);
+  self_.set_hostname(utils::hostname());
+  self_.set_port(self_port);
 }
 
 

@@ -6,8 +6,9 @@
 #include <zmq.hpp>
 
 #include "swim.pb.h"
-#include "utils/network.h"
 
+#include "utils/network.h"
+#include "SwimCommon.hpp"
 
 
 // Default items to be reported; see SWIM protocol and `SwimReport` in swim.proto.
@@ -17,32 +18,19 @@
 namespace swim {
 
 /**
- * Creates a Protobuf representation of the given hostname:port server.
+ * Client that is used to connect to a SwimServer and exchange messages.
  *
- * @param hostname the server's name, if known (or its IP address).
- * @param port the listening port
- * @param ip the IP address (optional, may be useful if the name is not DNS-resolvable)
- * @return the PB representation of this server
+ * <p>Clients solely initiate connections and query the server about status, or to
+ * send reports.
  */
-static Server makeServer(const std::string &hostname, int port, const std::string &ip = "") {
-  Server server;
-  server.set_hostname(hostname);
-  server.set_port(port);
-  if (ip.length() > 0) {
-    server.set_ip_addr(ip);
-  }
-  return server;
-}
-
-
 class SwimClient {
 
   static const unsigned long DEFAULT_TIMEOUT_MSEC;
   static const unsigned int DEFAULT_SOCKET_LINGER_MSEC;
 
   Server dest_;
-  unsigned long timeout_;
   Server self_;
+  unsigned long timeout_;
   unsigned int max_allowed_reports_ = MAX_ALLOWED_DEFAULT;
 
   /**
@@ -72,20 +60,7 @@ public:
    * @param self_port if this server is also listening on a port, specify it here.
    * @param timeout an optional timeout, in milliseconds.
    */
-  SwimClient(const Server &dest, int self_port, unsigned long timeout = DEFAULT_TIMEOUT_MSEC);
-
-  /**
-   * Simply calls the other constructor; see for details.
-   *
-   * @param hostname the destination host that we will try to reach.
-   * @param port the port the remote server is listening on.
-   * @param self_port an optional port where this server itself may be listening for incoming
-   *            messages.
-   * @param timeout an optional timeout.
-   */
-  SwimClient(const std::string &hostname, int port, int self_port = 0,
-             unsigned long timeout = DEFAULT_TIMEOUT_MSEC) :
-      SwimClient(makeServer(hostname, port), self_port, timeout) {}
+  SwimClient(const Server &dest, int self_port = 0, unsigned long timeout = DEFAULT_TIMEOUT_MSEC);
 
   virtual ~SwimClient() {}
 

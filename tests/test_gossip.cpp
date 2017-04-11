@@ -9,6 +9,7 @@
 
 #include <glog/logging.h>
 #include <gtest/gtest.h>
+#include <swim/SwimClient.hpp>
 
 #include "swim/GossipFailureDetector.hpp"
 
@@ -40,3 +41,19 @@ TEST(GossipFailureDetectorTests, create) {
 
   ASSERT_EQ(2, detector.alive().size());
 };
+
+TEST(GossipFailureDetectorTests, recordsets) {
+
+  ServerRecordsSet records;
+
+  std::shared_ptr<Server> server = MakeServer("localhost", 8081);
+  std::shared_ptr<Server> server2 = MakeServer("localhost", 8088);
+  std::shared_ptr<Server> sameServer = MakeServer("localhost", 8081);
+
+  records.insert(MakeRecord(*server));
+  records.insert(MakeRecord(*server2));
+  records.insert(MakeRecord(*sameServer));
+
+  ASSERT_EQ(2, records.size());
+
+}

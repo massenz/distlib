@@ -10,58 +10,12 @@
 
 #include "swim.pb.h"
 #include "SwimServer.hpp"
+#include "SwimCommon.hpp"
+
 #include "utils/network.h"
 
 
-using std::set;
-using namespace std::chrono;
-
-using Timestamp = std::chrono::system_clock::time_point;
-
 namespace swim {
-
-/**
- * Ordering operator for server records, uses the `Server` IP address as a total ordering
- * criterion.  For servers on the same host (IP), the port number is used; the timestamp is
- * not used as a sorting criterion.
- *
- * <p>The sorting by IP addresses is done solely lexicographically, no meaning is assigned
- * to the octets; it is simply a means to allow us to store `ServerRecord` objects into a `set`.
- *
- * @param other the ServerRecord to compare against
- * @return whether this server record is logically "less than" `other`
- */
-bool operator<(const ServerRecord &lhs, const ServerRecord& rhs);
-
-
-/**
- * Without this, associative containers (such as `set`) would compare the value of the pointers
- * (as opposed to the actual value of the records) for insertion and/or retrieval.
- *
- * <p>See Item 20 of "Effective STL", Scott Meyers.
- */
-struct ServerRecordPtrLess:
-    public std::binary_function<
-        const std::shared_ptr<ServerRecord>&,
-        const std::shared_ptr<ServerRecord>&,
-        bool> {
-
-  /**
-   * Comparison operator for the "less than" predicate (associative containers semantics) for
-   * containers of pointers.
-   *
-   * @param lhs the left-hand side of the operation
-   * @param rhs the right-hand side of the operation
-   * @return whether the record pointed to by `lhs` is "less than" the one pointed to by `rhs`
-   */
-  bool operator()(const std::shared_ptr<ServerRecord>& lhs,
-                  const std::shared_ptr<ServerRecord>& rhs) {
-    return *lhs < *rhs;
-  }
-};
-
-
-typedef set<std::shared_ptr<ServerRecord>, ServerRecordPtrLess> ServerRecordsSet;
 
 
 /**

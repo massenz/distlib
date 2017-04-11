@@ -52,8 +52,7 @@ public:
   TestServer(unsigned short port) : SwimServer(port, 1),
                                   wasUpdated_(false) {}
 
-  virtual ~TestServer() {
-  }
+  virtual ~TestServer() {}
 
   virtual void onUpdate(Server *client) {
     if (client) {
@@ -138,7 +137,9 @@ TEST_F(SwimServerTests, canCreate) {
 TEST_F(SwimServerTests, canStartAndConnect) {
   unsigned short port = server_->port();
   ASSERT_TRUE(port >= 15000 && port < 30000);
-  SwimClient client("localhost", port);
+
+  std::unique_ptr<Server> localhost = MakeServer("localhost", port);
+  SwimClient client(*localhost);
 
   EXPECT_FALSE(server_->isRunning());
   runServer();
@@ -155,7 +156,6 @@ TEST_F(SwimServerTests, canOverrideOnUpdate) {
   unsigned short port = randomPort();
   ASSERT_TRUE(port >= 15000 && port < 30000);
 
-  std::unique_ptr<SwimClient> client(new SwimClient("localhost", port, 20));
 
   TestServer server(port);
   EXPECT_FALSE(server.isRunning());
@@ -170,7 +170,9 @@ TEST_F(SwimServerTests, canOverrideOnUpdate) {
   }
   ASSERT_TRUE(server.isRunning());
 
-  ASSERT_TRUE(client->Ping());
+  auto dest = MakeServer("localhost", port);
+  SwimClient client(*dest);
+  ASSERT_TRUE(client.Ping());
   ASSERT_TRUE(server.wasUpdated());
 
   server.stop();
@@ -184,7 +186,9 @@ TEST_F(SwimServerTests, canOverrideOnUpdate) {
 
 TEST_F(SwimServerTests, destructorStopsServer) {
   unsigned short port = randomPort();
-  std::unique_ptr<SwimClient> client(new SwimClient("localhost", port));
+
+  auto server = MakeServer("localhost", port);
+  std::unique_ptr<SwimClient> client(new SwimClient(*server));
   {
     TestServer server(port);
     std::thread t([&] { server.start(); });
@@ -204,7 +208,8 @@ TEST_F(SwimServerTests, canRestart) {
   runServer();
 
   ASSERT_TRUE(server_->isRunning());
-  SwimClient client("localhost", server_->port());
+  auto svr = MakeServer("localhost", server_->port());
+  SwimClient client(*svr);
   ASSERT_TRUE(client.Ping());
 
   server_->stop();

@@ -119,7 +119,8 @@ int main(int argc, const char *argv[]) {
 
     LOG(INFO) << "Running Demo Client - Ver. " << RELEASE_STR;
 
-    SwimClient client(host, port, 0, timeout);
+    auto server = MakeServer(host, port);
+    SwimClient client(*server, 0, timeout);
     std::chrono::milliseconds wait(1500);
     start_timer(duration);
     while (!stopped.load()) {
