@@ -142,7 +142,7 @@ TEST_F(SwimServerTests, canStartAndConnect) {
   SwimClient client(*localhost);
 
   EXPECT_FALSE(server_->isRunning());
-  runServer();
+  ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
 
   ASSERT_TRUE(server_->isRunning());
   EXPECT_TRUE(client.Ping());
@@ -205,7 +205,7 @@ TEST_F(SwimServerTests, destructorStopsServer) {
 
 
 TEST_F(SwimServerTests, canRestart) {
-  runServer();
+  ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
 
   ASSERT_TRUE(server_->isRunning());
   auto svr = MakeServer("localhost", server_->port());
@@ -231,7 +231,7 @@ TEST_F(SwimServerTests, canRestart) {
   ASSERT_FALSE(server_->isRunning());
   ASSERT_FALSE(client.Ping());
 
-  runServer();
+  ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
   ASSERT_TRUE(server_->isRunning());
   ASSERT_TRUE(client.Ping());
 }

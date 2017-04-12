@@ -41,10 +41,10 @@ add_executable(${TEST_TARGET}
         ${SOURCE_FILES}
         ${SWIM_SOURCES}
         ${TEST_FILES}
+        all_tests.cpp
 )
 target_link_libraries(${TEST_TARGET}
         ${GTEST}
-        ${GTEST_MAIN}
         crypto
         glog
         protobuf
