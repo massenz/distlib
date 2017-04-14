@@ -4,8 +4,10 @@
 
 #pragma once
 
-#include <set>
 #include <chrono>
+#include <iomanip>
+#include <set>
+
 
 using std::set;
 using namespace std::chrono;
@@ -99,5 +101,40 @@ struct ServerRecordPtrLess :
 
 
 typedef set<std::shared_ptr<ServerRecord>, ServerRecordPtrLess> ServerRecordsSet;
+
+
+inline std::ostream &operator<<(std::ostream &out, const Server &server) {
+  out << "(" << server.hostname() << ":" << server.port();
+
+  if (server.has_ip_addr() && server.ip_addr().size() > 0) {
+    out << " [" << server.ip_addr() << "]";
+  }
+
+  out << ")";
+  return out;
+}
+
+inline std::ostream &operator<<(std::ostream &out, const ServerRecord &record) {
+  long ts = record.timestamp();
+
+  out << "[From: " << record.server() << " at: "
+      << std::put_time(std::gmtime(&ts), "%c %Z");
+
+  if (record.has_forwarder()) {
+    out << "; forwarded by: " << record.forwarder();
+  }
+  out << "]";
+
+  return out;
+}
+
+inline std::ostream& operator<<(std::ostream& out, const ServerRecordsSet& recordsSet) {
+  out << "{";
+  for (auto record : recordsSet) {
+    out << *record << ", ";
+  }
+  out << "\b\b}";
+  return out;
+}
 
 } // namespace swim

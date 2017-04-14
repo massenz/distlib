@@ -27,7 +27,7 @@ class SwimServer {
 protected:
 
   /**
-   * Helper method to log the client hostname and the timestamp.
+   * Helper method to log the client hostname and a message.
    *
    * @param client
    * @param timestamp
