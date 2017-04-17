@@ -81,7 +81,7 @@ TEST_F(GossipFailureDetectorTests, updatesAlives) {
 
   SwimClient client(*MakeServer("localhost", detector_->gossip_server().port()));
 
-  ASSERT_TRUE(tests::WaitAtMostFor([&]() { return detector_->gossip_server().isRunning(); },
+  ASSERT_TRUE(tests::WaitAtMostFor([&]() -> bool { return detector_->gossip_server().isRunning(); },
                        std::chrono::milliseconds(2000))) << "Detector didn't start";
 
   ASSERT_TRUE(detector_->alive().empty());
@@ -91,7 +91,7 @@ TEST_F(GossipFailureDetectorTests, updatesAlives) {
 
 TEST_F(GossipFailureDetectorTests, updatesManyAlives) {
 
-  ASSERT_TRUE(tests::WaitAtMostFor([&]() { return detector_->gossip_server().isRunning(); },
+  ASSERT_TRUE(tests::WaitAtMostFor([&]() -> bool { return detector_->gossip_server().isRunning(); },
                                    std::chrono::milliseconds(2000))) << "Detector didn't start";
 
   ASSERT_TRUE(detector_->alive().empty());
@@ -103,6 +103,7 @@ TEST_F(GossipFailureDetectorTests, updatesManyAlives) {
 
   ASSERT_EQ(10, detector_->alive().size());
 }
+
 
 TEST_F(GossipFailureDetectorTests, create) {
 
