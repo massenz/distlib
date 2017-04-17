@@ -14,6 +14,18 @@
 
 namespace utils {
 
+class unexpected_flag : public std::exception {
+  std::string what_;
+
+public:
+  unexpected_flag(const std::string& error) : what_(error) {}
+
+  virtual const char* what() const _GLIBCXX_USE_NOEXCEPT {
+    return what_.c_str();
+  }
+};
+
+
 /**
  * Command-line options parser.
  *
@@ -45,7 +57,7 @@ protected:
     if (parsed_)
       return;
 
-    std::for_each(args_.begin(), args_.end(), [this] (const std::string& s) {
+    std::for_each(args_.begin(), args_.end(), [this](const std::string &s) {
 
       // TODO: would this be simpler, faster using std::regex?
       VLOG(2) << "Parsing: " << s;
@@ -83,7 +95,8 @@ protected:
 
 public:
   ParseArgs() = delete;
-  ParseArgs(const ParseArgs& other) = delete;
+
+  ParseArgs(const ParseArgs &other) = delete;
 
   /**
    * Used to build a parser from a list of strings.
@@ -93,7 +106,7 @@ public:
    *
    * @param args a list of both positional and named arguments.
    */
-  explicit ParseArgs(const std::vector<std::string>& args) : args_(args), parsed_(false) {
+  explicit ParseArgs(const std::vector<std::string> &args) : args_(args), parsed_(false) {
     parse();
   }
 
@@ -122,7 +135,7 @@ public:
    * @param args an array of C-string values.
    * @param len the number of elements in `args`.
    */
-  ParseArgs(const char* args[], size_t len) : progname_(args[0]), parsed_(false) {
+  ParseArgs(const char *args[], size_t len) : progname_(args[0]), parsed_(false) {
     size_t pos = progname_.rfind("/");
     if (pos != std::string::npos) {
       progname_ = progname_.substr(pos + 1);
@@ -145,28 +158,55 @@ public:
   }
 
   /**
-   * Gets the value of the `--name=value` option.
-   *
-   * @param name
-   * @return the value of the named option if specified, or the empty string instead.
+   * @param name the name of the option to look for
+   * @return `true` if the option was passed on the command line; `false` otherwise
    */
-  std::string get(const std::string& name) const {
-    return parsed_options()[name];
+  bool has(const std::string& name) {
+    return parsed_options_.find(name) != parsed_options_.end();
   }
 
   /**
-   * Alias for `get(std::string)`.
+   * Gets the value of the `--flag=value` option.
    *
+   * @param flag the name of the flag
+   * @param defaultValue the default value to return if no flag was passed in
    * @return the value of the named option if specified, or the empty string instead.
    */
-  const char* get(const char* name) const {
-    return parsed_options()[name].c_str();
+  std::string get(const std::string &name, std::string defaultValue = "") const {
+    if (parsed_options_.find(name) == parsed_options_.end()) {
+      return defaultValue;
+    }
+    return parsed_options()[name];
+  }
+
+
+  /**
+   * If present, converts the value of the option into an integer value.
+   *
+   * <p>Optionally, a default value can be provided, which will be returned if the option is
+   * missing: <strong>be careful with this API</strong> because it is impossible to distinguish
+   * the case of when the option is missing from when the default value was passed in.
+   *
+   * <p>If it is necessary to take a different action if the flag is missing, then use the `has()`
+   * method first.
+   *
+   * @param name the name of the option, whose value MUST be convertible into a valid integer
+   * @param defaultInt an optional value to be returned if the flag is missing (0 will be
+   *        returned if this is not provided)
+   * @return the value of the option, if present, the `defaultInt` if not.
+   */
+  int getInt(const std::string &name, int defaultInt = 0) {
+    std::string value = get(name);
+    if (value.empty()) {
+      return defaultInt;
+    }
+    return atoi(value.c_str());
   }
 
   /**
    * @param pos the index of the positional argument
    * @return the value of the positional argument at position `pos`, if valid.
-   * @throws `std::out_of_range` if `pos` > `count()`
+   * @throws std::out_of_range if `pos` > `count()`
    */
   std::string at(int pos) const {
     if (pos < count()) {
@@ -198,7 +238,7 @@ public:
    * @param name
    * @return the value of the named option
    */
-  std::string operator[](const std::string& name) const {
+  std::string operator[](const std::string &name) const {
     return get(name);
   }
 
@@ -207,46 +247,31 @@ public:
    */
   std::vector<std::string> getNames() {
     std::vector<std::string> names;
-    for(auto elem : parsed_options_) {
+    for (auto elem : parsed_options_) {
       names.push_back(elem.first);
     }
     return names;
   }
 
   /**
-   * Converts an on/off flag into the boolean equivalent.
+   * Converts an on/off flag into its boolean equivalent.
    *
    * @param name the name of the option being passed on the command line.
    * @param ifAbsentValue if the flag has not been specified, the default value returned.
    * @return `false` if the option is "off"; `true` otherwise.
    */
-  bool has(const std::string& name, bool ifAbsentValue = false) {
+  bool enabled(const std::string &name, bool ifAbsentValue = false) {
     std::string value = get(name);
+
     if (value.empty()) return ifAbsentValue;
+
     if (value == "on") {
       return true;
     } else if (value == "off") {
       return false;
-    } else {
-      LOG(ERROR) << "Option '" << name << "' does not appear to be a flag (on/off): '" << value << "'";
-      return false;
     }
-  }
-
-  /**
-   * Explicit check on a flag being disabled.
-   *
-   * @param name the name of the option being checked (e.g., "help", when checking for an
-   *        explicit "--no-help" being passed on the command line).
-   * @return `true` iff the named flag was passed as a `--no-xxx` option (where `xxx` is the
-   *        `name` of the flag).
-   */
-  bool hasDisabled(const std::string& name) {
-    std::string value = get(name);
-    if (value == "off") {
-      return true;
-    }
-    return false;
+    throw new unexpected_flag("Option '" + name + "' does not appear to be a flag (on/off): "
+        "'" + value + "'");
   }
 };
 

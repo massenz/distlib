@@ -1,6 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Merkle Tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" singleton="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="distlib" TARGET_NAME="distlib_test" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="distlib" RUN_TARGET_NAME="distlib_test" TEST_PATTERN="MerkleNodeTests.*:MerkleNodeTests/*.*:*/MerkleNodeTests.*/*:*/MerkleNodeTests/*.*" TEST_MODE="PATTERN">
-    <envs />
-    <method />
-  </configuration>
-</component>

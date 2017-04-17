@@ -171,7 +171,7 @@ TEST_F(SwimServerTests, canOverrideOnUpdate) {
 }
 
 TEST_F(SwimServerTests, destructorStopsServer) {
-  unsigned short port = tests::randomPort();
+  unsigned short port = 55234;
 
   auto server = MakeServer("localhost", port);
   std::unique_ptr<SwimClient> client(new SwimClient(*server));
@@ -184,9 +184,10 @@ TEST_F(SwimServerTests, destructorStopsServer) {
     ASSERT_TRUE(server.isRunning());
     ASSERT_TRUE(client->Ping());
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds());
-
-  ASSERT_FALSE(client->Ping());
+  // It may take a bit for the server to stop, but not that long.
+  // NOTE: we must pass the std::unique_ptr by ref or the compiler gets upset.
+  ASSERT_TRUE(tests::WaitAtMostFor([&]() -> bool { return !client->Ping(); },
+      std::chrono::milliseconds(500)));
 }
 
 

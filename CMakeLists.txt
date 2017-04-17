@@ -79,6 +79,13 @@ set(SWIM_SOURCES
         ${SOURCE_DIR}/utils/network.cpp
 )
 
+set(SWIM_LIBS
+        protobuf
+        zmq
+        glog
+        pthread
+)
+
 add_executable(merkle_demo ${SOURCE_FILES} ${SOURCE_DIR}/main.cpp)
 target_link_libraries(merkle_demo ${CONAN_LIBS})
 
@@ -91,10 +98,7 @@ add_executable(server
         ${SOURCE_DIR}/server_demo.cpp
 )
 target_link_libraries(server
-        protobuf
-        zmq
-        glog
-        pthread
+        ${SWIM_LIBS}
 )
 
 

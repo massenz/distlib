@@ -54,12 +54,15 @@ void SwimServer::start() {
       // TODO: these should be invoked asynchronously.
       switch (message.type()) {
         case SwimEnvelope_Type_STATUS_UPDATE:
+          VLOG(2) << "Received a STATUS_UPDATE message";
           onUpdate(message.release_sender());
           break;
         case SwimEnvelope_Type_STATUS_REPORT:
+          VLOG(2) << "Received a STATUS_REPORT message";
           onReport(message.release_sender(), message.release_report());
           break;
         case SwimEnvelope_Type_STATUS_REQUEST:
+          VLOG(2) << "Received a STATUS_REQUEST message";
           onPingRequest(message.release_sender(), message.release_destination_server());
           break;
         default:
