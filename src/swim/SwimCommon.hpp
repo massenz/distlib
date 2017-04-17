@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <set>
 
+#include "swim.pb.h"
+
 
 using std::set;
 using namespace std::chrono;
@@ -136,5 +138,4 @@ inline std::ostream& operator<<(std::ostream& out, const ServerRecordsSet& recor
   out << "\b\b}";
   return out;
 }
-
 } // namespace swim

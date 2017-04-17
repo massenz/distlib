@@ -3,7 +3,6 @@
 
 
 #include <memory>
-#include <random>
 #include <thread>
 
 #include <gtest/gtest.h>
@@ -11,6 +10,7 @@
 #include "swim/SwimServer.hpp"
 #include "swim/SwimClient.hpp"
 
+#include "tests.h"
 
 using namespace swim;
 
@@ -68,29 +68,17 @@ public:
 
 class SwimServerTests : public ::testing::Test {
 
-  // Random number generator engine; using the default for the system, it will be
-  // seeded during static initialization and the sequence will be used by every test.
-  static std::default_random_engine DRE;
-
 protected:
 
-  std::uniform_int_distribution<unsigned short> di_;
   std::shared_ptr<SwimServer> server_;
   std::unique_ptr<std::thread> thread_;
 
-  static void SetUpTestCase() {
-    DRE.seed(std::time(nullptr));
-  }
-
-  SwimServerTests() : di_(15000, 30000) {
-    unsigned short port = randomPort();
+  SwimServerTests() {
+    unsigned short port = tests::randomPort();
     VLOG(2) << "TestFixture: creating server on port " << port;
     server_.reset(new SwimServer(port));
   }
 
-  unsigned short randomPort() {
-    return di_(DRE);
-  }
 
   virtual void TearDown() {
     VLOG(2) << "Tearing down...";
@@ -125,8 +113,6 @@ protected:
   }
 };
 
-std::default_random_engine SwimServerTests::DRE;
-
 
 TEST_F(SwimServerTests, canCreate) {
   ASSERT_NE(nullptr, server_);
@@ -136,7 +122,7 @@ TEST_F(SwimServerTests, canCreate) {
 
 TEST_F(SwimServerTests, canStartAndConnect) {
   unsigned short port = server_->port();
-  ASSERT_TRUE(port >= 15000 && port < 30000);
+  ASSERT_TRUE(port >= tests::kMinPort && port < tests::kMaxPort);
 
   std::unique_ptr<Server> localhost = MakeServer("localhost", port);
   SwimClient client(*localhost);
@@ -153,8 +139,8 @@ TEST_F(SwimServerTests, canStartAndConnect) {
 
 
 TEST_F(SwimServerTests, canOverrideOnUpdate) {
-  unsigned short port = randomPort();
-  ASSERT_TRUE(port >= 15000 && port < 30000);
+  unsigned short port = tests::randomPort();
+  ASSERT_TRUE(port >= tests::kMinPort && port < tests::kMaxPort);
 
 
   TestServer server(port);
@@ -185,7 +171,7 @@ TEST_F(SwimServerTests, canOverrideOnUpdate) {
 }
 
 TEST_F(SwimServerTests, destructorStopsServer) {
-  unsigned short port = randomPort();
+  unsigned short port = tests::randomPort();
 
   auto server = MakeServer("localhost", port);
   std::unique_ptr<SwimClient> client(new SwimClient(*server));

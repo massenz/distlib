@@ -4,16 +4,15 @@
 #pragma once
 
 #include <atomic>
-#include <memory>
-
-#include <zmq.hpp>
 #include <chrono>
-#include <thread>
 #include <iomanip>
+#include <memory>
+#include <thread>
 
-#include "swim.pb.h"
-#include "utils/network.h"
+#include <glog/logging.h>
+#include <zmq.hpp>
 
+#include "SwimCommon.hpp"
 
 namespace swim {
 
@@ -24,6 +23,19 @@ class SwimServer {
   std::atomic<bool> stopped_;
   unsigned long polling_interval_;
 
+  /**
+ * The list of servers that we deem to be healthy (they responded to a ping request).
+ * The timestamp is the last time we successfully pinged the server.
+ */
+  ServerRecordsSet alive_;
+
+  /**
+   * The list of servers we suspect to have crashed; the timestamp was the time at which
+   * the server was placed on this list (and will dictate when we finally determine it
+   * to have crashed, after the `grace_period_` time has elapsed).
+   */
+  ServerRecordsSet suspected_;
+
 protected:
 
   /**
@@ -32,8 +44,14 @@ protected:
    * @param client
    * @param timestamp
    */
-  void logClient(const Server& client, const std::string& msg) {
-    VLOG(2) << "Received message from '" << client.hostname() << "': " << msg;
+  void logClient(const Server& client, const std::string& msg = "") {
+    std::ostringstream log;
+    log << "Received message from " << client;
+    if (!msg.empty()) {
+      log << ": " << msg;
+    }
+
+    VLOG(2) << log.str();
   }
 
   /**
@@ -48,11 +66,12 @@ protected:
    *
    * @param client the server that just sent the message; the callee obtains ownership of the
    *        pointer and is responsible for freeing the memory.
-   * @param timestamp when the message was sent (according to the `client`'s clock).
    */
   virtual void onUpdate(Server* client) {
+    // Make sure client will be deleted, even if an exception is thrown.
     std::unique_ptr<Server> ps(client);
-    logClient(*ps, "ping");
+    alive_.insert(MakeRecord(*client));
+    logClient(*client);
   }
 
   /**
@@ -125,11 +144,11 @@ public:
 
   virtual ~SwimServer() {
     int retry_count = 5;
-    while (isRunning() && retry_count > 0) {
-      stop();
+
+    stop();
+    while (isRunning() && retry_count-- > 0) {
       VLOG(2) << "Waiting for server to stop...";
       std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_POLLING_INTERVAL_MSEC));
-      retry_count--;
     }
     if (retry_count == 0) {
       LOG(ERROR) << "Timed out waiting for server to shut down; giving up.";
@@ -150,7 +169,56 @@ public:
   bool isRunning() const { return !stopped_; }
 
   unsigned short port() const { return port_; }
+
+
+  const ServerRecordsSet& alive() const { return alive_; }
+
+  const ServerRecordsSet& suspected() const { return suspected_; }
+
+  /**
+   * Gives access to the internally-kept list of servers that are deemed to be "alive" and
+   * responding to pings (or, conversely, have just recently pinged this server).
+   *
+   * <p>The returned pointer, while guaranteed to be valid for the duration of this object's
+   * lifetime, should not be stored and should only be assumed valide temporarily.
+   *
+   * <p>If you only need access to the set of servers, without modifying it, it is best to use
+   * the `alive()` method instead.
+   *
+   * @return a pointer that allows modifying the list of internally kept healthy servers.
+   */
+  ServerRecordsSet* const mutable_alive() { return &alive_; }
+
+  /**
+   * Gives access to the internally-kept list of servers that are deemed to be "unhealthy," i.e.
+   * not responding to pings from this server; but not for long enough (`grace_period()`) to have
+   * been considered "dead."
+   *
+   * <p>The returned pointer, while guaranteed to be valid for the duration of this object's
+   * lifetime, should not be stored and should only be assumed valide temporarily.
+   *
+   * <p>If you only need access to the set of servers, without modifying it, it is best to use
+   * the `suspected()` method instead.
+   *
+   * @return a pointer that allows modifying the list of internally kept unhealthy servers.
+   */
+  ServerRecordsSet* const mutable_suspected() { return &suspected_; }
 };
+
+
+/**
+ * Factory method for `SwimServer` implementation classes.
+ *
+ * <p>Users of this library will have to provide their own implementation of this method and,
+ * possibly, also a class implementation for the server to be returned.
+ *
+ * <p>Otherwise any one of the provided default implementations can be returned, properly
+ * initialized.
+ *
+ * @param port the port the server will be listening on; use -1 for a randomly chosen one.
+ * @return an implementation of the `SwimServer` server.
+ */
+std::unique_ptr<SwimServer> CreateServer(unsigned short port);
 
 } // namespace swim
 

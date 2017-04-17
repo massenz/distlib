@@ -1,6 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Gossip Tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" singleton="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="distlib" TARGET_NAME="distlib_test" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="distlib" RUN_TARGET_NAME="distlib_test" TEST_CLASS="GossipFailureDetectorTests" TEST_MODE="SUITE_TEST">
-    <envs />
+  <configuration default="false" name="Gossip Tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" singleton="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="distlib" TARGET_NAME="distlib_test" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="distlib" RUN_TARGET_NAME="distlib_test" TEST_PATTERN="Gossip*" TEST_MODE="PATTERN">
+    <envs>
+      <env name="GLOG_v" value="2" />
+      <env name="GLOG_logtostderr" value="1" />
+    </envs>
     <method />
   </configuration>
 </component>

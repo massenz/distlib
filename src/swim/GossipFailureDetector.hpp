@@ -24,19 +24,6 @@ namespace swim {
  */
 class GossipFailureDetector {
 
-  /**
-   * The list of servers that we deem to be healthy (they responded to a ping request).
-   * The timestamp is the last time we successfully pinged the server.
-   */
-  ServerRecordsSet alive_;
-
-  /**
-   * The list of servers we suspect to have crashed; the timestamp was the time at which
-   * the server was placed on this list (and will dictate when we finally determine it
-   * to have crashed, after the `grace_period_` time has elapsed).
-   */
-  ServerRecordsSet suspected_;
-
   milliseconds update_round_interval_;
   milliseconds grace_period_;
   milliseconds ping_timeout_;
@@ -48,20 +35,28 @@ class GossipFailureDetector {
   std::unique_ptr<SwimServer> gossip_server_;
 
 public:
-  GossipFailureDetector(unsigned int port,
+  GossipFailureDetector(unsigned short port,
                         const long update_round_interval,
                         const long grace_period,
                         const long ping_timeout,
                         const long min_ping_interval) :
       update_round_interval_(update_round_interval), grace_period_(grace_period),
-      ping_timeout_(ping_timeout), min_ping_interval_(min_ping_interval),
-      gossip_server_(new SwimServer(port))
+      ping_timeout_(ping_timeout), min_ping_interval_(min_ping_interval)
   {
+    gossip_server_ = CreateServer(port);
+
     std::thread t([this] { gossip_server_->start(); });
     t.detach();
   }
 
-  virtual ~GossipFailureDetector() {}
+  virtual ~GossipFailureDetector() {
+    VLOG(2) << "Destroying detector, listening on port " << gossip_server_->port();
+    if (gossip_server_ && gossip_server_->isRunning()) {
+      VLOG(2) << "Stopping server";
+      gossip_server_->stop();
+    }
+    VLOG(2) << "done";
+  }
 
   /**
    * This is a convenience method to add more "neighbors" to this server; those will then
@@ -77,16 +72,10 @@ public:
     server->set_port(host.port());
     record->set_timestamp(utils::current_time());
 
-    alive_.insert(record);
+    ServerRecordsSet* ps = gossip_server_->mutable_alive();
+    ps->insert(record);
   }
 
-  const ServerRecordsSet& alive() const {
-    return alive_;
-  }
-
-  const ServerRecordsSet& suspected() const {
-    return suspected_;
-  }
 
   const milliseconds& update_round_interval() const {
     return update_round_interval_;
@@ -103,6 +92,11 @@ public:
   const milliseconds& min_ping_interval() const {
     return min_ping_interval_;
   }
+
+  const ServerRecordsSet& alive() const { return gossip_server_->alive(); }
+  const ServerRecordsSet& suspected() const { return gossip_server_->suspected(); }
+
+  const SwimServer& gossip_server() const { return *gossip_server_; }
 };
 
 } // namespace swim

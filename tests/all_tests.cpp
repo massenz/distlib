@@ -5,6 +5,8 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
+#include "tests.h"
+
 /**
  * Runs all the Google Test suites.
  *
@@ -17,6 +19,9 @@
  */
 int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
+
+  unsigned long seed = static_cast<unsigned long>(std::time(nullptr));
+  tests::DRE.seed(seed);
 
   LOG(INFO) << "Running all tests for distlib";
 
