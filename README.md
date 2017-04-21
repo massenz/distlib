@@ -146,8 +146,8 @@ See [this post](https://codetrips.com/2016/06/19/implementing-a-merkle-tree-in-c
 References:
 
  * [SWIM: Scalable Weakly-consistent Infection-style Process Group Membership Protocol](SWIM);
- * [Unreliable Distributed Failure Detectors for Reliable Systems](unreliable failure detectors); and
- * [A Gossip-Style Failure Detection Service](gossip failure)
+ * [Unreliable Distributed Failure Detectors for Reliable Systems](detectors); and
+ * [A Gossip-Style Failure Detection Service](gossip)
 
  ### PING server
 
@@ -169,5 +169,5 @@ References:
 
 
 [SWIM]: https://goo.gl/VUn4iQ
-[unreliable failure detectors]: https://goo.gl/6yuh9T
-[gossip failure]: https://goo.gl/rxAIa6
+[detectors]: https://goo.gl/6yuh9T
+[gossip]: https://goo.gl/rxAIa6
