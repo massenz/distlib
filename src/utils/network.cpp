@@ -2,26 +2,52 @@
 // Created by M. Massenzio (marco@alertavert.com) on 10/9/16.
 
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <iostream>
+
 #include "network.h"
 
 namespace utils {
 
-std::string inetAddress(const struct sockaddr *addr, socklen_t socklen) {
-  char host[NI_MAXHOST],
-       service[NI_MAXSERV];
+std::string InetAddress(const std::string& host) {
+  char ip_addr[INET6_ADDRSTRLEN];
+  struct addrinfo hints;
+  struct addrinfo *result;
+  std::string retval;
 
-  if (getnameinfo(addr, socklen, host, NI_MAXHOST,
-                  service, NI_MAXSERV, NI_NUMERICSERV) == 0) {
-    std::ostringstream ostream;
-    ostream << host << ":" << service;
-    return ostream.str();
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICSERV;
+
+  int resp = getaddrinfo(host.empty() ? hostname().c_str() : host.c_str(), nullptr,
+                         &hints, &result);
+  if (resp) {
+    LOG(ERROR) << "Cannot find IP address for '" << host << "': " << gai_strerror(resp);
+  } else {
+    // Iterate the addr_info fields, until we find an IPv4 field
+    for (auto rp = result; rp != nullptr; rp = rp->ai_next) {
+      if (rp->ai_family == AF_INET) {
+        if (inet_ntop(AF_INET,
+                      &((struct sockaddr_in *)rp->ai_addr)->sin_addr,
+                      ip_addr,
+                      INET6_ADDRSTRLEN)) {
+          retval = ip_addr;
+          break;
+        }
+      }
+    }
   }
 
-  return "";
+  if (result != nullptr) {
+    freeaddrinfo(result);
+  }
+  return retval;
 }
 
 
-std::string sockAddr(unsigned int port) {
+std::string SocketAddress(unsigned int port) {
   struct addrinfo hints;
   struct addrinfo *result;
 
@@ -30,33 +56,36 @@ std::string sockAddr(unsigned int port) {
   hints.ai_family = AF_UNSPEC;
   hints.ai_flags = AI_PASSIVE | AI_NUMERICSERV;
 
+  std::string retval;
   std::string port_str = std::to_string(port);
 
-  int resp = getaddrinfo(nullptr, port_str.c_str(), &hints, &result);
-  if (resp != 0 || result == nullptr) {
-    LOG(ERROR) << "Could not find address info: " << gai_strerror(resp);
-    return "";
+  if (!getaddrinfo(nullptr, port_str.c_str(), &hints, &result) && result != nullptr) {
+    // Simply return the first available socket.
+    char host[NI_MAXHOST];
+    if (getnameinfo(result->ai_addr, result->ai_addrlen, host, NI_MAXHOST,
+                    nullptr, 0, NI_NUMERICHOST) == 0) {
+      std::ostringstream ostream;
+      ostream << "tcp://" << host << ":" << port;
+      retval = ostream.str();
+    }
+    freeaddrinfo(result);
   }
 
-  // Simply return the first available socket.
-  std::string retval =  inetAddress(result->ai_addr, result->ai_addrlen);
-  freeaddrinfo(result);
-
-  return retval.empty() ? "" : "tcp://" + retval;
+  return retval;
 }
 
 
-google::protobuf::int64 current_time() {
+google::protobuf::int64 CurrentTime() {
   return std::time(nullptr);
 }
 
 
 std::string hostname() {
-  char name[MAXBUFSIZE];
-  int retcode = gethostname(name, MAXBUFSIZE);
+  char name[NI_MAXHOST];
+  int retcode = gethostname(name, NI_MAXHOST);
   if (retcode != 0) {
     LOG(ERROR) << "Could not determine hostname";
-    return "UNKNOWN";
+    return "";
   }
   return std::string(name);
 }

@@ -15,7 +15,7 @@
 using namespace swim;
 
 
-Server parse(void *data, size_t size) {
+Server parse(void *data, int size) {
   Server s2;
   s2.ParseFromArray(data, size);
   return s2;
@@ -26,7 +26,7 @@ TEST(SwimServerProtoTests, allocations) {
   Server server;
   server.set_hostname("fakehost");
   server.set_port(9999);
-  size_t bufSize = server.ByteSize();
+  int bufSize = server.ByteSize();
 
   char *data = new char[bufSize];
   ASSERT_NE(nullptr, data);
@@ -35,8 +35,6 @@ TEST(SwimServerProtoTests, allocations) {
   server.SerializeToArray(data, bufSize);
   Server svr2 = parse(data, bufSize);
 
-  // This shouldn't matter, as the data has now been squirreled away in the PB.
-  memset(data, 0, reinterpret_cast<size_t>(bufSize));
   delete (data);
 
   ASSERT_STREQ("fakehost", svr2.hostname().c_str());
@@ -49,9 +47,7 @@ class TestServer : public SwimServer {
   bool wasUpdated_;
 
 public:
-  TestServer(unsigned short port) : SwimServer(port, 1),
-                                  wasUpdated_(false) {}
-
+  TestServer(unsigned short port) : SwimServer(port, 1), wasUpdated_(false) {}
   virtual ~TestServer() {}
 
   virtual void onUpdate(Server *client) {
@@ -102,10 +98,8 @@ protected:
         server_->start();
       }));
       // Wait a beat to allow the socket connection to be established.
-      int retries = 10;
-      while (retries-- > 0 && !server_->isRunning()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      }
+      tests::WaitAtMostFor([this]() -> bool { return server_->isRunning(); },
+                           std::chrono::milliseconds(500));
       ASSERT_TRUE(server_->isRunning());
     } else {
       FAIL() << "server_ has not been allocated";
@@ -117,6 +111,14 @@ protected:
 TEST_F(SwimServerTests, canCreate) {
   ASSERT_NE(nullptr, server_);
   ASSERT_FALSE(server_->isRunning());
+}
+
+
+TEST_F(SwimServerTests, noServerNoPing) {
+  auto svr = MakeServer("localhost", server_->port());
+  SwimClient client(*svr);
+  ASSERT_FALSE(server_->isRunning());
+  ASSERT_FALSE(client.Ping());
 }
 
 
@@ -150,10 +152,9 @@ TEST_F(SwimServerTests, canOverrideOnUpdate) {
     server.start();
     VLOG(2) << "Test server thread exiting";
   });
-  unsigned short count = 50;
-  while (count-- > 0 && !server.isRunning()) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
-  }
+  tests::WaitAtMostFor([&]() -> bool { return server.isRunning(); },
+    std::chrono::milliseconds(200));
+
   ASSERT_TRUE(server.isRunning());
 
   auto dest = MakeServer("localhost", port);
@@ -191,6 +192,74 @@ TEST_F(SwimServerTests, destructorStopsServer) {
 }
 
 
+TEST_F(SwimServerTests, receiveReport) {
+  ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
+
+  ASSERT_TRUE(server_->isRunning());
+  auto svr = MakeServer("localhost", server_->port());
+  SwimClient client(*svr);
+
+  SwimReport report;
+  Server *sender = report.mutable_sender()->mutable_server();
+  sender->set_hostname("test.host.1");
+  sender->set_port(9099);
+  sender->set_ip_addr("192.168.1.1");
+  report.mutable_sender()->set_timestamp(utils::CurrentTime());
+
+  auto alives = report.mutable_alive();
+  ServerRecord* one = alives->Add();
+  one->set_timestamp(utils::CurrentTime());
+  one->mutable_server()->set_hostname("host1");
+  one->mutable_server()->set_port(1234);
+
+  auto suspected = report.mutable_suspected();
+  ServerRecord* two = suspected->Add();
+  two->set_timestamp(utils::CurrentTime());
+  two->mutable_server()->set_hostname("host_susp");
+  two->mutable_server()->set_port(9876);
+
+  ASSERT_TRUE(client.Send(report));
+  ASSERT_EQ(1, server_->alive().size());
+  ASSERT_EQ(1, server_->suspected().size());
+}
+
+TEST_F(SwimServerTests, receiveReportMany) {
+  ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
+
+  ASSERT_TRUE(server_->isRunning());
+  auto svr = MakeServer("localhost", server_->port());
+  SwimClient client(*svr);
+
+  SwimReport report;
+  report.mutable_sender()->mutable_server()->CopyFrom(client.self());
+  report.mutable_sender()->set_timestamp(utils::CurrentTime());
+
+  auto alives = report.mutable_alive();
+  for (int i = 0; i < 10; ++i) {
+    std::string host = "host-" + std::to_string(i);
+
+    ServerRecord *one = alives->Add();
+    one->set_timestamp(utils::CurrentTime());
+    one->mutable_server()->set_hostname(host);
+    one->mutable_server()->set_port(9900 + i);
+  }
+
+  auto suspected = report.mutable_suspected();
+  for (int i = 0; i < 5; ++i) {
+    std::string host = "dead-host-" + std::to_string(i);
+
+    ServerRecord *two = suspected->Add();
+    two->set_timestamp(utils::CurrentTime());
+    two->mutable_server()->set_hostname(host);
+    two->mutable_server()->set_port(5500 + i);
+  }
+
+  ASSERT_TRUE(client.Send(report));
+  ASSERT_EQ(10, server_->alive().size());
+  ASSERT_EQ(5, server_->suspected().size());
+}
+
+
 TEST_F(SwimServerTests, canRestart) {
   ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
 
@@ -200,23 +269,12 @@ TEST_F(SwimServerTests, canRestart) {
   ASSERT_TRUE(client.Ping());
 
   server_->stop();
-  // Start a timer that will fail the test if the server hasn't stopped
-  // within the timeout (200 msec).
-  std::atomic<bool> joined(false);
 
-  std::thread timeout([&joined] {
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    ASSERT_TRUE(joined);
-  });
-  timeout.detach();
-
-  if (thread_->joinable()) {
-    thread_->join();
-  }
-  joined = true;
-
+  tests::WaitAtMostFor([&]() -> bool { return !server_->isRunning(); },
+                       std::chrono::milliseconds(300));
   ASSERT_FALSE(server_->isRunning());
-  ASSERT_FALSE(client.Ping());
+  std::this_thread::yield();
+  thread_->join();
 
   ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
   ASSERT_TRUE(server_->isRunning());

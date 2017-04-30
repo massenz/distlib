@@ -10,7 +10,6 @@ include(../.conan/conanbuildinfo.cmake)
 conan_basic_setup()
 
 find_library(GTEST gtest ${INSTALL_DIR}/lib)
-find_library(GTEST_MAIN gtest_main ${INSTALL_DIR}/lib)
 
 if (${GTEST} STREQUAL GTEST-NOTFOUND)
     message(FATAL_ERROR "Could not locate a valid Google Test library installed.")
@@ -25,6 +24,7 @@ set(TEST_FILES
         ${TESTS_DIR}/test_merkle.cpp
         ${TESTS_DIR}/test_parse_args.cpp
         ${TESTS_DIR}/test_swim_server.cpp
+        ${TESTS_DIR}/test_utils_network.cpp
         ${TESTS_DIR}/test_view.cpp
 )
 

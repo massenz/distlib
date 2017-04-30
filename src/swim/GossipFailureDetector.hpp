@@ -70,7 +70,7 @@ public:
     Server *server = record->mutable_server();
     server->set_hostname(host.hostname());
     server->set_port(host.port());
-    record->set_timestamp(utils::current_time());
+    record->set_timestamp(utils::CurrentTime());
 
     ServerRecordsSet* ps = gossip_server_->mutable_alive();
     ps->insert(record);

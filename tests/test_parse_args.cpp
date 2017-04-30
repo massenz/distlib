@@ -37,7 +37,7 @@ TEST(ParseArgsTests, canParseMany) {
   EXPECT_EQ("off", parser.get("amend"));
   EXPECT_EQ("on", parser.get("enable-no-value"));
 
-  ASSERT_EQ(2, parser.count());
+  ASSERT_EQ(2, parser.size());
   EXPECT_STREQ("send", parser.at(0).c_str());
   EXPECT_STREQ("myfile.txt", parser.at(1).c_str());
 
@@ -86,7 +86,7 @@ TEST(ParseArgsTests, canParseFromVector) {
   EXPECT_EQ("google.com", parser.get("server"));
   EXPECT_EQ("off", parser.get("amend"));
 
-  ASSERT_EQ(2, parser.count());
+  ASSERT_EQ(2, parser.size());
   EXPECT_STREQ("send", parser.at(0).c_str());
   EXPECT_STREQ("myfile.txt", parser.at(1).c_str());
 }
@@ -106,7 +106,7 @@ TEST(ParseArgsTests, canUseHelperMethods) {
       }
   );
 
-  ASSERT_EQ(4, parser.count());
+  ASSERT_EQ(4, parser.size());
   ASSERT_EQ("fillme.png", parser[3]);
 
   ASSERT_STREQ("localhost:2181", parser["zk"].c_str());

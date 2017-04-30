@@ -23,8 +23,10 @@ void SwimServer::start() {
 
   // No point in keeping the socket around when we exit.
   socket.setsockopt(ZMQ_LINGER, &DEFAULT_SOCKET_LINGER_MSEC, sizeof (unsigned int));
-  socket.bind(utils::sockAddr(port_).c_str());
-  LOG(INFO) << "Server listening on port " << port_;
+  auto address = utils::SocketAddress(port_);
+  socket.bind(address.c_str());
+
+  LOG(INFO) << "Server listening on: " << address;
 
   // Polling from socket, so stopping the server does not hang indefinitely in the absence of
   // incoming messages.
@@ -46,32 +48,36 @@ void SwimServer::start() {
       }
 
       SwimEnvelope message;
-      if (!message.ParseFromArray(msg.data(), msg.size())) {
+      if (message.ParseFromArray(msg.data(), msg.size())) {
+
+        // TODO: these should be invoked asynchronously.
+        switch (message.type()) {
+          case SwimEnvelope_Type_STATUS_UPDATE:
+            VLOG(2) << "Received a STATUS_UPDATE message";
+            onUpdate(message.release_sender());
+            break;
+          case SwimEnvelope_Type_STATUS_REPORT:
+            VLOG(2) << "Received a STATUS_REPORT message";
+            onReport(message.release_sender(), message.release_report());
+            break;
+          case SwimEnvelope_Type_STATUS_REQUEST:
+            VLOG(2) << "Received a STATUS_REQUEST message";
+            onPingRequest(message.release_sender(), message.release_destination_server());
+            break;
+          default:
+            LOG(ERROR) << "Unexpected message type: '" << message.type();
+        }
+
+        message_t reply(2);
+        memcpy(reply.data(), "OK", 2);
+        socket.send(reply);
+
+      } else {
         LOG(ERROR) << "Cannot serialize data to `SwimEnvelope` protocol buffer";
-        continue;
+        message_t reply(4);
+        memcpy(reply.data(), "FAIL", 4);
+        socket.send(reply);
       }
-
-      // TODO: these should be invoked asynchronously.
-      switch (message.type()) {
-        case SwimEnvelope_Type_STATUS_UPDATE:
-          VLOG(2) << "Received a STATUS_UPDATE message";
-          onUpdate(message.release_sender());
-          break;
-        case SwimEnvelope_Type_STATUS_REPORT:
-          VLOG(2) << "Received a STATUS_REPORT message";
-          onReport(message.release_sender(), message.release_report());
-          break;
-        case SwimEnvelope_Type_STATUS_REQUEST:
-          VLOG(2) << "Received a STATUS_REQUEST message";
-          onPingRequest(message.release_sender(), message.release_destination_server());
-          break;
-        default:
-          LOG(ERROR) << "Unexpected message type: '" << message.type();
-      }
-
-      message_t reply(2);
-      memcpy(reply.data(), "OK", 2);
-      socket.send(reply);
     }
   }
   LOG(WARNING) << "SERVER STOPPED";

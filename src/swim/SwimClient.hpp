@@ -75,7 +75,7 @@ public:
    * @return `true` if the server returned an `OK`.
    */
   // TODO: make it return a Future instead
-  bool Ping();
+  bool Ping() const;
 
   /**
    * Sends a status report on all known nodes' statuses changes.
@@ -85,16 +85,18 @@ public:
    * size) exceeds the configured "max allowed reports."
    *
    * @param report
+   * @return `false` if the request timed out
    */
-  void Send(const SwimReport *report);
+  bool Send(const SwimReport& report) const;
 
   /**
    * Requests the `dest` server to ping `other` and verify its status.
    * See the SWIM protocol for more details.
    *
    * @param other the server to be pinged on behalf of this one
+   * @return `false` if the request timed out
    */
-  void RequestPing(const Server *other);
+  bool RequestPing(const Server *other) const;
 
   /**
    * Utility method to obtain this server's coordinates.

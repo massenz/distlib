@@ -206,10 +206,10 @@ public:
   /**
    * @param pos the index of the positional argument
    * @return the value of the positional argument at position `pos`, if valid.
-   * @throws std::out_of_range if `pos` > `count()`
+   * @throws std::out_of_range if `pos` > `size()`
    */
   std::string at(int pos) const {
-    if (pos < count()) {
+    if (pos < size()) {
       return positional_args().at(pos);
     }
     throw new std::out_of_range("Not enough positional arguments");
@@ -218,7 +218,7 @@ public:
   /**
    * @return the number of positional arguments found.
    */
-  int count() const {
+  int size() const {
     return positional_args().size();
   }
 

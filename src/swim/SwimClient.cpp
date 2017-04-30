@@ -22,7 +22,7 @@ SwimClient::SwimClient(const Server &dest, int self_port, unsigned long timeout)
 }
 
 
-bool SwimClient::Ping() {
+bool SwimClient::Ping() const {
   SwimEnvelope message;
   message.set_type(SwimEnvelope::Type::SwimEnvelope_Type_STATUS_UPDATE);
 
@@ -34,26 +34,21 @@ bool SwimClient::Ping() {
 }
 
 
-void SwimClient::Send(const SwimReport *report) {
+bool SwimClient::Send(const SwimReport& report) const {
   SwimEnvelope message;
-  message_t reply;
 
   message.set_type(SwimEnvelope_Type_STATUS_REPORT);
-  message.set_allocated_report(const_cast<SwimReport *>(report));
+  message.mutable_report()->CopyFrom(report);
 
-  if (!postMessage(&message)) {
-    LOG(ERROR) << "Could not post report";
-  }
+  return postMessage(&message);
 }
 
-void SwimClient::RequestPing(const Server *other) {
+bool SwimClient::RequestPing(const Server *other) const {
   SwimEnvelope message;
   message.set_type(SwimEnvelope_Type_STATUS_REQUEST);
   message.set_allocated_destination_server(const_cast<Server *>(other));
 
-  if (!postMessage(&message)) {
-    LOG(ERROR) << "Ping request to " << other->hostname() << " failed";
-  }
+  return postMessage(&message);
 }
 
 unsigned long SwimClient::timeout() const {
@@ -74,9 +69,7 @@ void SwimClient::set_max_allowed_reports(unsigned int max_allowed_reports_) {
 
 bool SwimClient::postMessage(SwimEnvelope *envelope) const {
 
-  envelope->mutable_sender()->set_hostname(self_.hostname());
-  envelope->mutable_sender()->set_port(self_.port());
-
+  envelope->mutable_sender()->CopyFrom(self_);
   std::string msgAsStr = envelope->SerializeAsString();
 
   size_t msgSize = msgAsStr.size();
@@ -113,8 +106,14 @@ bool SwimClient::postMessage(SwimEnvelope *envelope) const {
     return false;
   }
 
+  char response[reply.size() + 1];
   VLOG(2) << "Received: " << reply.size() << " bytes";
-  return true;
+  memset(response, 0, reply.size() + 1);
+  memcpy(response, reply.data(), reply.size());
+  VLOG(2) << "Response: " << response;
+
+  return strcmp(response, "OK") == 0;
+//  return reply.size() == 2;
 }
 
 } // namespace swim

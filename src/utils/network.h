@@ -12,18 +12,16 @@
 #include <google/protobuf/stubs/common.h>
 
 
-#define MAXBUFSIZE 1024
-
 namespace utils {
+
 /**
- * Given a Linux {@link struct sockaddr} structure, it returns a string that
- * represents the {@literal host:port} for the network address.
+ * Returns the IP address of the host whose name is `hostname`; if `hostname` is empty, the IP
+ * address of this server will be returned.
  *
- * @param addr the address information struct
- * @param socklen the size of the struct pointed at by `addr`
- * @return a string of the form "localhost:8080"
+ * @param hostname the host whose IP address we want to resolve.
+ * @return the IP address, in human-readable format.
  */
-std::string inetAddress(const struct sockaddr *addr, socklen_t socklen);
+std::string InetAddress(const std::string& hostname = "");
 
 
 /**
@@ -34,7 +32,7 @@ std::string inetAddress(const struct sockaddr *addr, socklen_t socklen);
  * @return a string suitable for use with ZMQ {@link socket_t socket()} call.
  *      Or an empty string, if no suitable socket is available.
  */
-std::string sockAddr(unsigned int port);
+std::string SocketAddress(unsigned int port);
 
 /**
  * Returns the current time in a format suitable for use as a timestamp field
@@ -42,7 +40,7 @@ std::string sockAddr(unsigned int port);
  *
  * @return the current time (via `std::time()`).
  */
-google::protobuf::int64 current_time();
+google::protobuf::int64 CurrentTime();
 
 /**
  * Tries to find this node's hostname, as returned by the OS.

@@ -54,7 +54,7 @@ inline unsigned short randomPort() {
  * <p>We slice the total timeout in "slices" of `sliceDuration` msec, and test the predicate
  * every time until it either becomes true or we run out of time.
  *
- * <p>Assumes that the predicate tested is idemptotent (in other words, the fact that we test it
+ * <p>Assumes that the predicate tested is idempotent (in other words, the fact that we test it
  * several times instead of only once will not impact the outcome) and that it does change over
  * time (typically, because another thread is busy doing something).
  *
@@ -72,7 +72,7 @@ inline bool WaitAtMostFor(
 ) {
   long retries = timeout / sliceDuration;
 
-  // If the caller is not willing to wait at lease one "slice" we'll just test the predicate.
+  // If the caller is not willing to wait at least one "slice" we'll just test the predicate.
   if (retries < 1) {
     return pred();
   }

@@ -12,6 +12,7 @@
 #include <glog/logging.h>
 #include <zmq.hpp>
 
+#include "utils/network.h"
 #include "SwimCommon.hpp"
 
 namespace swim {
@@ -57,8 +58,8 @@ protected:
   /**
    * Invoked when the `client` sends a `SwimEnvelope::Type::STATUS_UPDATE` message to this server.
    *
-   * <p>This is essentially a callback method that will be invoked by the server's loop, in its
-   * own thread: the default implementation simply logs the request and returns.
+   * <p>This is a callback method that will be invoked by the server's loop, in its
+   * own thread.
    *
    * <p><strong>Note</strong> that this server class is currently <strong>NOT</strong>
    * thread-safe and that none of its members (apart from the `atomic<bool>` stopped_) should be
@@ -70,15 +71,25 @@ protected:
   virtual void onUpdate(Server* client) {
     // Make sure client will be deleted, even if an exception is thrown.
     std::unique_ptr<Server> ps(client);
-    alive_.insert(MakeRecord(*client));
-    logClient(*client);
+
+    std::shared_ptr<ServerRecord> record = MakeRecord(*client);
+    alive_.insert(record);
+
+    // If it was previously suspected of being unresponsive, this server is removed from the
+    // suspected list:
+    auto removed = suspected_.erase(record);
+    if (removed > 0) {
+      logClient(*client, "Previously suspected; added back to alive set");
+    } else {
+      logClient(*client);
+    }
   }
 
   /**
-   * Invoked when the `server` sends a `SwimEnvelope::Type::STATUS_REPORT` message to this server.
+   * Invoked when the `client` sends a `SwimEnvelope::Type::STATUS_REPORT` message to this server.
    *
-   * <p>This is essentially a callback method that will be invoked by the server's loop, in its
-   * own thread: the default implementation simply logs the request and returns.
+   * <p>This is a callback method that will be invoked by the server's loop, in its
+   * own thread.
    *
    * <p><strong>Note</strong> that this server class is currently <strong>NOT</strong>
    * thread-safe and that none of its members (apart from the `atomic<bool>` stopped_) should be
@@ -92,7 +103,21 @@ protected:
    */
   virtual void onReport(Server* client, SwimReport* report) {
     std::unique_ptr<Server> ps(client);
-    logClient(*ps, "received a report");
+
+    logClient(*ps, "Received a report");
+    for (auto record : report->alive()) {
+      std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
+      alive_.insert(pRecord);
+    }
+
+    for (auto record : report->suspected()) {
+      std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
+      suspected_.insert(pRecord);
+      alive_.erase(pRecord);
+    }
+
+    VLOG(2) << "After merging, alive: " << alive_;
+    VLOG(2) << "After merging, suspected: " << suspected_;
   }
 
   /**
@@ -169,6 +194,18 @@ public:
   bool isRunning() const { return !stopped_; }
 
   unsigned short port() const { return port_; }
+
+  /**
+   *
+   * @return the coordinates of this server (host and port; optionally, the IP address too)
+   */
+  const Server self() const {
+    auto server = Server();
+    server.set_port(port());
+    server.set_hostname(utils::hostname());
+    server.set_ip_addr(utils::InetAddress());
+    return server;
+  }
 
 
   const ServerRecordsSet& alive() const { return alive_; }

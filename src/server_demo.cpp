@@ -123,7 +123,7 @@ int main(int argc, const char *argv[]) {
   }
 
 
-  if (parser.count() != 1) {
+  if (parser.size() != 1) {
     LOG(ERROR) << "Please specify an ACTION ('send' or 'receive')";
     return EXIT_FAILURE;
   }

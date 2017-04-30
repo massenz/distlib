@@ -65,12 +65,6 @@ message SwimReport {
     // These servers are suspected to have crashed (have not responded to pings recently) but
     // still within the grace period, before they are declared to be `dead`.
     repeated ServerRecord suspected = 4;
-
-    // Finally, after enough time has elapsed without a response, these server are placed in
-    // this list, from which they will never be taken out.
-    //
-    // TODO: revisit the "faulty detectors" paper and reconsider whether "revive" servers.
-    repeated ServerRecord dead = 5;
 }
 
 
