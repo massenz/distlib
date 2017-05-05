@@ -22,15 +22,7 @@ Updated | 2016-10-09
 See [http://conan.io](http://conan.io) for more information.
 
 TO build the project, you need to first donwload/build the necessary binary dependencies, as
-listed in `conanfile.text`:
-
-```
-[requires]
-glog/0.3.4@dwerner/testing
-OpenSSL/1.0.2g@lasote/stable
-cryptopp/5.6.3@riebl/testing
-zmqcpp/4.1.1@memsharded/stable
-```
+listed in `conanfile.text`.
 
 This is done as follows:
 
@@ -38,8 +30,12 @@ This is done as follows:
 $ sudo -H pip install -U conan
 $ mkdir .conan && cd .conan
 $ conan install .. -s compiler=clang -s compiler.version=3.6 \
-    -s compiler.libcxx=libstdc++ --build=missing
+    -s compiler.libcxx=libstdc++11 --build=missing
 ```
+
+__note__
+>I've found Conan not to work terribly well inside virtualenvs - but
+if you can make it work there, that'd be the preferred way.
 
 After the dependencies are built, you can see information about them using `conan info ..`
 (the commands above assume that `clang` is configured on the `PATH` and that you have
@@ -47,31 +43,10 @@ version 3.6 installed).
 
 See also `CMakeLists.txt` for the changes necessary to add Conan's builds to the targets.
 
-### Google Tests
-
-The `gtest` package in Conan is broken, so we need to manually donwload, build and install `gtest`.
-
-The code here has been tested using
-[Google Gtest 1.7.0](https://github.com/google/googletest/releases/tag/release-1.7.0): download
-and untar into a folder (assume it's called `$GTEST_DIR`):
-
-    cd $GTEST_DIR
-    mkdir build && cd build
-    cmake ..
-    make
-
-Then the gtest libraries (`libgtest.a` and `libgtest_main.a`) need to be copied into the
-installation folder along with a symlink to the header files:
-
-    cp libgtest.a libgtest_main.a ${INSTALL_DIR}/lib
-    ln -sf ${GTEST_DIR}/include/gtest ${INSTALL_DIR}/include/gtest
-
-and then define the `INSTALL_DIR` variable when invoking `cmake` via `-DINSTALL_DIR` (see next
-section).
 
 ### Google Protocol Buffers
 
-The [SWIM gossip protocol implementation](#SWIM Gossip and Consensus algorithm) makes use of
+The [SWIM gossip protocol implementation](#swim_gossip_and_consensus_algorithm) makes use of
 Protobuf as the serialization protocol to exchange status messages between servers.
 
 The code in this project has been tested using
