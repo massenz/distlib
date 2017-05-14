@@ -55,8 +55,9 @@ TEST(GossipTests, streamOut) {
 
   std::ostringstream s;
   s << records;
-  ASSERT_EQ(0, s.str().find("{[From: (localhost:8081) at:"));
-  ASSERT_GT(200, s.str().find(", [From: (localhost:8088) at:"));
+
+  ASSERT_EQ(0, s.str().find("{ ['localhost:8081' at:"));
+  ASSERT_LT(s.str().find(", ['localhost:8088' at:"), 100);
 }
 
 

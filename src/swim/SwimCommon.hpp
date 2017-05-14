@@ -62,18 +62,29 @@ inline std::unique_ptr<ServerRecord> MakeRecord(
 
 
 /**
- * Ordering operator for server records, uses the `Server` IP address as a total ordering
+ * Ordering operator for server records, uses the `hostname`  as a total ordering
  * criterion.  For servers on the same host (IP), the port number is used; the timestamp is
  * not used as a sorting criterion.
  *
- * <p>The sorting by IP addresses is done solely lexicographically, no meaning is assigned
- * to the octets; it is simply a means to allow us to store `ServerRecord` objects into a `set`.
+ * <p>The sorting by hostname is done solely lexicographically, no meaning is assigned
+ * to the either the name or the IP address (if present); it is simply a means to allow us to store
+ * `ServerRecord` objects into a `set`.
  *
  * @param other the ServerRecord to compare against
  * @return whether this server record is logically "less than" `other`
  */
 bool operator<(const ServerRecord &lhs, const ServerRecord &rhs);
 
+
+/**
+ * Equality operator for servers; we assume we are talking to the same server if it has the same
+ * hostname and the same port.  The IP address is not used.
+ *
+ * @param lhs the left-hand operand
+ * @param rhs the right-hand operand
+ * @return `true` if both `hostname` and `port` match
+ */
+bool operator==(const Server &lhs, const Server &rhs);
 
 /**
  * Without this, associative containers (such as `set`) would compare the value of the pointers

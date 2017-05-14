@@ -332,6 +332,32 @@ TEST_F(SwimServerTests, ignoreStaleReports) {
   ASSERT_EQ(1, server_->suspected().size());
 }
 
+TEST_F(SwimServerTests, servesPingRequests) {
+  ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
+  ASSERT_TRUE(server_->isRunning());
+
+  auto svr = MakeServer("localhost", server_->port());
+  SwimClient client(*svr);
+
+  auto other = MakeServer("fakeserver", 9098);
+
+  // Note we need to release the unique_ptr here, as RequestPing takes ownership.
+  ASSERT_TRUE(client.RequestPing(other.release()));
+
+  // This is the sender (us).
+  ASSERT_EQ(1, server_->alive().size());
+
+  // We need to wait a bit for the ping to time out.
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+  // THis is the fakeserver, definitely dead.
+  ASSERT_EQ(1, server_->suspected().size());
+
+  for (auto record : server_->suspected()) {
+    ASSERT_EQ(*MakeServer("fakeserver", 9098), record->server());
+  }
+}
+
 
 TEST_F(SwimServerTests, canRestart) {
   ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";

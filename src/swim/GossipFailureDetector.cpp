@@ -6,10 +6,15 @@
 namespace swim {
 
 bool operator<(const ServerRecord &lhs, const ServerRecord& rhs) {
-  if (lhs.server().ip_addr() == rhs.server().ip_addr()) {
+  if (lhs.server().hostname() == rhs.server().hostname()) {
     return lhs.server().port() < rhs.server().port();
   }
-  return lhs.server().ip_addr() < rhs.server().ip_addr();
+  return lhs.server().hostname() < rhs.server().hostname();
+}
+
+bool operator==(const Server &lhs, const Server &rhs) {
+  return lhs.hostname() == rhs.hostname()
+      && lhs.port() == rhs.port();
 }
 
 } // namespace swim

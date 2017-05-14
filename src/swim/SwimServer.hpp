@@ -14,6 +14,7 @@
 
 #include "utils/network.h"
 #include "SwimCommon.hpp"
+#include "SwimClient.hpp"
 
 namespace swim {
 
@@ -138,22 +139,26 @@ protected:
    * Invoked when the `client` sends a `SwimEnvelope::Type::STATUS_REQUEST` message to this server.
    *
    * <p>This is essentially a callback method that will be invoked by the server's loop, in its
-   * own thread: the default implementation simply logs the request and returns.
+   * own thread.
+   *
+   * <p>This message requests this server to send a ping on behalf of the `sender`, to
+   * the `destination` server; if the latter responds within the given timeout, this server will
+   * send back a report to notify that it is alive.
+   *
+   * <p>If the `destination` does not respond, no action is taken, beyond marking it as a
+   * `suspected` crashed server.
    *
    * <p><strong>Note</strong> that this server class is currently <strong>NOT</strong>
    * thread-safe and that none of its members (apart from the `atomic<bool>` stopped_) should be
    * modified while processing this call.
    *
-   * @param client the server that just sent the message; the callee obtains ownership of the
+   * @param sender the server that just sent the message; the callee obtains ownership of the
    *        pointer and is responsible for freeing the memory.
    * @param destination the other server that the requestor (`client`) is asksing this server to
    *        ping and report status back.
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
-  virtual void onPingRequest(Server* client, Server* destination) {
-    std::unique_ptr<Server> ps(client);
-    logClient(*ps, "request to ping " + destination->hostname());
-  }
+  virtual void onPingRequest(Server* sender, Server* destination);
 
 public:
 

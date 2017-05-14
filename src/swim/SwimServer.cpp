@@ -83,4 +83,34 @@ void SwimServer::start() {
   LOG(WARNING) << "SERVER STOPPED";
 }
 
+void SwimServer::onPingRequest(Server* sender, Server* destination) {
+
+  Server from(*sender);
+
+  std::thread([this, destination, from] {
+
+    std::shared_ptr<Server> pdest(destination);
+
+    // TODO: the timeout should be a property that we could set; for now using the default value.
+    SwimClient client(*destination, port_);
+    if (client.Ping()) {
+      VLOG(2) << "Forwarded request to " << *destination << " succeded; reporting ALIVE";
+      SwimReport report;
+      report.mutable_alive()->Add()->CopyFrom(*MakeRecord(*destination));
+
+      SwimClient respond(from, port_);
+      respond.Send(report);
+    } else {
+      VLOG(2) << "Forwarded requested PING failed to " << *destination;
+      suspected_.insert(MakeRecord(*destination));
+      VLOG(2) << "Server " << *destination << " added to SUSPECTED list";
+    }
+  }).detach();
+
+
+  // We also update the sender's status to be "alive" (and this will
+  // also take care of destroying the resource).
+  VLOG(2) << "Updating status for " << *sender << " as ALIVE";
+  onUpdate(sender);
+}
 } // namespace swim
