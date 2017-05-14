@@ -260,6 +260,79 @@ TEST_F(SwimServerTests, receiveReportMany) {
 }
 
 
+TEST_F(SwimServerTests, reconcileReports) {
+  ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
+  ASSERT_TRUE(server_->isRunning());
+
+  auto svr = MakeServer("localhost", server_->port());
+  SwimClient client(*svr);
+
+  SwimReport report;
+  report.mutable_sender()->mutable_server()->CopyFrom(client.self());
+
+  report.mutable_sender()->set_timestamp(utils::CurrentTime());
+
+  auto suspected = report.mutable_suspected();
+  ServerRecord *two = suspected->Add();
+  two->mutable_server()->set_hostname("host-suspect");
+  two->set_timestamp(utils::CurrentTime() - 10);
+  two->mutable_server()->set_port(5500);
+
+  ASSERT_TRUE(client.Send(report));
+  ASSERT_EQ(0, server_->alive().size());
+  ASSERT_EQ(1, server_->suspected().size());
+
+  report.clear_suspected();
+
+  two = report.mutable_alive()->Add();
+  two->mutable_server()->set_hostname("host-suspect");
+  two->set_timestamp(utils::CurrentTime());
+  two->mutable_server()->set_port(5500);
+
+  ASSERT_TRUE(client.Send(report));
+  ASSERT_EQ(1, server_->alive().size());
+  ASSERT_EQ(0, server_->suspected().size());
+}
+
+
+TEST_F(SwimServerTests, ignoreStaleReports) {
+  ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
+  ASSERT_TRUE(server_->isRunning());
+
+  auto svr = MakeServer("localhost", server_->port());
+  SwimClient client(*svr);
+
+  SwimReport report;
+  report.mutable_sender()->mutable_server()->CopyFrom(client.self());
+
+  // First let's send a "stale" report, where one host was suspected 10 minutes ago.
+  report.mutable_sender()->set_timestamp(utils::CurrentTime());
+
+  auto suspected = report.mutable_suspected();
+  ServerRecord *two = suspected->Add();
+  two->mutable_server()->set_hostname("host-suspect");
+  two->set_timestamp(utils::CurrentTime());
+  two->mutable_server()->set_port(5500);
+
+  ASSERT_TRUE(client.Send(report));
+  ASSERT_EQ(0, server_->alive().size());
+  ASSERT_EQ(1, server_->suspected().size());
+
+  report.clear_suspected();
+
+  two = report.mutable_alive()->Add();
+  two->mutable_server()->set_hostname("host-suspect");
+  // The information that this server was alive 10 minutes ago is
+  // irrelevant and should be ignored.
+  two->set_timestamp(utils::CurrentTime() - 600);
+  two->mutable_server()->set_port(5500);
+
+  ASSERT_TRUE(client.Send(report));
+  ASSERT_EQ(0, server_->alive().size());
+  ASSERT_EQ(1, server_->suspected().size());
+}
+
+
 TEST_F(SwimServerTests, canRestart) {
   ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
 

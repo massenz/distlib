@@ -47,6 +47,6 @@ google::protobuf::int64 CurrentTime();
  *
  * @return the hostname, if available.
  */
-std::string hostname();
+std::string Hostname();
 
 } // namespace utils

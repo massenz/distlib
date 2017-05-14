@@ -11,7 +11,7 @@ using namespace std;
 
 
 TEST(NetworkTests, CanGetHostname) {
-  string host = hostname();
+  string host = Hostname();
   EXPECT_FALSE(host.empty());
 }
 

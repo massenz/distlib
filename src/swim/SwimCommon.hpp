@@ -106,20 +106,18 @@ typedef set<std::shared_ptr<ServerRecord>, ServerRecordPtrLess> ServerRecordsSet
 
 
 inline std::ostream &operator<<(std::ostream &out, const Server &server) {
-  out << "(" << server.hostname() << ":" << server.port();
+  out << "'" << server.hostname() << ":" << server.port() << "'";
 
   if (server.has_ip_addr() && server.ip_addr().size() > 0) {
     out << " [" << server.ip_addr() << "]";
   }
-
-  out << ")";
   return out;
 }
 
 inline std::ostream &operator<<(std::ostream &out, const ServerRecord &record) {
   long ts = record.timestamp();
 
-  out << "[From: " << record.server() << " at: "
+  out << "[" << record.server() << " at: "
       << std::put_time(std::gmtime(&ts), "%c %Z");
 
   if (record.has_forwarder()) {
@@ -131,11 +129,15 @@ inline std::ostream &operator<<(std::ostream &out, const ServerRecord &record) {
 }
 
 inline std::ostream& operator<<(std::ostream& out, const ServerRecordsSet& recordsSet) {
-  out << "{";
+  out << "{ ";
   for (auto record : recordsSet) {
     out << *record << ", ";
   }
-  out << "\b\b}";
+
+  if (!recordsSet.empty()) {
+    out << "\b\b";
+  }
+  out << " }";
   return out;
 }
 } // namespace swim

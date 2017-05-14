@@ -21,7 +21,7 @@ std::string InetAddress(const std::string& host) {
   hints.ai_family = AF_UNSPEC;
   hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICSERV;
 
-  int resp = getaddrinfo(host.empty() ? hostname().c_str() : host.c_str(), nullptr,
+  int resp = getaddrinfo(host.empty() ? Hostname().c_str() : host.c_str(), nullptr,
                          &hints, &result);
   if (resp) {
     LOG(ERROR) << "Cannot find IP address for '" << host << "': " << gai_strerror(resp);
@@ -80,7 +80,7 @@ google::protobuf::int64 CurrentTime() {
 }
 
 
-std::string hostname() {
+std::string Hostname() {
   char name[NI_MAXHOST];
   int retcode = gethostname(name, NI_MAXHOST);
   if (retcode != 0) {

@@ -107,13 +107,27 @@ protected:
     logClient(*ps, "Received a report");
     for (auto record : report->alive()) {
       std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
-      alive_.insert(pRecord);
+
+      auto was_suspected = suspected_.find(pRecord);
+      if (was_suspected != suspected_.end() &&
+          (*was_suspected)->timestamp() < record.timestamp()) {
+        suspected_.erase(pRecord);
+        alive_.insert(pRecord);
+      } else if (was_suspected == suspected_.end()) {
+        alive_.insert(pRecord);
+      }
     }
 
     for (auto record : report->suspected()) {
       std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
-      suspected_.insert(pRecord);
-      alive_.erase(pRecord);
+
+      auto was_alive = alive_.find(pRecord);
+      if (was_alive != alive_.end() && (*was_alive)->timestamp() < record.timestamp()) {
+        suspected_.insert(pRecord);
+        alive_.erase(pRecord);
+      } else if (was_alive == alive_.end()) {
+        suspected_.insert(pRecord);
+      }
     }
 
     VLOG(2) << "After merging, alive: " << alive_;
@@ -202,7 +216,7 @@ public:
   const Server self() const {
     auto server = Server();
     server.set_port(port());
-    server.set_hostname(utils::hostname());
+    server.set_hostname(utils::Hostname());
     server.set_ip_addr(utils::InetAddress());
     return server;
   }
