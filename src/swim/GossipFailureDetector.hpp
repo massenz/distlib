@@ -71,6 +71,7 @@ public:
     server->set_hostname(host.hostname());
     server->set_port(host.port());
     record->set_timestamp(utils::CurrentTime());
+    record->set_didgossip(false);
 
     ServerRecordsSet* ps = gossip_server_->mutable_alive();
     ps->insert(record);
@@ -96,7 +97,15 @@ public:
   const ServerRecordsSet& alive() const { return gossip_server_->alive(); }
   const ServerRecordsSet& suspected() const { return gossip_server_->suspected(); }
 
-  const SwimServer& gossip_server() const { return *gossip_server_; }
+  SwimServer& gossip_server() const { return *gossip_server_; }
+
+  /**
+   * Prepares a report that can then be sent to neighbors to gossip about.
+   *
+   * @return a list of all known alive and suspected servers, including only those that have been
+   *    added since the last time a report was sent (i.e., the ones we haven't gossiped about yet).
+   */
+  SwimReport PrepareReport();
 };
 
 } // namespace swim

@@ -57,6 +57,8 @@ inline std::unique_ptr<ServerRecord> MakeRecord(
   psvr->set_ip_addr(server.ip_addr());
 
   record->set_timestamp(TimestampToFixed64(timestamp));
+  record->set_didgossip(false);
+
   return record;
 }
 
@@ -149,6 +151,21 @@ inline std::ostream& operator<<(std::ostream& out, const ServerRecordsSet& recor
     out << "\b\b";
   }
   out << " }";
+  return out;
+}
+
+inline std::ostream &operator<<(std::ostream &out, const SwimReport &report) {
+  out << "Report from: " << report.sender();
+  out << "\n=================================\nHealthy servers\n--------------------------\n";
+  for (auto healthy : report.alive()) {
+    out << healthy << std::endl;
+  }
+  out << "\nUnresponsive servers\n--------------------------\n";
+  for (auto suspect : report.suspected()) {
+    out << suspect << std::endl;
+  }
+  out << "\n=================================\n";
+
   return out;
 }
 } // namespace swim

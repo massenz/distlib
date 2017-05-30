@@ -36,6 +36,11 @@ message ServerRecord {
     // If this record is sent on behalf of another server,
     // the forwarder should enter its identity here.
     optional Server forwarder = 3;
+
+    // When building a report, only those records with this flag unset will be sent
+    // to neighbors (we "gossip" about new things that have happened; old news are not
+    // interesting).
+    required bool didGossip = 4 [default = false];
 }
 
 
@@ -56,7 +61,7 @@ message ServerRecord {
 //
 message SwimReport {
     // The sender and the time when this report was created.
-    required ServerRecord sender = 1;
+    required Server sender = 1;
 
     // `alive` servers are those that were `suspected` to have crashed, but have subsequently
     // been found to be healthy and responding, within the configured `SUSPECTED_TTL` time.

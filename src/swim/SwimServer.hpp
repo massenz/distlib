@@ -108,6 +108,7 @@ protected:
     logClient(*ps, "Received a report");
     for (auto record : report->alive()) {
       std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
+      pRecord->set_didgossip(false);
 
       auto was_suspected = suspected_.find(pRecord);
       if (was_suspected != suspected_.end() &&
@@ -121,6 +122,7 @@ protected:
 
     for (auto record : report->suspected()) {
       std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
+      pRecord->set_didgossip(false);
 
       auto was_alive = alive_.find(pRecord);
       if (was_alive != alive_.end() && (*was_alive)->timestamp() < record.timestamp()) {
