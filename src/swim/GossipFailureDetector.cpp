@@ -17,6 +17,27 @@ bool operator==(const Server &lhs, const Server &rhs) {
       && lhs.port() == rhs.port();
 }
 
+SwimReport GossipFailureDetector::PrepareReport() {
+  SwimReport report;
+
+  report.mutable_sender()->CopyFrom(gossip_server().self());
+
+  for (auto item : gossip_server().alive()) {
+    if (!item->didgossip()) {
+      ServerRecord *prec = report.mutable_alive()->Add();
+      prec->CopyFrom(*item);
+    }
+  }
+
+  for (auto item : gossip_server().suspected()) {
+    if (!item->didgossip()) {
+      ServerRecord *prec = report.mutable_suspected()->Add();
+      prec->CopyFrom(*item);
+    }
+  }
+
+  return report;
+}
 } // namespace swim
 
 

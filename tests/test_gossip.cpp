@@ -153,3 +153,28 @@ TEST_F(GossipFailureDetectorTests, addNeighbors) {
   detector_->AddNeighbor(*server3);
   ASSERT_EQ(3, detector_->alive().size());
 }
+
+
+TEST_F(GossipFailureDetectorTests, prepareReport) {
+  for (int i = 0; i < 3; ++i) {
+    std::string host = "host_" + std::to_string(i) + ".example.com";
+    std::shared_ptr<Server> server = MakeServer(host, 4456 + i);
+    detector_->AddNeighbor(*server);
+  }
+
+  SwimReport report = detector_->PrepareReport();
+  ASSERT_EQ(3, report.alive_size());
+  ASSERT_EQ(0, report.suspected_size());
+
+  auto first = *(detector_->gossip_server().mutable_alive()->begin());
+  first->set_didgossip(true);
+
+  report = detector_->PrepareReport();
+  ASSERT_EQ(2, report.alive_size());
+
+  detector_->gossip_server().mutable_suspected()->insert(
+      MakeRecord(*MakeServer("another.example.com", 4456)));
+
+  report = detector_->PrepareReport();
+  ASSERT_EQ(1, report.suspected_size());
+}

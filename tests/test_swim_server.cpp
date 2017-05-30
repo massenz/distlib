@@ -200,23 +200,25 @@ TEST_F(SwimServerTests, receiveReport) {
   SwimClient client(*svr);
 
   SwimReport report;
-  Server *sender = report.mutable_sender()->mutable_server();
+
+  Server *sender = report.mutable_sender();
   sender->set_hostname("test.host.1");
   sender->set_port(9099);
   sender->set_ip_addr("192.168.1.1");
-  report.mutable_sender()->set_timestamp(utils::CurrentTime());
 
   auto alives = report.mutable_alive();
   ServerRecord* one = alives->Add();
   one->set_timestamp(utils::CurrentTime());
   one->mutable_server()->set_hostname("host1");
   one->mutable_server()->set_port(1234);
+  one->set_didgossip(false);
 
   auto suspected = report.mutable_suspected();
   ServerRecord* two = suspected->Add();
   two->set_timestamp(utils::CurrentTime());
   two->mutable_server()->set_hostname("host_susp");
   two->mutable_server()->set_port(9876);
+  two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
   ASSERT_EQ(1, server_->alive().size());
@@ -231,8 +233,7 @@ TEST_F(SwimServerTests, receiveReportMany) {
   SwimClient client(*svr);
 
   SwimReport report;
-  report.mutable_sender()->mutable_server()->CopyFrom(client.self());
-  report.mutable_sender()->set_timestamp(utils::CurrentTime());
+  report.mutable_sender()->CopyFrom(client.self());
 
   auto alives = report.mutable_alive();
   for (int i = 0; i < 10; ++i) {
@@ -242,6 +243,7 @@ TEST_F(SwimServerTests, receiveReportMany) {
     one->set_timestamp(utils::CurrentTime());
     one->mutable_server()->set_hostname(host);
     one->mutable_server()->set_port(9900 + i);
+    one->set_didgossip(false);
   }
 
   auto suspected = report.mutable_suspected();
@@ -252,6 +254,7 @@ TEST_F(SwimServerTests, receiveReportMany) {
     two->set_timestamp(utils::CurrentTime());
     two->mutable_server()->set_hostname(host);
     two->mutable_server()->set_port(5500 + i);
+    two->set_didgossip(false);
   }
 
   ASSERT_TRUE(client.Send(report));
@@ -268,15 +271,14 @@ TEST_F(SwimServerTests, reconcileReports) {
   SwimClient client(*svr);
 
   SwimReport report;
-  report.mutable_sender()->mutable_server()->CopyFrom(client.self());
-
-  report.mutable_sender()->set_timestamp(utils::CurrentTime());
+  report.mutable_sender()->CopyFrom(client.self());
 
   auto suspected = report.mutable_suspected();
   ServerRecord *two = suspected->Add();
   two->mutable_server()->set_hostname("host-suspect");
   two->set_timestamp(utils::CurrentTime() - 10);
   two->mutable_server()->set_port(5500);
+  two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
   ASSERT_EQ(0, server_->alive().size());
@@ -288,6 +290,7 @@ TEST_F(SwimServerTests, reconcileReports) {
   two->mutable_server()->set_hostname("host-suspect");
   two->set_timestamp(utils::CurrentTime());
   two->mutable_server()->set_port(5500);
+  two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
   ASSERT_EQ(1, server_->alive().size());
@@ -303,16 +306,14 @@ TEST_F(SwimServerTests, ignoreStaleReports) {
   SwimClient client(*svr);
 
   SwimReport report;
-  report.mutable_sender()->mutable_server()->CopyFrom(client.self());
-
-  // First let's send a "stale" report, where one host was suspected 10 minutes ago.
-  report.mutable_sender()->set_timestamp(utils::CurrentTime());
+  report.mutable_sender()->CopyFrom(client.self());
 
   auto suspected = report.mutable_suspected();
   ServerRecord *two = suspected->Add();
   two->mutable_server()->set_hostname("host-suspect");
   two->set_timestamp(utils::CurrentTime());
   two->mutable_server()->set_port(5500);
+  two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
   ASSERT_EQ(0, server_->alive().size());
@@ -326,6 +327,7 @@ TEST_F(SwimServerTests, ignoreStaleReports) {
   // irrelevant and should be ignored.
   two->set_timestamp(utils::CurrentTime() - 600);
   two->mutable_server()->set_port(5500);
+  two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
   ASSERT_EQ(0, server_->alive().size());
