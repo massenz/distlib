@@ -9,12 +9,10 @@ enable_testing()
 include(../.conan/conanbuildinfo.cmake)
 conan_basic_setup()
 
-find_library(GTEST gtest ${INSTALL_DIR}/lib)
 
+find_library(GTEST gtest ${INSTALL_DIR}/lib)
 if (${GTEST} STREQUAL GTEST-NOTFOUND)
     message(FATAL_ERROR "Could not locate a valid Google Test library installed.")
-else (${GTEST} STREQUAL GTEST-NOTFOUND)
-    message(STATUS "Found Google Test library at: ${GTEST}")
 endif (${GTEST} STREQUAL GTEST-NOTFOUND)
 
 set(TEST_FILES
@@ -44,12 +42,9 @@ add_executable(${TEST_TARGET}
         all_tests.cpp
 )
 target_link_libraries(${TEST_TARGET}
-        ${GTEST}
         crypto
-        glog
-        protobuf
-        pthread
-        zmq
+        ${GTEST}
+        ${SWIM_LIBS}
 )
 
 add_test(${TEST_TARGET} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_TARGET})

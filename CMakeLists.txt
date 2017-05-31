@@ -6,7 +6,6 @@ cmake_minimum_required(VERSION 3.4)
 
 # Include common cmake utilities:
 include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
-include(FindProtobuf)
 
 ### Setting up common configuration variables
 
@@ -35,7 +34,7 @@ set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests)
 set(PROTO_DIR ${PROJECT_SOURCE_DIR}/proto)
 set(PROJECT_BINARY_DIR ${PROJECT_SOURCE_DIR}/build)
-set(ZMQ_LIBRARIES zmq)
+set(ZMQ_LIBRARIES zmq-static)
 
 # Configure a header file to pass settings into source code
 configure_file(
@@ -44,22 +43,19 @@ configure_file(
 )
 
 # Building Protocol Buffers.
-# NOTE -- the variable Protobuf_INCLUDE_DIR must be in that case or CLion will
-# fail to build (command line cmake works just fine with the ALL_UPPERCASE value too).
-set(Protobuf_INCLUDE_DIR ${INSTALL_DIR}/include)
-
+#
 find_package(Protobuf REQUIRED)
 
 IF(${PROTOBUF_FOUND})
     PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_DIR}/swim.proto)
-    message(STATUS "Generated Protocol Buffer\n\tHeaders: ${PROTO_HDRS}\n\tSources: ${PROTO_SRCS}")
+    message(STATUS "When generated, Protocol Buffer files will be in:\n"
+                   "\tHeaders: ${PROTO_HDRS}\n\tSources: ${PROTO_SRCS}")
 ELSE(${PROTOBUF_FOUND})
     message(FATAL_ERROR "Could not find Google Protocol Buffers libraries")
 ENDIF(${PROTOBUF_FOUND})
 
 include_directories(
         ${SOURCE_DIR}
-        ${INSTALL_DIR}/include
         ${PROJECT_BINARY_DIR}
         ${CMAKE_BINARY_DIR}
         ${PROTOBUF_INCLUDE_DIRS}
@@ -81,7 +77,7 @@ set(SWIM_SOURCES
 
 set(SWIM_LIBS
         protobuf
-        zmq
+        ${ZMQ_LIBRARIES}
         glog
         pthread
 )
