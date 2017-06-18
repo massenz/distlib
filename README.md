@@ -126,6 +126,57 @@ References:
  ```
 (obviously, change the hostname if you are running the two on separate machines/VMs/containers).
 
+### Server states
+
+![States Diagram](docs/images/distlib-states.png)
+
+After startup, a `SwimServer` can `ping()` one or more of the servers that have been named
+as `seeds` (perhaps, as a CLI `--seeds` arguments, or named in a config file) and will be
+inserted into the list of `Alive` peers; afterwards, other peers will learn of this server's
+`Alive` state via the Gossip protocol, as this is `reported` to them as being `Alive`.
+
+Subsequently, at regular intervals (but randomly, from the list of `Alive` servers) successful
+`ping()` requests will keep this server in the pool of peers' lists of `Alive` peers.
+
+If one of the pings fails, or the server is reported by one of the peers to be `Suspected`, it
+will be placed in the appropriate list and, after a (configurable) timeout lapses, it will be
+considered as `Terminated` and removed from the list.
+
+Once in the `Suspected` list, a server is never pinged again from the detector; however, it
+may come back `Alive` under one of these conditions (and __before__ the timeout expires):
+
+- _indirectly_, when one of the other peers reports it to be `Alive`;
+- _directly_, if the server receives a `ping()` request from the `Suspected` server
+  which arrives __after__ a similar `ping()` request from this server had failed
+  (and caused the other server to be `Suspected`);
+- _mediated_, when a third server reports a successful response to a `forward ping()` request
+  that this server had requested, with the `Suspected` server as the object.
+
+When the (configurable) timeout expires, the `Suspected` server is simply removed from the list
+and assumed to be __terminated__ (both the `Started` and `terminated` states are only "logical",
+no list is kept, or no special meaning is associated to them).
+
+In particular, we do not gossip about servers that have been determined to be in either state,
+and we will assume that each of the peers will take care of removing suspected servers from their
+lists once the timeout (which is not necessarily the same for the entire pool - or even constant
+over time for a given server) expires.
+
+See the [SWIM Paper](SWIM) for more details.
+
+__Gossip__
+
+At regular intervals, a gossiper will pick at random from the list of `Alive` peers one server,
+to which it will send a `SwimReport` containing __only__ the changes since the last report that 
+was sent out (regardless of _who_ it was send out to), as gossipers do not care much for old news.
+
+_Timing_ is an issue at present, in that we want to prevent stale news to overwrite newer state
+information - however, using the report's records' timestamps is unreliable, as different
+servers will have different system clocks and, potentially, they will be further diverging over
+time.
+
+`TODO: this has not been addressed for now`
+
+
 
 [SWIM]: https://goo.gl/VUn4iQ
 [detectors]: https://goo.gl/6yuh9T
