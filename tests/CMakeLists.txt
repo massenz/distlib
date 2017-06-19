@@ -35,16 +35,12 @@ set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES
                             GENERATED TRUE)
 
 add_executable(${TEST_TARGET}
-        ${PROTO_SRCS}
-        ${SOURCE_FILES}
-        ${SWIM_SOURCES}
         ${TEST_FILES}
         all_tests.cpp
 )
 target_link_libraries(${TEST_TARGET}
-        crypto
         ${GTEST}
-        ${SWIM_LIBS}
+        distlib
 )
 
 add_test(${TEST_TARGET} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_TARGET})
