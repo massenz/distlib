@@ -1,4 +1,4 @@
-# This file (c) 2016 AlertAvert.com.  All rights reserved.
+# This file (c) 2016-2017 AlertAvert.com.  All rights reserved.
 
 project(distlib)
 cmake_minimum_required(VERSION 3.4)
@@ -11,8 +11,8 @@ include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 
 # Version number
 set(RELEASE_MAJOR 0)
-set(RELEASE_MINOR 6)
-set(RELEASE_PATCH 1)
+set(RELEASE_MINOR 7)
+set(RELEASE_PATCH 0)
 
 IF (${COMMONS_FILE} STREQUAL NOTFOUND)
     message(WARNING "Not using CMake utilities")
@@ -28,13 +28,12 @@ conan_basic_setup()
 set(RELEASE_STRING "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}-${BUILD_ID}")
 message(STATUS "Building Release: ${RELEASE_STRING}")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC")
 
 set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests)
 set(PROTO_DIR ${PROJECT_SOURCE_DIR}/proto)
 set(PROJECT_BINARY_DIR ${PROJECT_SOURCE_DIR}/build)
-set(ZMQ_LIBRARIES zmq-static)
 
 # Configure a header file to pass settings into source code
 configure_file(
@@ -76,25 +75,53 @@ set(SWIM_SOURCES
 )
 
 set(SWIM_LIBS
-        protobuf
-        ${ZMQ_LIBRARIES}
+        crypto
         glog
+        protobuf
         pthread
+        zmq
 )
 
-add_executable(merkle_demo ${SOURCE_FILES} ${SOURCE_DIR}/main.cpp)
-target_link_libraries(merkle_demo ${CONAN_LIBS})
+# Create a shared (dynamic) library.
+add_library(${PROJECT_NAME}
+        ${SOURCE_FILES}
+        ${SWIM_SOURCES}
+        ${PROTO_SRCS}
+)
+target_link_libraries(${PROJECT_NAME}
+        ${SWIM_LIBS})
+
+if (NOT ${INSTALL_DIR})
+    message(STATUS "Installing lib${PROJECT_NAME}.a static library to ${INSTALL_DIR}/lib\n"
+                   "   and include files to ${INSTALL_DIR}/include/${PROJECT_NAME}")
+    install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_DIR}/lib)
+
+    # Install Library headers.
+    install(DIRECTORY ${SOURCE_DIR}/ DESTINATION ${INSTALL_DIR}/include/${PROJECT_NAME}
+            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+
+    # Copy Proto headers to include folder.
+    install(FILES ${PROTO_HDRS} DESTINATION ${INSTALL_DIR}/include/${PROJECT_NAME}/proto)
+
+else (NOT ${INSTALL_DIR})
+    message(WARNING "INSTALL_DIR is not defined, files will not be installed."
+                    " Use -DINSTALL_DIR=/path/to/install to enable")
+endif (NOT ${INSTALL_DIR})
+
+# Example creating an exec using the shared lib.
+add_executable(merkle_demo ${SOURCE_DIR}/merkle_demo.cpp)
+target_link_libraries(merkle_demo
+        ${PROJECT_NAME}
+)
 
 # Adding a target demo server that will use the SWIM protocol to derive
 # a list of healthy server from a configured pool.
 link_directories(${INSTALL_DIR}/lib)
-add_executable(server
-        ${PROTO_SRCS}
-        ${SWIM_SOURCES}
+add_executable(swim_server_demo
         ${SOURCE_DIR}/server_demo.cpp
 )
-target_link_libraries(server
-        ${SWIM_LIBS}
+target_link_libraries(swim_server_demo
+        ${PROJECT_NAME}
 )
 
 
