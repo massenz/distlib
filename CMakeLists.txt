@@ -83,7 +83,7 @@ set(SWIM_LIBS
 )
 
 # Create a shared (dynamic) library.
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
         ${SOURCE_FILES}
         ${SWIM_SOURCES}
         ${PROTO_SRCS}

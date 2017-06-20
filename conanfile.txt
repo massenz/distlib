@@ -1,10 +1,10 @@
 [requires]
 glog/0.3.4@dwerner/testing
-OpenSSL/1.0.2g@lasote/stable
+OpenSSL/1.0.2j@lasote/stable
 cryptopp/5.6.3@riebl/testing
 gtest/1.8.0@lasote/stable
 Protobuf/2.6.1@memsharded/testing
-ZMQ/4.1.1@memsharded/stable
+libzmq/4.1.5@memsharded/stable
 
 
 [options]

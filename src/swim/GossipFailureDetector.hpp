@@ -54,7 +54,18 @@ public:
     if (gossip_server_ && gossip_server_->isRunning()) {
       VLOG(2) << "Stopping server";
       gossip_server_->stop();
+
+      // Wait a little while for the server to stop.
+      int retries = 5;
+      while (gossip_server_->isRunning() && retries-- > 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+      }
+
+      if (gossip_server_->isRunning()) {
+        LOG(ERROR) << "Failed to stop the server, giving up";
+      }
     }
+
     VLOG(2) << "done";
   }
 

@@ -1,15 +1,13 @@
 #!/bin/bash
 
-set -e -x
+set -e
 
 cd $(dirname $0)/../build
 
 cmake -DCOMMON_UTILS_DIR=/home/marco/Dropbox/development \
       -DCMAKE_CXX_COMPILER=/usr/local/bin/clang++ \
-      -DINSTALL_DIR=/data/store/usr/local ..
-
-
-make
+      -DINSTALL_DIR=/data/store/usr/local .. && make
 
 ./tests/bin/distlib_test --gtest_filter=-Gossip*
 ./tests/bin/distlib_test --gtest_filter=Gossip*
+
