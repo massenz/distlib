@@ -1,14 +1,20 @@
+# Conan Packaging configuration.
+# Created by M. Massenzio
+#
+# See the README for more information or http://conan.io
+
 [requires]
-glog/0.3.4@dwerner/testing
-OpenSSL/1.0.2j@lasote/stable
 cryptopp/5.6.3@riebl/testing
+glog/0.3.4@dwerner/testing
 gtest/1.8.0@lasote/stable
-Protobuf/2.6.1@memsharded/testing
 libzmq/4.1.5@memsharded/stable
+OpenSSL/1.0.2j@lasote/stable
+Protobuf/2.6.1@memsharded/testing
 
 
 [options]
 gtest:shared=False
+libzmq:shared=True
 
 [generators]
 cmake
