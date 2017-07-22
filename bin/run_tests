@@ -1,13 +1,20 @@
 #!/bin/bash
 
-set -e
+set -ex
+
+if [[ -n ${COMMON_UTILS_DIR} ]]; then
+  UTILS="-DCOMMON_UTILS_DIR=${COMMON_UTILS_DIR}"
+fi
+
+if [[ -n ${LOCAL_INSTALL_DIR} ]]; then
+  INSTALL="-DINSTALL_DIR=${LOCAL_INSTALL_DIR}"
+fi
 
 cd $(dirname $0)/../build
 
-cmake -DCOMMON_UTILS_DIR=/home/marco/Dropbox/development \
-      -DCMAKE_CXX_COMPILER=/usr/local/bin/clang++ \
-      -DINSTALL_DIR=/data/store/usr/local .. && make
+cmake --clean .
+cmake  -DCMAKE_CXX_COMPILER=/usr/local/bin/clang++ ${UTILS} ${INSTALL} ..
+make clean distlib_test
 
 ./tests/bin/distlib_test --gtest_filter=-Gossip*
 ./tests/bin/distlib_test --gtest_filter=Gossip*
-

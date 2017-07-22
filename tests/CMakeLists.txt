@@ -36,6 +36,7 @@ set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES
 
 add_executable(${TEST_TARGET}
         ${TEST_FILES}
+        tests.h
         all_tests.cpp
 )
 target_link_libraries(${TEST_TARGET}

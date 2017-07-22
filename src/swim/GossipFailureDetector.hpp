@@ -24,17 +24,27 @@ namespace swim {
  */
 class GossipFailureDetector {
 
-  milliseconds update_round_interval_;
-  milliseconds grace_period_;
-  milliseconds ping_timeout_;
-  milliseconds min_ping_interval_;
+  milliseconds update_round_interval_{};
+  milliseconds grace_period_{};
+  milliseconds ping_timeout_{};
+  milliseconds min_ping_interval_{};
 
 
   // This is the server that will be listening to incoming
   // pings and update reports from neighbors.
-  std::unique_ptr<SwimServer> gossip_server_;
+  std::unique_ptr<SwimServer> gossip_server_{};
 
 public:
+
+  // TODO: for now, deleting the copy constructor and assignment; but maybe they would make sense?
+  GossipFailureDetector(const GossipFailureDetector&) = delete;
+
+  // TODO: would it make any sense to have a move constructor?
+  GossipFailureDetector(const GossipFailureDetector&&) = delete;
+
+  GossipFailureDetector operator=(const GossipFailureDetector&) = delete;
+  GossipFailureDetector operator=(const GossipFailureDetector&&) = delete;
+
   GossipFailureDetector(unsigned short port,
                         const long update_round_interval,
                         const long grace_period,
@@ -69,8 +79,29 @@ public:
     VLOG(2) << "done";
   }
 
+  // Getters
+
+  const milliseconds& update_round_interval() const { return update_round_interval_;
+  }
+
+  const milliseconds& grace_period() const { return grace_period_;
+  }
+
+  const milliseconds& ping_timeout() const { return ping_timeout_;
+  }
+
+  const milliseconds& min_ping_interval() const { return min_ping_interval_;
+  }
+
+  const ServerRecordsSet& alive() const { return gossip_server_->alive(); }
+
+  const ServerRecordsSet& suspected() const { return gossip_server_->suspected(); }
+
+  SwimServer& gossip_server() const { return *gossip_server_; }
+
+
   /**
-   * This is a convenience method to add more "neighbors" to this server; those will then
+   * Convenience method to add a "neighbor" to this server; those will then
    * start "gossiping" with each other.
    *
    * @param host the host to add to this server's neighbors list
@@ -87,28 +118,6 @@ public:
     ServerRecordsSet* ps = gossip_server_->mutable_alive();
     ps->insert(record);
   }
-
-
-  const milliseconds& update_round_interval() const {
-    return update_round_interval_;
-  }
-
-  const milliseconds& grace_period() const {
-    return grace_period_;
-  }
-
-  const milliseconds& ping_timeout() const {
-    return ping_timeout_;
-  }
-
-  const milliseconds& min_ping_interval() const {
-    return min_ping_interval_;
-  }
-
-  const ServerRecordsSet& alive() const { return gossip_server_->alive(); }
-  const ServerRecordsSet& suspected() const { return gossip_server_->suspected(); }
-
-  SwimServer& gossip_server() const { return *gossip_server_; }
 
   /**
    * Prepares a report that can then be sent to neighbors to gossip about.

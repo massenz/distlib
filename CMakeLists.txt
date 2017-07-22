@@ -35,10 +35,10 @@ set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests)
 set(PROTO_DIR ${PROJECT_SOURCE_DIR}/proto)
 set(PROJECT_BINARY_DIR ${PROJECT_SOURCE_DIR}/build)
 
-# Configure a header file to pass settings into source code
+# Configure a header file to pass settings into source code.
 configure_file(
     ${SOURCE_DIR}/config.h.in
-    ${PROJECT_BINARY_DIR}/config.h
+    ${PROJECT_BINARY_DIR}/version.h
 )
 
 # Building Protocol Buffers.
@@ -95,6 +95,10 @@ if (NOT ${INSTALL_DIR})
     message(STATUS "Installing lib${PROJECT_NAME}.a static library to ${INSTALL_DIR}/lib\n"
                    "   and include files to ${INSTALL_DIR}/include/${PROJECT_NAME}")
     install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_DIR}/lib)
+
+    # Generated configuration file, containing version and build number.
+    install(FILES ${PROJECT_BINARY_DIR}/version.h DESTINATION
+            "${INSTALL_DIR}/include/${PROJECT_NAME}")
 
     # Install Library headers.
     install(DIRECTORY ${SOURCE_DIR}/ DESTINATION ${INSTALL_DIR}/include/${PROJECT_NAME}

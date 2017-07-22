@@ -4,7 +4,6 @@
 
 #include <chrono>
 #include <cstdlib>
-#include <ctime>
 #include <iostream>
 #include <iomanip>
 #include <thread>
@@ -14,7 +13,7 @@
 #include <zmq.hpp>
 #include <atomic>
 
-#include "config.h"
+#include "version.h"
 
 #include "utils/network.h"
 #include "utils/ParseArgs.hpp"
