@@ -68,8 +68,8 @@ protected:
   unsigned short port_;
 
   virtual void SetUp() {
-    port_ = tests::randomPort();
-    detector_.reset(new GossipFailureDetector(port_, 10, 5, 5, 5));
+    port_ = tests::RandomPort();
+    detector_.reset(new GossipFailureDetector(port_, 10, 500, 5, 5));
   }
 
   virtual void TearDown() {
@@ -98,7 +98,7 @@ TEST_F(GossipFailureDetectorTests, updatesManyAlives) {
   ASSERT_TRUE(detector_->alive().empty());
   for (int i = 0; i < 10; ++i) {
     SwimClient client(*MakeServer("localhost", detector_->gossip_server().port()),
-      tests::randomPort());
+                      tests::RandomPort());
     ASSERT_TRUE(client.Ping());
   }
 
@@ -178,3 +178,4 @@ TEST_F(GossipFailureDetectorTests, prepareReport) {
   report = detector_->PrepareReport();
   ASSERT_EQ(1, report.suspected_size());
 }
+

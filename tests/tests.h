@@ -28,21 +28,21 @@ static std::uniform_int_distribution<unsigned short> di_(kMinPort, kMaxPort);
 
 /**
  * Initializes the random generator with the current time (seconds from epoch) as a long value.
- * It should not be necessary to call this directly, it is called once by the `randomPort()` method.
+ * It should not be necessary to call this directly, it is called once by the `RandomPort()` method.
  */
 inline void _init_dre() {
-  unsigned long seed = static_cast<unsigned long>(std::time(nullptr));
+  auto seed = static_cast<unsigned long>(std::time(nullptr));
   DRE.seed(seed);
+  seeded = true;
 }
 
 
 /**
  * @return a random integer, to be used as port number during tests.
  */
-inline unsigned short randomPort() {
+inline unsigned short RandomPort() {
   if (!seeded) {
     _init_dre();
-    seeded = true;
   }
   return di_(DRE);
 }
@@ -66,7 +66,7 @@ inline unsigned short randomPort() {
  *      `sliceDuration` accuracy
  */
 inline bool WaitAtMostFor(
-    std::function<bool ()> pred,
+    const std::function<bool ()> &pred,
     std::chrono::milliseconds timeout,
     std::chrono::milliseconds sliceDuration = std::chrono::milliseconds(100)
 ) {

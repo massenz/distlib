@@ -24,15 +24,25 @@ namespace swim {
  */
 class GossipFailureDetector {
 
-  milliseconds update_round_interval_{};
-  milliseconds grace_period_{};
-  milliseconds ping_timeout_{};
-  milliseconds min_ping_interval_{};
+  // The time between sending out updates to neighboring servers.
+  seconds update_round_interval_{};
 
+  // The time we will wait for a `suspected_` server to get back online.
+  seconds grace_period_{};
+
+  // The timeout for when we ping a server and that we'll wait for a response to be sent.
+  milliseconds ping_timeout_{};
+
+  // The time between subsequent `ping()` sent to neighbors.
+  seconds ping_interval_{};
+
+  // Used to pick a random host to ping from the list of alive neighbors.
+  static std::default_random_engine random_engine_;
 
   // This is the server that will be listening to incoming
   // pings and update reports from neighbors.
   std::unique_ptr<SwimServer> gossip_server_{};
+
 
 public:
 
@@ -41,19 +51,31 @@ public:
 
   // TODO: would it make any sense to have a move constructor?
   GossipFailureDetector(const GossipFailureDetector&&) = delete;
-
   GossipFailureDetector operator=(const GossipFailureDetector&) = delete;
+
   GossipFailureDetector operator=(const GossipFailureDetector&&) = delete;
 
+  /**
+   * Creates a new detector and starts the embedded Gossip Server; the background threads are
+   * <strong>not</strong> started: use `InitAllBackgroundThreads()` once the server `isRunning()`.
+   *
+   * <p>All time intervals, except for `ping_timeout_msec`, are expressed in seconds.
+   *
+   * param port for this server to listening to incoming requests
+   * @param update_round_interval the time, in seconds, between updates to neighbors
+   * @param grace_period the time, in seconds, we will wait for a suspected server to come back
+   * @param ping_timeout_msec the time, in milliseconds, we will wait for the ping response
+   * @param ping_interval time, in seconds, between ping requests to neighboring servers
+   */
   GossipFailureDetector(unsigned short port,
                         const long update_round_interval,
                         const long grace_period,
-                        const long ping_timeout,
-                        const long min_ping_interval) :
+                        const long ping_timeout_msec,
+                        const long ping_interval) :
       update_round_interval_(update_round_interval), grace_period_(grace_period),
-      ping_timeout_(ping_timeout), min_ping_interval_(min_ping_interval)
+      ping_timeout_(ping_timeout_msec), ping_interval_(ping_interval)
   {
-    gossip_server_ = CreateServer(port);
+    gossip_server_.reset(new SwimServer(port));
 
     std::thread t([this] { gossip_server_->start(); });
     t.detach();
@@ -81,17 +103,13 @@ public:
 
   // Getters
 
-  const milliseconds& update_round_interval() const { return update_round_interval_;
-  }
+  const seconds& update_round_interval() const { return update_round_interval_; }
 
-  const milliseconds& grace_period() const { return grace_period_;
-  }
+  const seconds& grace_period() const { return grace_period_; }
 
-  const milliseconds& ping_timeout() const { return ping_timeout_;
-  }
+  const milliseconds& ping_timeout() const { return ping_timeout_; }
 
-  const milliseconds& min_ping_interval() const { return min_ping_interval_;
-  }
+  const seconds& ping_interval() const { return ping_interval_; }
 
   const ServerRecordsSet& alive() const { return gossip_server_->alive(); }
 
@@ -99,6 +117,14 @@ public:
 
   SwimServer& gossip_server() const { return *gossip_server_; }
 
+  /**
+   * Starts all the gossip protocol threads: ping neighbors, send reports and evict suspects once
+   * the grace period has elapsed.
+   *
+   * <p>This method starts a number of (detached) background threads that will be running for as
+   * long as the `gossip_server()` is running.
+   */
+  void InitAllBackgroundThreads();
 
   /**
    * Convenience method to add a "neighbor" to this server; those will then
@@ -125,7 +151,30 @@ public:
    * @return a list of all known alive and suspected servers, including only those that have been
    *    added since the last time a report was sent (i.e., the ones we haven't gossiped about yet).
    */
-  SwimReport PrepareReport();
+  SwimReport PrepareReport() const;
+
+  /**
+   * Pick a neighbor at random from the list of `alive()` servers and sends a ping: if it
+   * receives no response, remove the server from the set and add it to the `suspected()` set.
+   */
+  void PingNeighbor() const;
+
+  /**
+   * It sends an update report to a neighbor from the `alive()` set, choosing it according to the
+   * following algorithm:
+   *
+   * <ul>
+   *   <li>find one neighbor it hasn't already sent a report to (`didGossip` is false);</li>
+   *   <li>if we already have gossipped with all the neighbors, pick one at random from the set</li>
+   * </ul>
+   */
+  void SendReport() const;
+
+  /**
+   * Scan the set of `suspected()` servers: if any has been there for longer than the allowed
+   * `grace_period()`, then evict it and consider it "dead".
+   */
+  void GarbageCollectSuspected() const;
 };
 
 } // namespace swim
