@@ -82,8 +82,7 @@ google::protobuf::int64 CurrentTime() {
 
 std::string Hostname() {
   char name[NI_MAXHOST];
-  int retcode = gethostname(name, NI_MAXHOST);
-  if (retcode != 0) {
+  if (gethostname(name, NI_MAXHOST) != 0) {
     LOG(ERROR) << "Could not determine hostname";
     return "";
   }

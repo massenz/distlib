@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+function run_tests {
+    ./tests/bin/distlib_test --gtest_filter=-Gossip*
+    ./tests/bin/distlib_test --gtest_filter=Gossip*
+}
+
+cd $(dirname $0)/../build
+
+cmake --build . --target distlib_test
+time run_tests

@@ -18,11 +18,9 @@
  * See:https://github.com/google/googletest/blob/master/googletest/docs/Primer.md#writing-the-main-function
  */
 int main(int argc, char **argv) {
-  google::InitGoogleLogging(argv[0]);
+  ::google::InitGoogleLogging(argv[0]);
 
-  unsigned long seed = static_cast<unsigned long>(std::time(nullptr));
-  tests::DRE.seed(seed);
-
+  ::tests::_init_dre();
   LOG(INFO) << "Running all tests for distlib";
 
   ::testing::InitGoogleTest(&argc, argv);

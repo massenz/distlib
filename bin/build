@@ -12,9 +12,5 @@ fi
 
 cd $(dirname $0)/../build
 
-cmake --clean .
 cmake  -DCMAKE_CXX_COMPILER=/usr/local/bin/clang++ ${UTILS} ${INSTALL} ..
-make clean distlib_test
-
-./tests/bin/distlib_test --gtest_filter=-Gossip*
-./tests/bin/distlib_test --gtest_filter=Gossip*
+cmake --build . --target all -- -j 6

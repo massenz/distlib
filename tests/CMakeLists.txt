@@ -15,7 +15,7 @@ if (${GTEST} STREQUAL GTEST-NOTFOUND)
     message(FATAL_ERROR "Could not locate a valid Google Test library installed.")
 endif (${GTEST} STREQUAL GTEST-NOTFOUND)
 
-set(TEST_FILES
+set(UNIT_TESTS
         ${TESTS_DIR}/test_consistent_hash.cpp
         ${TESTS_DIR}/test_bucket.cpp
         ${TESTS_DIR}/test_gossip.cpp
@@ -24,6 +24,10 @@ set(TEST_FILES
         ${TESTS_DIR}/test_swim_server.cpp
         ${TESTS_DIR}/test_utils_network.cpp
         ${TESTS_DIR}/test_view.cpp
+)
+
+set(INTEGRATION_TESTS
+        ${TESTS_DIR}/test_integration.cpp
 )
 
 # This is necessary as the .pb.cc and .pb.h files will not (yet) be present
@@ -35,11 +39,21 @@ set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES
                             GENERATED TRUE)
 
 add_executable(${TEST_TARGET}
-        ${TEST_FILES}
+        ${UNIT_TESTS}
         tests.h
         all_tests.cpp
 )
 target_link_libraries(${TEST_TARGET}
+        ${GTEST}
+        distlib
+)
+
+add_executable(integration_tests
+        ${INTEGRATION_TESTS}
+        tests.h
+        all_tests.cpp
+)
+target_link_libraries(integration_tests
         ${GTEST}
         distlib
 )

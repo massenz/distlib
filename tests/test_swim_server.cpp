@@ -8,7 +8,6 @@
 #include <gtest/gtest.h>
 
 #include "swim/SwimServer.hpp"
-#include "swim/SwimClient.hpp"
 
 #include "tests.h"
 
@@ -28,7 +27,7 @@ TEST(SwimServerProtoTests, allocations) {
   server.set_port(9999);
   int bufSize = server.ByteSize();
 
-  char *data = new char[bufSize];
+  auto data = new char[bufSize];
   ASSERT_NE(nullptr, data);
   memset(data, 0, bufSize);
 
@@ -47,11 +46,11 @@ class TestServer : public SwimServer {
   bool wasUpdated_;
 
 public:
-  TestServer(unsigned short port) : SwimServer(port, 1), wasUpdated_(false) {}
-  virtual ~TestServer() {}
+  explicit TestServer(unsigned short port) : SwimServer(port, 1), wasUpdated_(false) {}
+  virtual ~TestServer() = default;
 
-  virtual void onUpdate(Server *client) {
-    if (client) {
+  void onUpdate(Server *client) override {
+    if (client != nullptr) {
       VLOG(2) << "TestServer::onUpdate " << client->hostname() << ":" << client->port();
       wasUpdated_ = true;
       delete (client);
@@ -70,13 +69,13 @@ protected:
   std::unique_ptr<std::thread> thread_;
 
   SwimServerTests() {
-    unsigned short port = tests::randomPort();
+    unsigned short port = tests::RandomPort();
     VLOG(2) << "TestFixture: creating server on port " << port;
     server_.reset(new SwimServer(port));
   }
 
 
-  virtual void TearDown() {
+  void TearDown() override {
     VLOG(2) << "Tearing down...";
     if (server_) {
       VLOG(2) << "TearDown: stopping server...";
@@ -141,7 +140,7 @@ TEST_F(SwimServerTests, canStartAndConnect) {
 
 
 TEST_F(SwimServerTests, canOverrideOnUpdate) {
-  unsigned short port = tests::randomPort();
+  unsigned short port = tests::RandomPort();
   ASSERT_TRUE(port >= tests::kMinPort && port < tests::kMaxPort);
 
 
@@ -177,12 +176,12 @@ TEST_F(SwimServerTests, destructorStopsServer) {
   auto server = MakeServer("localhost", port);
   std::unique_ptr<SwimClient> client(new SwimClient(*server));
   {
-    TestServer server(port);
-    std::thread t([&] { server.start(); });
+    TestServer testServer(port);
+    std::thread t([&] { testServer.start(); });
     t.detach();
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-    ASSERT_TRUE(server.isRunning());
+    ASSERT_TRUE(testServer.isRunning());
     ASSERT_TRUE(client->Ping());
   }
   // It may take a bit for the server to stop, but not that long.
