@@ -43,6 +43,8 @@ class GossipFailureDetector {
   // pings and update reports from neighbors.
   std::unique_ptr<SwimServer> gossip_server_{};
 
+  std::vector<std::unique_ptr<std::thread>> threads_{};
+
 
 public:
 
@@ -90,13 +92,15 @@ public:
       // Wait a little while for the server to stop.
       int retries = 5;
       while (gossip_server_->isRunning() && retries-- > 0) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
       }
 
       if (gossip_server_->isRunning()) {
-        LOG(ERROR) << "Failed to stop the server, giving up";
+        LOG(FATAL) << "Failed to stop the server, aborting process";
       }
     }
+    VLOG(2) << "stopping background threads";
+    StopAllBackgroundThreads();
 
     VLOG(2) << "done";
   }
@@ -125,6 +129,11 @@ public:
    * long as the `gossip_server()` is running.
    */
   void InitAllBackgroundThreads();
+
+  /**
+   * Terminates all background threads for this detector.
+   */
+  void StopAllBackgroundThreads();
 
   /**
    * Convenience method to add a "neighbor" to this server; those will then

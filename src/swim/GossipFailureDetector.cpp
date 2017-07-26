@@ -48,31 +48,34 @@ void GossipFailureDetector::InitAllBackgroundThreads() {
                   "detector's background threads";
   }
 
-  std::thread pings([this]() {
-    while (gossip_server().isRunning()) {
-      PingNeighbor();
-      std::this_thread::sleep_for(ping_interval());
-    }
-  });
-  pings.detach();
+  threads_.push_back(std::unique_ptr<std::thread>(
+      new std::thread([this]() {
+        while (gossip_server().isRunning()) {
+          PingNeighbor();
+          std::this_thread::sleep_for(ping_interval());
+        }
+      }))
+  );
 
-  std::thread report([this]() {
-    while (gossip_server().isRunning()) {
-      SendReport();
-      std::this_thread::sleep_for(update_round_interval());
-    }
-  });
-  report.detach();
+  threads_.push_back(std::unique_ptr<std::thread>(
+      new std::thread([this]() {
+        while (gossip_server().isRunning()) {
+          SendReport();
+          std::this_thread::sleep_for(update_round_interval());
+        }
+      }))
+  );
 
-  std::thread gc([this]() {
-    while (gossip_server().isRunning()) {
-      GarbageCollectSuspected();
-      std::this_thread::sleep_for(ping_interval());
-    }
-  });
-  gc.detach();
+  threads_.push_back(std::unique_ptr<std::thread>(
+      new std::thread([this]() {
+        while (gossip_server().isRunning()) {
+          GarbageCollectSuspected();
+          std::this_thread::sleep_for(ping_interval());
+        }
+      }))
+  );
 
-  LOG(INFO) << "All background threads for the SWIM Detector started";
+  LOG(INFO) << "All Gossiping threads for the SWIM Detector started";
 }
 
 void GossipFailureDetector::PingNeighbor() const {
@@ -103,30 +106,49 @@ void GossipFailureDetector::PingNeighbor() const {
 }
 
 void GossipFailureDetector::SendReport() const {
-  VLOG(2) << "Sending report";
+  if (gossip_server().alive().empty()) {
+    VLOG(2) << "No neighbors, skip sending report";
+    return;
+  }
+
   auto report = PrepareReport();
+  VLOG(2) << "Sending report, alive: " << report.alive_size() << "; suspected: "
+          << report.suspected_size();
 
   auto neighbors = gossip_server().mutable_alive();
   for (auto server : *neighbors) {
     if (!server->didgossip()) {
       auto client = SwimClient(server->server());
       VLOG(2) << "Sending report to " << server->server();
-      client.Send(report);
-      server->set_didgossip(true);
-      return;
+
+      // Either way, we want to mark the time we connected (or tried to connect) to this server.
+      server->set_timestamp(::utils::CurrentTime());
+
+      if (client.Send(report)) {
+        server->set_didgossip(true);
+        return;
+      }
+
+      // We managed to pick an unresponsive server; let's add to suspects, then let the loop
+      // continue.
+      gossip_server().mutable_suspected()->insert(server);
+      gossip_server().mutable_alive()->erase(server);
     }
   }
 
   // If we got here, it means we have sent updates to all our neighbors in the past; we can then
   // select just one at random and send an update.
   std::uniform_int_distribution<unsigned long> distribution(0, alive().size() - 1);
-  auto iterator = alive().begin();
   auto num = distribution(random_engine_);
+
+  auto iterator = alive().begin();
   advance(iterator, num);
+
   auto client = SwimClient((*iterator)->server());
   client.Send(report);
   VLOG(2) << "Sent report to " << (*iterator)->server();
 }
+
 
 void GossipFailureDetector::GarbageCollectSuspected() const {
   auto suspects = gossip_server().mutable_suspected();
@@ -139,6 +161,33 @@ void GossipFailureDetector::GarbageCollectSuspected() const {
       suspects->erase(suspect);
     }
   }
+}
+
+void GossipFailureDetector::StopAllBackgroundThreads() {
+
+  LOG(WARNING) << "Stopping background threads for SWIM protocol";
+  bool server_was_stopped = false;
+
+  if (gossip_server_->isRunning()) {
+    VLOG(2) << "Temporarily stopping server to allow threads to drain gracefully";
+    gossip_server_->stop();
+    server_was_stopped = true;
+  }
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(600));
+
+  VLOG(2) << "Waiting for threads to stop";
+  for (auto const &thread : threads_) {
+    if (thread->joinable()) {
+      thread->join();
+    }
+  }
+
+  if (server_was_stopped) {
+    std::thread t([this] { gossip_server_->start(); });
+    t.detach();
+  }
+  LOG(WARNING) << "All Gossiping threads for the SWIM Detector terminated";
 }
 } // namespace swim
 
