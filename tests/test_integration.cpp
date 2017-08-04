@@ -2,15 +2,13 @@
 // Created by M. Massenzio (marco@alertavert.com) on 7/23/17.
 
 
-
 #include <memory>
 #include <thread>
 
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#include <swim/SwimClient.hpp>
-
+#include "swim/SwimClient.hpp"
 #include "swim/GossipFailureDetector.hpp"
 
 #include "tests.h"
@@ -24,6 +22,11 @@ protected:
   std::shared_ptr<GossipFailureDetector> detector{};
 
   void SetUp() override {
+    // The intervals, timeouts etc. configured here are just for convenience's sake:
+    // if a test requires different timings, just stop the threads, change the values, then
+    // restart the background threads:
+    //
+    // detector
     detector.reset(new GossipFailureDetector(
         ::tests::RandomPort(),
         1,  // time between reports
@@ -75,6 +78,15 @@ TEST_F(IntegrationTests, detectFailingNeighbor) {
 }
 
 TEST_F(IntegrationTests, gossipSpreads) {
+  // For this test to work, we need the grace period to be long enough for the neighbor to pick
+  // this up.
+  detector->StopAllBackgroundThreads();
+
+  detector->set_grace_period(seconds(3));
+
+  ASSERT_TRUE(detector->gossip_server().isRunning());
+  detector->InitAllBackgroundThreads();
+
   auto neighbor = std::unique_ptr<SwimServer>(new SwimServer(::tests::RandomPort()));
   std::thread neighbor_thread([&]() { neighbor->start(); });
 
@@ -88,21 +100,30 @@ TEST_F(IntegrationTests, gossipSpreads) {
   detector->AddNeighbor(neighbor->self());
   detector->AddNeighbor(flaky->self());
 
-  // Give the detector enough time to ping and make reports.
-  std::this_thread::sleep_for(seconds(5));
-
-  // Verify that the happy news about flaky have traveled to the neighbor.
-  EXPECT_EQ(1, neighbor->alive().size());
+  // Verify that the happy news about flaky has traveled to the neighbor
+  // within a reasonable time frame (see the paper in the README References
+  // for a mathematical derivation of a rigorous upper bound: this one it sure ain't).
+  ASSERT_TRUE(::tests::WaitAtMostFor([&neighbor]() -> bool {
+    // TODO: this needs to change to == 2 once we fix didGossip (see #146262019)
+    // Until then, this test is flaky, as the value depends on whether `neighbor` gets pinged
+    // first or `flaky` does.
+        return neighbor->alive().size() >= 1;
+      }, milliseconds(6000))
+  ) << neighbor->alive();
 
   flaky->stop();
-  ASSERT_TRUE(::tests::WaitAtMostFor([&]() -> bool { return !flaky->isRunning(); },
-                                     milliseconds (200)));
+  ASSERT_TRUE(::tests::WaitAtMostFor([&flaky]() -> bool {
+        return !flaky->isRunning();
+    }, milliseconds(200))
+  );
   flaky_thread.join();
 
   // Give the detector enough time to ping and make reports.
-  std::this_thread::sleep_for(seconds(3));
+  std::this_thread::sleep_for(seconds(2));
+  ASSERT_EQ(1, detector->suspected().size());
 
   // It should now be suspected, but still the grace period should have not expired.
+  std::this_thread::sleep_for(seconds(1));
   EXPECT_EQ(1, neighbor->suspected().size());
 
   neighbor->stop();
@@ -110,16 +131,14 @@ TEST_F(IntegrationTests, gossipSpreads) {
                                      milliseconds (200)));
   neighbor_thread.join();
 
-  // Give the detector enough time to ping and make reports.
-  std::this_thread::sleep_for(seconds(3));
-
+  // Give the detector enough time to evict all the now-gone servers.
+  std::this_thread::sleep_for(seconds(5));
+  EXPECT_TRUE(detector->alive().empty());
   EXPECT_TRUE(detector->suspected().empty());
 }
 
 TEST_F(IntegrationTests, canStopThreads) {
-
   std::vector<std::unique_ptr<SwimServer>> neighbors{};
-
   for (int i = 0; i < 5; ++i) {
     auto neighbor = new SwimServer(::tests::RandomPort());
     std::thread neighbor_thread([&]() { neighbor->start(); });

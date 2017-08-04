@@ -115,6 +115,15 @@ public:
 
   const seconds& ping_interval() const { return ping_interval_; }
 
+
+  void set_update_round_interval(const seconds &update_round_interval_);
+
+  void set_grace_period(const seconds &grace_period_);
+
+  void set_ping_timeout(const milliseconds &ping_timeout_);
+
+  void set_ping_interval(const seconds &ping_interval_);
+
   const ServerRecordsSet& alive() const { return gossip_server_->alive(); }
 
   const ServerRecordsSet& suspected() const { return gossip_server_->suspected(); }

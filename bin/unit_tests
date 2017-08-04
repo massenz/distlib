@@ -3,8 +3,9 @@
 set -e
 
 function run_tests {
-    ./tests/bin/distlib_test --gtest_filter=-Gossip*
-    ./tests/bin/distlib_test --gtest_filter=Gossip*
+    for filter in "-Gossip*" "Gossip*"; do
+        ./tests/bin/distlib_test --gtest_filter=${filter}
+    done
 }
 
 cd $(dirname $0)/../build
