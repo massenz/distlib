@@ -26,12 +26,23 @@ using namespace zmq;
 using namespace swim;
 
 
-static void usage() {
+namespace {
+
+/**
+ * Prints out usage instructions for this application.
+ */
+void usage() {
   std::cout << "Usage: " << program_invocation_short_name << " --port=PORT [--host=HOST] \n"
-            << "\t\t[--timeout=TIMEOUT] [--duration=DURATION] ACTION\n\n"
-            << "\tPORT       an int specifying the port the server will listen on, or connect to;\n"
+            << "\t\t[--timeout=TIMEOUT] [--duration=DURATION] ACTION\n"
+            << "\t\t[--debug] [--version] [--help]\n\n"
+            << "\t--debug    verbose output (LOG_v = 2)\n"
+            << "\t--help     prints this message and exits\n"
+            << "\t--version  prints the version string for this demo and third-party libraries "
+               "and exits\n\n"
+            << "\tPORT       an int specifying the port the server will listen on (`receive`), or\n"
+            << "\t           connect to (`send`);\n"
             << "\tHOST       the hostname/IP to send the status to (e.g., h123.example.org or \n"
-            << "\t           192.168.1.1)\n"
+            << "\t           192.168.1.1).  Required for sending, ignored otherwise.\n"
             << "\tTIMEOUT    in milliseconds, how long to wait for the server to respond to the\n"
             << "\t           ping\n"
             << "\tDURATION   in seconds, how long the client (`send`) should run\n"
@@ -40,7 +51,10 @@ static void usage() {
             << "HOST is only required when sending.\n\n";
 }
 
-static std::atomic<bool> stopped(false);
+std::atomic<bool> stopped(false);
+
+} // namespace
+
 
 void start_timer(unsigned long duration_sec) {
   std::thread t([=] {
@@ -48,19 +62,6 @@ void start_timer(unsigned long duration_sec) {
     stopped.store(true);
   });
   t.detach();
-}
-
-
-void printVersion() {
-  int major, minor, patch;
-
-  zmq::version(&major, &minor, &patch);
-  char zmq_ver[32];
-  sprintf(zmq_ver, "%d.%d.%d", major, minor, patch);
-
-  std::cout << "Demo SWIM server Ver. " << RELEASE_STR
-            << "\n- ZeroMQ ver. " << zmq_ver << "\n- Google Protocol Buffer ver. "
-            << ::google::protobuf::internal::VersionString(GOOGLE_PROTOBUF_VERSION) << std::endl;
 }
 
 
@@ -96,10 +97,10 @@ int main(int argc, const char *argv[]) {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   google::InitGoogleLogging(argv[0]);
-  FLAGS_logtostderr = 1;
+  FLAGS_logtostderr = true;
 
 
-  utils::ParseArgs parser(argv, argc);
+  ::utils::ParseArgs parser(argv, argc);
   if (parser.enabled("debug")) {
     FLAGS_v = 2;
   }
@@ -109,8 +110,8 @@ int main(int argc, const char *argv[]) {
     return EXIT_SUCCESS;
   }
 
+  ::utils::printVersion();
   if (parser.has("version")) {
-    printVersion();
     return EXIT_SUCCESS;
   }
 
@@ -142,7 +143,6 @@ int main(int argc, const char *argv[]) {
               static_cast<unsigned long>(parser.getInt("duration", 5)));
 
   } else if (action == "receive") {
-    printVersion();
     SwimServer server(port);
     // TODO: this should run in a separate thread instead, and we just join() on the timer thread.
     server.start();

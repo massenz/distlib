@@ -108,8 +108,8 @@ void GossipFailureDetector::PingNeighbor() const {
       suspectRecord->set_timestamp(utils::CurrentTime());
       suspectRecord->set_didgossip(false);
 
-      // TODO: we are mutating the alive/suspected containers, there is a race with PrepareReport.
-      //     Must add a mutex_lock around these two statements.
+      // TODO: Must add a mutex_lock around these two statements.
+      // We are mutating the alive/suspected containers, there is a race with PrepareReport.
       gossip_server().mutable_suspected()->insert(suspectRecord);
       gossip_server().mutable_alive()->erase(*iterator);
 

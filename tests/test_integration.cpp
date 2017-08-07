@@ -104,7 +104,7 @@ TEST_F(IntegrationTests, gossipSpreads) {
   // within a reasonable time frame (see the paper in the README References
   // for a mathematical derivation of a rigorous upper bound: this one it sure ain't).
   ASSERT_TRUE(::tests::WaitAtMostFor([&neighbor]() -> bool {
-    // TODO: this needs to change to == 2 once we fix didGossip (see #146262019)
+    // TODO: this needs to change to == 2 once we fix didGossip (see #149950890)
     // Until then, this test is flaky, as the value depends on whether `neighbor` gets pinged
     // first or `flaky` does.
         return neighbor->alive().size() >= 1;

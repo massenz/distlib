@@ -49,4 +49,9 @@ google::protobuf::int64 CurrentTime();
  */
 std::string Hostname();
 
+/**
+ * Prints this library's (and supporting third-party libraries') version.
+ */
+void printVersion();
+
 } // namespace utils
