@@ -41,22 +41,6 @@ class SwimServer {
 protected:
 
   /**
-   * Helper method to log the client hostname and a message.
-   *
-   * @param client
-   * @param timestamp
-   */
-  void logClient(const Server& client, const std::string& msg = "") {
-    std::ostringstream log;
-    log << "Received message from " << client;
-    if (!msg.empty()) {
-      log << ": " << msg;
-    }
-
-    VLOG(2) << log.str();
-  }
-
-  /**
    * Invoked when the `client` sends a `SwimEnvelope::Type::STATUS_UPDATE` message to this server.
    *
    * <p>This is a callback method that will be invoked by the server's loop, in its
@@ -80,9 +64,9 @@ protected:
     // suspected list:
     auto removed = suspected_.erase(record);
     if (removed > 0) {
-      logClient(*client, "Previously suspected; added back to alive set");
+      VLOG(2) << *client << " previously suspected; added back to healthy set";
     } else {
-      logClient(*client);
+      VLOG(3) << "Received a ping from " << *client;
     }
   }
 
@@ -96,17 +80,22 @@ protected:
    * thread-safe and that none of its members (apart from the `atomic<bool>` stopped_) should be
    * modified while processing this call.
    *
-   * @param client the server that just sent the message; the callee obtains ownership of the
+   * @param sender the server that just sent the message; the callee obtains ownership of the
    *        pointer and is responsible for freeing the memory.
    * @param report the `SwimReport` that the `client` sent and can be used by this server to
    *        update its membership list.
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
-  virtual void onReport(Server* client, SwimReport* report) {
-    std::unique_ptr<Server> ps(client);
+  virtual void onReport(Server* sender, SwimReport* report) {
+    std::unique_ptr<Server> ps(sender);
 
-    logClient(*ps, "Received a report");
+    VLOG(2) << self() << " received: " << *report;
     for (auto record : report->alive()) {
+      if (record.server() == self()) {
+        // yes, we know we are alive, thank you very much.
+        continue;
+      }
+
       std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
       pRecord->set_didgossip(false);
 
@@ -121,20 +110,35 @@ protected:
     }
 
     for (auto record : report->suspected()) {
-      std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
-      pRecord->set_didgossip(false);
+      if (record.server() == self()) {
+        // Reports of our death were greatly exaggerated.
+        VLOG(2) << *sender << " reported this server (" << self() << ") as 'suspected'; pinging";
+        SwimClient client(*sender, port());
+        client.Ping();
+        continue;
+      }
 
-      auto was_alive = alive_.find(pRecord);
-      if (was_alive != alive_.end() && (*was_alive)->timestamp() < record.timestamp()) {
-        suspected_.insert(pRecord);
-        alive_.erase(pRecord);
-      } else if (was_alive == alive_.end()) {
-        suspected_.insert(pRecord);
+      std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
+      if (suspected_.find(pRecord) == suspected_.end()) {
+
+        pRecord->set_didgossip(false);
+        pRecord->set_timestamp(::utils::CurrentTime());
+
+        auto was_alive = alive_.find(pRecord);
+        if (was_alive != alive_.end() && (*was_alive)->timestamp() < record.timestamp()) {
+          // This is genuine new news and we need to update our records.
+          suspected_.insert(pRecord);
+          alive_.erase(pRecord);
+        } else if (was_alive == alive_.end()) {
+          // If we are here, it means that we haven't seen this server before, and
+          // we should record it as "suspicious."
+          suspected_.insert(pRecord);
+        }
       }
     }
 
-    VLOG(2) << "After merging, alive: " << alive_;
-    VLOG(2) << "After merging, suspected: " << suspected_;
+    VLOG(2) << "After merging, alive: " << alive_
+            << "; suspected: " << suspected_;
   }
 
   /**

@@ -43,6 +43,8 @@ class GossipFailureDetector {
   // pings and update reports from neighbors.
   std::unique_ptr<SwimServer> gossip_server_{};
 
+  std::vector<std::unique_ptr<std::thread>> threads_{};
+
 
 public:
 
@@ -90,13 +92,15 @@ public:
       // Wait a little while for the server to stop.
       int retries = 5;
       while (gossip_server_->isRunning() && retries-- > 0) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
       }
 
       if (gossip_server_->isRunning()) {
-        LOG(ERROR) << "Failed to stop the server, giving up";
+        LOG(FATAL) << "Failed to stop the server, aborting process";
       }
     }
+    VLOG(2) << "stopping background threads";
+    StopAllBackgroundThreads();
 
     VLOG(2) << "done";
   }
@@ -110,6 +114,23 @@ public:
   const milliseconds& ping_timeout() const { return ping_timeout_; }
 
   const seconds& ping_interval() const { return ping_interval_; }
+
+
+  void set_update_round_interval(const seconds &update_round_interval) {
+    update_round_interval_ = seconds(update_round_interval);
+  }
+
+  void set_grace_period(const seconds &grace_period) {
+    grace_period_ = seconds(grace_period);
+  }
+
+  void set_ping_timeout(const milliseconds &ping_timeout) {
+    ping_timeout_ = milliseconds(ping_timeout);
+  }
+
+  void set_ping_interval(const seconds &ping_interval) {
+    ping_interval_ = seconds(ping_interval);
+  }
 
   const ServerRecordsSet& alive() const { return gossip_server_->alive(); }
 
@@ -127,10 +148,17 @@ public:
   void InitAllBackgroundThreads();
 
   /**
+   * Terminates all background threads for this detector.
+   */
+  void StopAllBackgroundThreads();
+
+  /**
    * Convenience method to add a "neighbor" to this server; those will then
    * start "gossiping" with each other.
    *
-   * @param host the host to add to this server's neighbors list
+   * @param host the host to add to this server's neighbors list; a new instance will be
+   * allocated inside the `ServerRecord` that is created to be added to the "alive set," hence
+   * passing a temporary variable that gets destroyed after this call will not cause any issue.
    */
   void AddNeighbor(const Server& host) {
     std::shared_ptr<ServerRecord> record = std::make_shared<ServerRecord>();

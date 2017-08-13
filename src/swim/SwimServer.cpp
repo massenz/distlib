@@ -80,7 +80,7 @@ void SwimServer::start() {
       }
     }
   }
-  LOG(WARNING) << "SERVER STOPPED";
+  LOG(WARNING) << "SERVER STOPPED: " << self();
 }
 
 void SwimServer::onPingRequest(Server* sender, Server* destination) {

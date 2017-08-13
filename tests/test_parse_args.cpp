@@ -1,8 +1,6 @@
 // Copyright (c) 2016 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 11/22/16.
 
-
-
 #include <gtest/gtest.h>
 
 #include "utils/ParseArgs.hpp"
@@ -167,4 +165,16 @@ TEST(ParseArgsTests, throwsIfUnexpected)
   EXPECT_ANY_THROW(parser.enabled("port"));
   EXPECT_ANY_THROW(parser[2]);
 
+}
+
+TEST(ParseArgsTests, parseIp) {
+  // The DIY approach.
+  ASSERT_TRUE(std::regex_match("10.0.2.15", ::utils::kIpPattern));
+
+  ASSERT_TRUE(::utils::ParseIp("192.168.1.51"));
+  ASSERT_TRUE(::utils::ParseIp("17.0.0.1"));
+  ASSERT_TRUE(::utils::ParseIp("255.255.255.254"));
+  ASSERT_FALSE(::utils::ParseIp("255,255,255,254"));
+  ASSERT_FALSE(::utils::ParseIp("17.0.0.1:8080"));
+  ASSERT_FALSE(::utils::ParseIp("a tomato is not an IP"));
 }

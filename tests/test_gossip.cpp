@@ -67,13 +67,9 @@ protected:
   std::unique_ptr<GossipFailureDetector> detector_;
   unsigned short port_;
 
-  virtual void SetUp() {
+  void SetUp() override {
     port_ = tests::RandomPort();
     detector_.reset(new GossipFailureDetector(port_, 10, 500, 5, 5));
-  }
-
-  virtual void TearDown() {
-    VLOG(2) << "Tearing down test for detector on port " << port_;
   }
 };
 

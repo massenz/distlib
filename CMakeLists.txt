@@ -71,8 +71,9 @@ set(SWIM_SOURCES
         ${SOURCE_DIR}/swim/SwimClient.cpp
         ${SOURCE_DIR}/swim/SwimServer.cpp
         ${SOURCE_DIR}/swim/GossipFailureDetector.cpp
+        ${SOURCE_DIR}/utils/misc.cpp
         ${SOURCE_DIR}/utils/network.cpp
-)
+        )
 
 set(SWIM_LIBS
         crypto
@@ -112,22 +113,43 @@ else (NOT ${INSTALL_DIR})
                     " Use -DINSTALL_DIR=/path/to/install to enable")
 endif (NOT ${INSTALL_DIR})
 
+# Unit tests build is defined in the tests/ folder
+add_subdirectory(${TESTS_DIR})
+
+#########
+# Examples - demo execs/programs to show usage of the libraries/utilities.
+#########
+
 # Example creating an exec using the shared lib.
 add_executable(merkle_demo ${SOURCE_DIR}/merkle_demo.cpp)
 target_link_libraries(merkle_demo
         ${PROJECT_NAME}
 )
 
-# Adding a target demo server that will use the SWIM protocol to derive
-# a list of healthy server from a configured pool.
+##
+# SWIM Server
+#
+# Demo server to either listen to incoming pings, or send.
+# Basic usage of the `SwimServer` class.
+#
 link_directories(${INSTALL_DIR}/lib)
 add_executable(swim_server_demo
-        ${SOURCE_DIR}/server_demo.cpp
+        ${SOURCE_DIR}/examples/server_demo.cpp
 )
 target_link_libraries(swim_server_demo
         ${PROJECT_NAME}
 )
 
-
-# Unit tests build is defined in the tests/ folder
-add_subdirectory(${TESTS_DIR})
+##
+# Gossip Server
+#
+# Full implementation of the `GossipFailureDetector` with associated HTTP REST API.
+#
+link_directories(${INSTALL_DIR}/lib)
+add_executable(gossip_detector_example
+        ${SOURCE_DIR}/utils/misc.cpp
+        ${SOURCE_DIR}/examples/gossip_example.cpp
+)
+target_link_libraries(gossip_detector_example
+        ${PROJECT_NAME}
+)

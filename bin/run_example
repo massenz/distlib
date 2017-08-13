@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+WORKDIR=$(dirname $0)
+PORTS="8081 8082 8083"
+
+if [[ -n $1 ]]; then
+    echo "Setting up verbose output logs"
+    DEBUG="$1"
+fi
+
+cd ${WORKDIR}/../build
+
+for port in ${PORTS}; do
+    OUT="/tmp/detector_${port}.log"
+    ./bin/gossip_detector_example ${DEBUG} --port=${port} \
+            --seeds=gondor:8081,gondor:8082,gondor:8083 >$OUT  2>&1 &
+    echo "[INFO] Started Detector on port ${port}; output in ${OUT}"
+done

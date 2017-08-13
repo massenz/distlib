@@ -283,6 +283,9 @@ TEST_F(SwimServerTests, reconcileReports) {
   ASSERT_EQ(0, server_->alive().size());
   ASSERT_EQ(1, server_->suspected().size());
 
+  // Make some time pass so that timestamps genuinely differ.
+  std::this_thread::sleep_for(seconds(1));
+
   report.clear_suspected();
 
   two = report.mutable_alive()->Add();

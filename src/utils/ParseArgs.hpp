@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstring>
 #include <map>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -14,16 +15,131 @@
 
 namespace utils {
 
-class unexpected_flag : public std::exception {
+// RegEx pattern for use when parsing IP/port strings, defined in misc.cpp.
+const std::regex kIpPortPattern{R"((\d{1,3}(\.\d{1,3}){3}):(\d+))"};
+const std::regex kHostPortPattern{R"((\S+(\.\S+)*):(\d+))"};
+const std::regex kIpPattern{R"(\d{1,3}(\.\d{1,3}){3})"};
+
+
+class parse_error : public std::exception {
   std::string what_;
 
 public:
-  unexpected_flag(const std::string& error) : what_(error) {}
+  explicit parse_error(const std::string& error) : what_(error) {}
 
   virtual const char* what() const _GLIBCXX_USE_NOEXCEPT {
     return what_.c_str();
   }
 };
+
+
+/**
+ * Splits an ip:port string into its component parts, also ensuring that they are correctly formed.
+ *
+ * @param ipPort a string of the form `IP:port`, as in " "192.168.51.123:8084".
+ * @return the parsed `{ip, port}` tuple.
+ * @throws parse_error if the string is not correctly formatted.
+ */
+std::tuple<std::string, unsigned int> ParseIpPort(const std::string& ipPort) {
+
+  std::smatch matches;
+
+  if (std::regex_match(ipPort, matches, kIpPortPattern)) {
+    return std::make_tuple(matches[1], atoi(matches[3].str().c_str()));
+  }
+
+  throw new parse_error("Not a valid IP:port string: " + ipPort);
+}
+
+/**
+ * Splits a `host:port` string into its component parts.
+ *
+ * @param hostPort a string of the form `host:port`, as in " "host.example.com:8084".
+ * @return the parsed `{host, port}` tuple.
+ * @throws parse_error if the string is not correctly formatted.
+ */
+std::tuple<std::string, unsigned int> ParseHostPort(const std::string& hostPort) {
+
+  std::smatch matches;
+
+  if (std::regex_match(hostPort, matches, kHostPortPattern)) {
+    return std::make_tuple(matches[1], atoi(matches[3].str().c_str()));
+  }
+
+  throw new parse_error("Not a valid host:port string: " + hostPort);
+}
+
+
+/**
+ * Parses a string and checks whether it is a valid IP address.
+ *
+ * param ip
+ * @return `true` if `ip` is an IP address.
+ */
+inline bool ParseIp(const std::string &ip) {
+  return std::regex_match(ip, kIpPattern);
+}
+
+/**
+ * Removes leading and trailing spaces from the string.
+ *
+ * @param str
+ * @return the `str` without leading and trailing spaces, if any
+ */
+std::string trim(const std::string &str) {
+  const auto strBegin = str.find_first_not_of(' ');
+
+  if (strBegin == std::string::npos)
+    return ""; // no content
+
+  const auto strEnd = str.find_last_not_of(' ');
+  const auto strRange = strEnd - strBegin + 1;
+
+  return str.substr(strBegin, strRange);
+}
+
+
+/**
+ * Splits a `sep`-separated string into its components part.
+ *
+ * <p>For example using the default ',' comma separator, it would return `"one,two,three"` as a
+ * three-element vector `{"one", "two", "three"}`.
+ *
+ * It can optionaly skip empty values (by default, they are returned as empty strings) and remove
+ * leading and trailing spaces around the values (the default behavior).
+ *
+ * Spaces inside the values (unless space is used as `sep`) are preserved.
+ *
+ * @param values the string containing 0 or more string separated by `sep`
+ * @param sep the separator; by defaul the comma (`,`) but can be any string
+ * @param trim_spaces if `true` (the default) spaces around the values are trimmed
+ * @param preserve_empty if `true` (the default) consecutive `sep` strings will be considered as
+ *      a single separator (in other words, `"one,two,,,,three"` will return a three-elements vector
+ *
+ * @return a vector of string containing the values, possibly empty.
+ */
+std::vector<std::string> split(const std::string &values, const std::string &sep = ",",
+                          bool trim_spaces = true, bool preserve_empty = true) {
+  auto remains = values;
+  std::vector<std::string> results;
+  std::string::size_type pos;
+
+  while ((pos = remains.find(sep)) != std::string::npos) {
+    std::string value = remains.substr(0, pos);
+    if (trim_spaces) {
+      value = trim(value);
+    }
+    if (!value.empty() || preserve_empty) {
+      results.push_back(value);
+    }
+    remains = remains.substr(pos + 1);
+  }
+
+  if (!remains.empty()) {
+    results.push_back(remains);
+  }
+  return results;
+}
 
 
 /**
@@ -270,7 +386,7 @@ public:
     } else if (value == "off") {
       return false;
     }
-    throw new unexpected_flag("Option '" + name + "' does not appear to be a flag (on/off): "
+    throw new parse_error("Option '" + name + "' does not appear to be a flag (on/off): "
         "'" + value + "'");
   }
 };
