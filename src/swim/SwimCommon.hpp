@@ -127,6 +127,11 @@ inline std::ostream &operator<<(std::ostream &out, const Server &server) {
   return out;
 }
 
+inline std::ostream &operator<<(std::ostream &out, const std::shared_ptr<Server> &ps) {
+  out << (*ps);
+  return out;
+}
+
 inline std::ostream &operator<<(std::ostream &out, const ServerRecord &record) {
   long ts = record.timestamp();
 

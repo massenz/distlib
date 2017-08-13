@@ -71,8 +71,9 @@ set(SWIM_SOURCES
         ${SOURCE_DIR}/swim/SwimClient.cpp
         ${SOURCE_DIR}/swim/SwimServer.cpp
         ${SOURCE_DIR}/swim/GossipFailureDetector.cpp
+        ${SOURCE_DIR}/utils/misc.cpp
         ${SOURCE_DIR}/utils/network.cpp
-)
+        )
 
 set(SWIM_LIBS
         crypto
@@ -133,7 +134,6 @@ target_link_libraries(merkle_demo
 #
 link_directories(${INSTALL_DIR}/lib)
 add_executable(swim_server_demo
-        ${SOURCE_DIR}/utils/misc.cpp
         ${SOURCE_DIR}/examples/server_demo.cpp
 )
 target_link_libraries(swim_server_demo

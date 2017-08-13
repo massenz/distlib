@@ -116,13 +116,21 @@ public:
   const seconds& ping_interval() const { return ping_interval_; }
 
 
-  void set_update_round_interval(const seconds &update_round_interval_);
+  void set_update_round_interval(const seconds &update_round_interval) {
+    update_round_interval_ = seconds(update_round_interval);
+  }
 
-  void set_grace_period(const seconds &grace_period_);
+  void set_grace_period(const seconds &grace_period) {
+    grace_period_ = seconds(grace_period);
+  }
 
-  void set_ping_timeout(const milliseconds &ping_timeout_);
+  void set_ping_timeout(const milliseconds &ping_timeout) {
+    ping_timeout_ = milliseconds(ping_timeout);
+  }
 
-  void set_ping_interval(const seconds &ping_interval_);
+  void set_ping_interval(const seconds &ping_interval) {
+    ping_interval_ = seconds(ping_interval);
+  }
 
   const ServerRecordsSet& alive() const { return gossip_server_->alive(); }
 
@@ -148,7 +156,9 @@ public:
    * Convenience method to add a "neighbor" to this server; those will then
    * start "gossiping" with each other.
    *
-   * @param host the host to add to this server's neighbors list
+   * @param host the host to add to this server's neighbors list; a new instance will be
+   * allocated inside the `ServerRecord` that is created to be added to the "alive set," hence
+   * passing a temporary variable that gets destroyed after this call will not cause any issue.
    */
   void AddNeighbor(const Server& host) {
     std::shared_ptr<ServerRecord> record = std::make_shared<ServerRecord>();

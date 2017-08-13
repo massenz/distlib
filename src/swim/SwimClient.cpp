@@ -94,7 +94,7 @@ bool SwimClient::postMessage(SwimEnvelope *envelope) const {
   poll(items, 1, timeout());
 
   if (!items[0].revents & ZMQ_POLLIN) {
-    LOG(ERROR) << "Timed out";
+    LOG(ERROR) << "Timed out waiting for response from " << destinationUri();
     return false;
   }
 
@@ -102,12 +102,12 @@ bool SwimClient::postMessage(SwimEnvelope *envelope) const {
   VLOG(2) << "Connected to server";
   message_t reply;
   if (!socket.recv(&reply)) {
-    LOG(ERROR) << "Failed to receive reply from server";
+    LOG(ERROR) << "Failed to receive reply from server" << destinationUri();
     return false;
   }
 
   char response[reply.size() + 1];
-  VLOG(2) << "Received: " << reply.size() << " bytes";
+  VLOG(2) << "Received: " << reply.size() << " bytes from " << destinationUri();
   memset(response, 0, reply.size() + 1);
   memcpy(response, reply.data(), reply.size());
   VLOG(2) << "Response: " << response;

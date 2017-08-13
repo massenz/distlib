@@ -15,6 +15,12 @@
 
 namespace utils {
 
+// RegEx pattern for use when parsing IP/port strings, defined in misc.cpp.
+const std::regex kIpPortPattern{R"((\d{1,3}(\.\d{1,3}){3}):(\d+))"};
+const std::regex kHostPortPattern{R"((\S+(\.\S+)*):(\d+))"};
+const std::regex kIpPattern{R"(\d{1,3}(\.\d{1,3}){3})"};
+
+
 class parse_error : public std::exception {
   std::string what_;
 
@@ -36,14 +42,42 @@ public:
  */
 std::tuple<std::string, unsigned int> ParseIpPort(const std::string& ipPort) {
 
-  std::regex pattern{R"((\d{1,3}(\.\d{1,3}){3}):(\d+))"};
   std::smatch matches;
 
-  if (std::regex_match(ipPort, matches, pattern)) {
+  if (std::regex_match(ipPort, matches, kIpPortPattern)) {
     return std::make_tuple(matches[1], atoi(matches[3].str().c_str()));
   }
 
   throw new parse_error("Not a valid IP:port string: " + ipPort);
+}
+
+/**
+ * Splits a `host:port` string into its component parts.
+ *
+ * @param hostPort a string of the form `host:port`, as in " "host.example.com:8084".
+ * @return the parsed `{host, port}` tuple.
+ * @throws parse_error if the string is not correctly formatted.
+ */
+std::tuple<std::string, unsigned int> ParseHostPort(const std::string& hostPort) {
+
+  std::smatch matches;
+
+  if (std::regex_match(hostPort, matches, kHostPortPattern)) {
+    return std::make_tuple(matches[1], atoi(matches[3].str().c_str()));
+  }
+
+  throw new parse_error("Not a valid host:port string: " + hostPort);
+}
+
+
+/**
+ * Parses a string and checks whether it is a valid IP address.
+ *
+ * param ip
+ * @return `true` if `ip` is an IP address.
+ */
+inline bool ParseIp(const std::string &ip) {
+  return std::regex_match(ip, kIpPattern);
 }
 
 /**

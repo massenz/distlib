@@ -46,6 +46,7 @@ void GossipFailureDetector::InitAllBackgroundThreads() {
   if (!gossip_server().isRunning()) {
     LOG(ERROR) << "SWIM Gossip Server is not running, please start() it before running the "
                   "detector's background threads";
+    return;
   }
 
   threads_.push_back(std::unique_ptr<std::thread>(
@@ -214,22 +215,6 @@ void GossipFailureDetector::StopAllBackgroundThreads() {
   }
   LOG(WARNING) << "All Gossiping threads for the SWIM Detector terminated; this detector is "
                << "no longer participating in Gossip.";
-}
-
-void GossipFailureDetector::set_update_round_interval(const seconds &update_round_interval_) {
-  GossipFailureDetector::update_round_interval_ = update_round_interval_;
-}
-
-void GossipFailureDetector::set_grace_period(const seconds &grace_period_) {
-  GossipFailureDetector::grace_period_ = grace_period_;
-}
-
-void GossipFailureDetector::set_ping_timeout(const milliseconds &ping_timeout_) {
-  GossipFailureDetector::ping_timeout_ = ping_timeout_;
-}
-
-void GossipFailureDetector::set_ping_interval(const seconds &ping_interval_) {
-  GossipFailureDetector::ping_interval_ = ping_interval_;
 }
 } // namespace swim
 

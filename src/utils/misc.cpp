@@ -1,11 +1,14 @@
 // Copyright (c) 2017 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 8/6/17.
 
+#include <regex>
+#include <iostream>
+
+#include <google/protobuf/stubs/common.h>
 
 #include <zmq.hpp>
-#include <iostream>
-#include <config.h>
-#include <google/protobuf/stubs/common.h>
+
+#include "config.h"
 
 
 namespace utils {
@@ -22,5 +25,6 @@ void printVersion() {
             << "\n- ZeroMQ ver. " << zmq_ver << "\n- Google Protocol Buffer ver. "
             << ::google::protobuf::internal::VersionString(GOOGLE_PROTOBUF_VERSION) << std::endl;
 }
+
 
 } // namespace utils
