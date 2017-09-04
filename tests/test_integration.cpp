@@ -19,7 +19,7 @@ using namespace std::chrono;
 
 class IntegrationTests : public ::testing::Test {
 protected:
-  std::shared_ptr<GossipFailureDetector> detector{};
+  std::shared_ptr<GossipFailureDetector> detector;
 
   void SetUp() override {
     // The intervals, timeouts etc. configured here are just for convenience's sake:
@@ -45,11 +45,13 @@ protected:
   }
 
   void TearDown() override {
-    detector->gossip_server().stop();
+    const_cast<SwimServer&>(detector->gossip_server()).stop();
     ASSERT_TRUE(::tests::WaitAtMostFor([this]() -> bool {
       return !detector->gossip_server().isRunning();
     }, milliseconds(500)));
   }
+
+  const SwimServer& server() { return detector->gossip_server(); }
 };
 
 TEST_F(IntegrationTests, detectFailingNeighbor) {
@@ -58,11 +60,11 @@ TEST_F(IntegrationTests, detectFailingNeighbor) {
   std::thread neighbor_thread([&neighbor]() { neighbor->start(); });
 
   detector->AddNeighbor(neighbor->self());
-  EXPECT_EQ(1, detector->alive().size());
+  EXPECT_EQ(1, server().alive_size());
 
 // Give other background threads a chance to do work, and verify the neighbor is still alive.
   std::this_thread::sleep_for(seconds(2));
-  EXPECT_EQ(1, detector->alive().size());
+  EXPECT_EQ(1, server().alive_size());
 
   neighbor->stop();
   EXPECT_FALSE(neighbor->isRunning());
@@ -70,11 +72,11 @@ TEST_F(IntegrationTests, detectFailingNeighbor) {
 
 // Wait long enough for the stopped server to be suspected, but not evicted.
   std::this_thread::sleep_for(seconds(2));
-  EXPECT_EQ(1, detector->suspected().size());
+  EXPECT_EQ(1, server().suspected_size());
 
 // Now, wait long enough for the stopped server to be evicted.
   std::this_thread::sleep_for(seconds(3));
-  EXPECT_TRUE(detector->suspected().empty());
+  EXPECT_TRUE(server().suspected_empty());
 }
 
 TEST_F(IntegrationTests, gossipSpreads) {
@@ -120,7 +122,7 @@ TEST_F(IntegrationTests, gossipSpreads) {
 
   // Give the detector enough time to ping and make reports.
   std::this_thread::sleep_for(seconds(2));
-  ASSERT_EQ(1, detector->suspected().size());
+  ASSERT_EQ(1, server().suspected_size());
 
   // It should now be suspected, but still the grace period should have not expired.
   std::this_thread::sleep_for(seconds(1));
@@ -133,8 +135,8 @@ TEST_F(IntegrationTests, gossipSpreads) {
 
   // Give the detector enough time to evict all the now-gone servers.
   std::this_thread::sleep_for(seconds(5));
-  EXPECT_TRUE(detector->alive().empty());
-  EXPECT_TRUE(detector->suspected().empty());
+  EXPECT_TRUE(server().alive_empty());
+  EXPECT_TRUE(server().suspected_empty());
 }
 
 TEST_F(IntegrationTests, canStopThreads) {
@@ -153,7 +155,7 @@ TEST_F(IntegrationTests, canStopThreads) {
   }
 
   std::this_thread::sleep_for(seconds(6));
-  EXPECT_EQ(5, detector->alive().size());
+  EXPECT_EQ(5, server().alive_size());
 
   // Stopping the background threads will cause the alive/suspected to stay frozen where they are
   // now.
@@ -164,10 +166,10 @@ TEST_F(IntegrationTests, canStopThreads) {
   }
 
   std::this_thread::sleep_for(seconds(3));
-  EXPECT_EQ(5, detector->alive().size());
+  EXPECT_EQ(5, server().alive_size());
 
   // Now, when we restart, we should pretty soon find out they're all gone.
   detector->InitAllBackgroundThreads();
   std::this_thread::sleep_for(seconds(6));
-  EXPECT_TRUE(detector->alive().empty());
+  EXPECT_TRUE(server().alive_empty());
 }

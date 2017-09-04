@@ -132,11 +132,7 @@ public:
     ping_interval_ = seconds(ping_interval);
   }
 
-  const ServerRecordsSet& alive() const { return gossip_server_->alive(); }
-
-  const ServerRecordsSet& suspected() const { return gossip_server_->suspected(); }
-
-  SwimServer& gossip_server() const { return *gossip_server_; }
+  const SwimServer& gossip_server() const { return *gossip_server_; }
 
   /**
    * Starts all the gossip protocol threads: ping neighbors, send reports and evict suspects once

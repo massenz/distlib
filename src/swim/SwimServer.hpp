@@ -7,6 +7,7 @@
 #include <chrono>
 #include <iomanip>
 #include <memory>
+#include <mutex>
 #include <thread>
 
 #include <glog/logging.h>
@@ -38,6 +39,10 @@ class SwimServer {
    */
   ServerRecordsSet suspected_;
 
+  // Access to the collection of servers must be thread-safe;
+  // use a std::lock_guard to protect access.
+  mutable std::mutex alive_mutex_;
+  mutable std::mutex suspected_mutex_;
 protected:
 
   /**
@@ -232,9 +237,44 @@ public:
     return server;
   }
 
+  /**
+   * This is thread-safe to access.
+   * @return the number of currently detected `alive` neighbors.
+   */
+  unsigned long alive_size() const {
+    std::lock_guard<std::mutex> lock(alive_mutex_);
+    return alive_.size();
+  }
 
+  /**
+   * This is thread-safe to access.
+   * @return the number of currently detected `suspected` neighbors.
+   */
+  unsigned long suspected_size() const {
+    std::lock_guard<std::mutex> lock(suspected_mutex_);
+    return suspected_.size();
+  }
+
+  /**
+   * This is thread-safe to access.
+   * @return whether the set of `alive` servers is empty.
+   */
+  bool alive_empty() const { return alive_size() == 0; }
+
+  /**
+   * This is thread-safe to access.
+   * @return whether the set of `suspected` servers is emtpy.
+   */
+  bool suspected_empty() const { return suspected_size() == 0; }
+
+  /**
+   * @deprecated this will soon be removed; avoid use
+   */
   const ServerRecordsSet& alive() const { return alive_; }
 
+  /**
+   * @deprecated this will soon be removed; avoid use
+   */
   const ServerRecordsSet& suspected() const { return suspected_; }
 
   /**
@@ -248,6 +288,7 @@ public:
    * the `alive()` method instead.
    *
    * @return a pointer that allows modifying the list of internally kept healthy servers.
+   * @deprecated access to this is thread-unsafe; this method will be removed.
    */
   ServerRecordsSet* const mutable_alive() { return &alive_; }
 
@@ -263,6 +304,7 @@ public:
    * the `suspected()` method instead.
    *
    * @return a pointer that allows modifying the list of internally kept unhealthy servers.
+   * @deprecated access to this is thread-unsafe; this method will be removed.
    */
   ServerRecordsSet* const mutable_suspected() { return &suspected_; }
 };

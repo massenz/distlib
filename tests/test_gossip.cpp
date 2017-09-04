@@ -81,24 +81,27 @@ TEST_F(GossipFailureDetectorTests, updatesAlives) {
   ASSERT_TRUE(tests::WaitAtMostFor([&]() -> bool { return detector_->gossip_server().isRunning(); },
                        std::chrono::milliseconds(2000))) << "Detector didn't start";
 
-  ASSERT_TRUE(detector_->alive().empty());
+  const SwimServer& server = detector_->gossip_server();
+
+  ASSERT_TRUE(server.alive_empty());
   ASSERT_TRUE(client.Ping());
-  ASSERT_EQ(1, detector_->alive().size());
+  ASSERT_EQ(1, server.alive_size());
 }
 
 TEST_F(GossipFailureDetectorTests, updatesManyAlives) {
 
   ASSERT_TRUE(tests::WaitAtMostFor([&]() -> bool { return detector_->gossip_server().isRunning(); },
                                    std::chrono::milliseconds(2000))) << "Detector didn't start";
+  const SwimServer& server = detector_->gossip_server();
 
-  ASSERT_TRUE(detector_->alive().empty());
+  ASSERT_TRUE(server.alive_empty());
   for (int i = 0; i < 10; ++i) {
     SwimClient client(*MakeServer("localhost", detector_->gossip_server().port()),
                       tests::RandomPort());
     ASSERT_TRUE(client.Ping());
   }
 
-  ASSERT_EQ(10, detector_->alive().size());
+  ASSERT_EQ(10, server.alive_size());
 }
 
 
@@ -109,10 +112,11 @@ TEST_F(GossipFailureDetectorTests, create) {
   h1.set_ip_addr("10.10.1.5");
   h1.set_port(8080);
   detector_->AddNeighbor(h1);
+  const SwimServer& server = detector_->gossip_server();
 
   // Adding twice the same server will have no effect.
   detector_->AddNeighbor(h1);
-  ASSERT_EQ(1, detector_->alive().size());
+  ASSERT_EQ(1, server.alive_size());
 
   // Obviously, a different object makes no difference.
   Server h1_alias;
@@ -122,7 +126,7 @@ TEST_F(GossipFailureDetectorTests, create) {
 
   // Still one server in the set.
   detector_->AddNeighbor(h1_alias);
-  ASSERT_EQ(1, detector_->alive().size());
+  ASSERT_EQ(1, server.alive_size());
 
   // However, a different port is regarded as a different server: note `hostname` is still "h1."
   Server h1_other;
@@ -131,26 +135,29 @@ TEST_F(GossipFailureDetectorTests, create) {
   h1_other.set_port(8090);
   detector_->AddNeighbor(h1_other);
 
-  ASSERT_EQ(2, detector_->alive().size());
+  ASSERT_EQ(2, server.alive_size());
 }
 
 TEST_F(GossipFailureDetectorTests, addNeighbors) {
-  std::shared_ptr<Server> server = MakeServer("host1.example.com", 8087),
-      server2 = MakeServer("host2.test.net", 9099);
+  const SwimServer& server = detector_->gossip_server();
+  std::shared_ptr<Server> host1 = MakeServer("host1.example.com", 8087),
+      host2 = MakeServer("host2.test.net", 9099);
 
-  ASSERT_TRUE(detector_->alive().empty());
+  ASSERT_TRUE(server.alive_empty());
 
-  detector_->AddNeighbor(*server);
-  detector_->AddNeighbor(*server2);
+  detector_->AddNeighbor(*host1);
+  detector_->AddNeighbor(*host2);
 
-  ASSERT_EQ(2, detector_->alive().size());
+  ASSERT_EQ(2, server.alive_size());
 
   std::shared_ptr<Server> server3 = MakeServer("another.example.com", 4456);
   detector_->AddNeighbor(*server3);
-  ASSERT_EQ(3, detector_->alive().size());
+  ASSERT_EQ(3, server.alive_size());
 }
 
 
+// TODO: this test will need to be changed, once we remove explicit access to
+//       the alive() and suspected() inner collections (thread-safety).
 TEST_F(GossipFailureDetectorTests, prepareReport) {
   for (int i = 0; i < 3; ++i) {
     std::string host = "host_" + std::to_string(i) + ".example.com";
@@ -162,13 +169,19 @@ TEST_F(GossipFailureDetectorTests, prepareReport) {
   ASSERT_EQ(3, report.alive_size());
   ASSERT_EQ(0, report.suspected_size());
 
-  auto first = *(detector_->gossip_server().mutable_alive()->begin());
+  // We need to cast-away const-ness, so that we can mutate the list of alive
+  // and suspected servers.
+  // Generally speaking, this is **thread-unsafe** but here we can, as we can be
+  // sure there is no other thread accessing these collections.
+  SwimServer& swimServer = const_cast<SwimServer&> (detector_->gossip_server());
+
+  auto first = *(swimServer.alive().begin());
   first->set_didgossip(true);
 
   report = detector_->PrepareReport();
   ASSERT_EQ(2, report.alive_size());
 
-  detector_->gossip_server().mutable_suspected()->insert(
+  swimServer.mutable_suspected()->insert(
       MakeRecord(*MakeServer("another.example.com", 4456)));
 
   report = detector_->PrepareReport();
