@@ -80,7 +80,7 @@ void GossipFailureDetector::InitAllBackgroundThreads() {
 }
 
 void GossipFailureDetector::PingNeighbor() const {
-  const ServerRecordsSet& neighbors = alive();
+  const ServerRecordsSet& neighbors = gossip_server_->alive();
   if (!neighbors.empty()) {
     VLOG(2) << "Selecting from " << neighbors.size() << " neighbors";
     std::uniform_int_distribution<unsigned long> distribution(0, neighbors.size() - 1);
@@ -111,8 +111,8 @@ void GossipFailureDetector::PingNeighbor() const {
 
       // TODO: Must add a mutex_lock around these two statements.
       // We are mutating the alive/suspected containers, there is a race with PrepareReport.
-      gossip_server().mutable_suspected()->insert(suspectRecord);
-      gossip_server().mutable_alive()->erase(*iterator);
+      gossip_server_->mutable_suspected()->insert(suspectRecord);
+      gossip_server_->mutable_alive()->erase(*iterator);
 
       VLOG(3) << "After: " << gossip_server().alive().size() << " alive; "
               << gossip_server().suspected().size() << " suspected";
@@ -132,7 +132,7 @@ void GossipFailureDetector::SendReport() const {
   VLOG(2) << "Sending report, alive: " << report.alive_size() << "; suspected: "
           << report.suspected_size();
 
-  auto neighbors = gossip_server().mutable_alive();
+  auto neighbors = gossip_server_->mutable_alive();
   for (auto server : *neighbors) {
     if (!server->didgossip()) {
       auto client = SwimClient(server->server());
@@ -148,17 +148,17 @@ void GossipFailureDetector::SendReport() const {
 
       // We managed to pick an unresponsive server; let's add to suspects, then let the loop
       // continue.
-      gossip_server().mutable_suspected()->insert(server);
-      gossip_server().mutable_alive()->erase(server);
+      gossip_server_->mutable_suspected()->insert(server);
+      gossip_server_->mutable_alive()->erase(server);
     }
   }
 
   // If we got here, it means we have sent updates to all our neighbors in the past; we can then
   // select just one at random and send an update.
-  std::uniform_int_distribution<unsigned long> distribution(0, alive().size() - 1);
+  std::uniform_int_distribution<unsigned long> distribution(0, gossip_server_->alive_size() - 1);
   auto num = distribution(random_engine_);
 
-  auto iterator = alive().begin();
+  auto iterator = gossip_server_->alive().begin();
   advance(iterator, num);
 
   auto client = SwimClient((*iterator)->server());
@@ -168,7 +168,7 @@ void GossipFailureDetector::SendReport() const {
 
 
 void GossipFailureDetector::GarbageCollectSuspected() const {
-  auto suspects = gossip_server().mutable_suspected();
+  auto suspects = gossip_server_->mutable_suspected();
   auto expiredTime = ::utils::CurrentTime() - grace_period().count();
   VLOG(2) << "Evicting suspects last seen before " << expiredTime;
   for (const auto &suspect : *suspects) {
