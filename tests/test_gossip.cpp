@@ -165,7 +165,7 @@ TEST_F(GossipFailureDetectorTests, prepareReport) {
     detector_->AddNeighbor(*server);
   }
 
-  SwimReport report = detector_->PrepareReport();
+  SwimReport report = detector_->gossip_server().PrepareReport();
   ASSERT_EQ(3, report.alive_size());
   ASSERT_EQ(0, report.suspected_size());
 
@@ -178,13 +178,13 @@ TEST_F(GossipFailureDetectorTests, prepareReport) {
   auto first = *(swimServer.alive().begin());
   first->set_didgossip(true);
 
-  report = detector_->PrepareReport();
+  report = detector_->gossip_server().PrepareReport();
   ASSERT_EQ(2, report.alive_size());
 
   swimServer.mutable_suspected()->insert(
       MakeRecord(*MakeServer("another.example.com", 4456)));
 
-  report = detector_->PrepareReport();
+  report = detector_->gossip_server().PrepareReport();
   ASSERT_EQ(1, report.suspected_size());
 }
 

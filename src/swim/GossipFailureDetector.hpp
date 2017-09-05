@@ -36,25 +36,20 @@ class GossipFailureDetector {
   // The time between subsequent `ping()` sent to neighbors.
   seconds ping_interval_{};
 
-  // Used to pick a random host to ping from the list of alive neighbors.
-  static std::default_random_engine random_engine_;
-
   // This is the server that will be listening to incoming
   // pings and update reports from neighbors.
   std::unique_ptr<SwimServer> gossip_server_{};
 
   std::vector<std::unique_ptr<std::thread>> threads_{};
 
-
 public:
 
   // TODO: for now, deleting the copy constructor and assignment; but maybe they would make sense?
   GossipFailureDetector(const GossipFailureDetector&) = delete;
+  GossipFailureDetector operator=(const GossipFailureDetector&) = delete;
 
   // TODO: would it make any sense to have a move constructor?
   GossipFailureDetector(const GossipFailureDetector&&) = delete;
-  GossipFailureDetector operator=(const GossipFailureDetector&) = delete;
-
   GossipFailureDetector operator=(const GossipFailureDetector&&) = delete;
 
   /**
@@ -168,14 +163,6 @@ public:
     ServerRecordsSet* ps = gossip_server_->mutable_alive();
     ps->insert(record);
   }
-
-  /**
-   * Prepares a report that can then be sent to neighbors to gossip about.
-   *
-   * @return a list of all known alive and suspected servers, including only those that have been
-   *    added since the last time a report was sent (i.e., the ones we haven't gossiped about yet).
-   */
-  SwimReport PrepareReport() const;
 
   /**
    * Pick a neighbor at random from the list of `alive()` servers and sends a ping: if it

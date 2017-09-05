@@ -17,30 +17,6 @@ bool operator==(const Server &lhs, const Server &rhs) {
       && lhs.port() == rhs.port();
 }
 
-SwimReport GossipFailureDetector::PrepareReport() const {
-  SwimReport report;
-
-  report.mutable_sender()->CopyFrom(gossip_server().self());
-
-  for (const auto &item : gossip_server().alive()) {
-    if (!item->didgossip()) {
-      ServerRecord *prec = report.mutable_alive()->Add();
-      prec->CopyFrom(*item);
-    }
-  }
-
-  for (const auto &item : gossip_server().suspected()) {
-    if (!item->didgossip()) {
-      ServerRecord *prec = report.mutable_suspected()->Add();
-      prec->CopyFrom(*item);
-    }
-  }
-
-  return report;
-}
-
-std::default_random_engine GossipFailureDetector::random_engine_{};
-
 void GossipFailureDetector::InitAllBackgroundThreads() {
 
   if (!gossip_server().isRunning()) {
@@ -80,17 +56,9 @@ void GossipFailureDetector::InitAllBackgroundThreads() {
 }
 
 void GossipFailureDetector::PingNeighbor() const {
-  const ServerRecordsSet& neighbors = gossip_server_->alive();
-  if (!neighbors.empty()) {
-    VLOG(2) << "Selecting from " << neighbors.size() << " neighbors";
-    std::uniform_int_distribution<unsigned long> distribution(0, neighbors.size() - 1);
-    auto num = distribution(random_engine_);
-
-    VLOG(2) << "Picked " << num << "-th server";
-    auto iterator = neighbors.begin();
-    advance(iterator, num);
-
-    const Server& server = (*iterator)->server();
+//  const ServerRecordsSet& neighbors = gossip_server_->alive();
+  if (!gossip_server_->alive_empty()) {
+    const Server server = gossip_server_->GetRandomNeighbor();
     VLOG(2) << "Pinging " << server;
 
     SwimClient client(server, gossip_server().port(), ping_timeout().count());
@@ -98,24 +66,12 @@ void GossipFailureDetector::PingNeighbor() const {
     if (!response) {
       // TODO: forward request to ping to a set of kForwarderCount neighbors.
 
-      // TODO: remove unnecessary trace once confirmed all tests pass.
-      VLOG(3) << "Before: " << gossip_server().alive().size() << " alive; "
-              << gossip_server().suspected().size() << " suspected";
-
       LOG(WARNING) << server << " is not responding to ping";
-
-      std::shared_ptr<ServerRecord> suspectRecord(new ServerRecord());
-      suspectRecord->set_allocated_server(new Server(server));
-      suspectRecord->set_timestamp(utils::CurrentTime());
-      suspectRecord->set_didgossip(false);
-
-      // TODO: Must add a mutex_lock around these two statements.
-      // We are mutating the alive/suspected containers, there is a race with PrepareReport.
-      gossip_server_->mutable_suspected()->insert(suspectRecord);
-      gossip_server_->mutable_alive()->erase(*iterator);
-
-      VLOG(3) << "After: " << gossip_server().alive().size() << " alive; "
-              << gossip_server().suspected().size() << " suspected";
+      if (gossip_server_->ReportSuspect(server)) {
+        VLOG(2) << "Server " << server << " added to the suspected set";
+      } else {
+        LOG(WARNING) << "Could not add " << server << " to the suspected set";
+      }
     }
   } else {
     VLOG(2) << "No servers in group, skipping ping";
@@ -123,47 +79,26 @@ void GossipFailureDetector::PingNeighbor() const {
 }
 
 void GossipFailureDetector::SendReport() const {
-  if (gossip_server().alive().empty()) {
+  if (gossip_server_->alive_empty()) {
     VLOG(2) << "No neighbors, skip sending report";
     return;
   }
 
-  auto report = PrepareReport();
+  auto report = gossip_server_->PrepareReport();
   VLOG(2) << "Sending report, alive: " << report.alive_size() << "; suspected: "
           << report.suspected_size();
 
-  auto neighbors = gossip_server_->mutable_alive();
-  for (auto server : *neighbors) {
-    if (!server->didgossip()) {
-      auto client = SwimClient(server->server());
-      VLOG(2) << "Sending report to " << server->server();
+  // TODO: make the number of reports sent out configurable; only sending one at a time now.
+  const Server other = gossip_server_->GetRandomNeighbor();
+  auto client = SwimClient(other);
+  VLOG(2) << "Sending report to " << other;
 
-      // Either way, we want to mark the time we connected (or tried to connect) to this server.
-      server->set_timestamp(::utils::CurrentTime());
-
-      if (client.Send(report)) {
-        server->set_didgossip(true);
-        return;
-      }
-
-      // We managed to pick an unresponsive server; let's add to suspects, then let the loop
-      // continue.
-      gossip_server_->mutable_suspected()->insert(server);
-      gossip_server_->mutable_alive()->erase(server);
-    }
+  if (!client.Send(report)) {
+    // TODO: ask m forwarders to reach this server.
+    // We managed to pick an unresponsive server; let's add to suspects.
+    LOG(WARNING) << "Report sending failed; adding " << other << " to suspects";
+    gossip_server_->ReportSuspect(other);
   }
-
-  // If we got here, it means we have sent updates to all our neighbors in the past; we can then
-  // select just one at random and send an update.
-  std::uniform_int_distribution<unsigned long> distribution(0, gossip_server_->alive_size() - 1);
-  auto num = distribution(random_engine_);
-
-  auto iterator = gossip_server_->alive().begin();
-  advance(iterator, num);
-
-  auto client = SwimClient((*iterator)->server());
-  client.Send(report);
-  VLOG(2) << "Sent report to " << (*iterator)->server();
 }
 
 

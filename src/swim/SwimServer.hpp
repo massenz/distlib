@@ -58,7 +58,7 @@ protected:
    * @param client the server that just sent the message; the callee obtains ownership of the
    *        pointer and is responsible for freeing the memory.
    */
-  virtual void onUpdate(Server* client) {
+  virtual void onUpdate(Server *client) {
     // Make sure client will be deleted, even if an exception is thrown.
     std::unique_ptr<Server> ps(client);
 
@@ -91,7 +91,7 @@ protected:
    *        update its membership list.
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
-  virtual void onReport(Server* sender, SwimReport* report) {
+  virtual void onReport(Server *sender, SwimReport *report) {
     std::unique_ptr<Server> ps(sender);
 
     VLOG(2) << self() << " received: " << *report;
@@ -169,7 +169,7 @@ protected:
    *        ping and report status back.
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
-  virtual void onPingRequest(Server* sender, Server* destination);
+  virtual void onPingRequest(Server *sender, Server *destination);
 
 public:
 
@@ -267,15 +267,16 @@ public:
    */
   bool suspected_empty() const { return suspected_size() == 0; }
 
-  /**
-   * @deprecated this will soon be removed; avoid use
-   */
-  const ServerRecordsSet& alive() const { return alive_; }
 
   /**
    * @deprecated this will soon be removed; avoid use
    */
-  const ServerRecordsSet& suspected() const { return suspected_; }
+  const ServerRecordsSet &alive() const { return alive_; }
+
+  /**
+   * @deprecated this will soon be removed; avoid use
+   */
+  const ServerRecordsSet &suspected() const { return suspected_; }
 
   /**
    * Gives access to the internally-kept list of servers that are deemed to be "alive" and
@@ -290,7 +291,7 @@ public:
    * @return a pointer that allows modifying the list of internally kept healthy servers.
    * @deprecated access to this is thread-unsafe; this method will be removed.
    */
-  ServerRecordsSet* const mutable_alive() { return &alive_; }
+  ServerRecordsSet *const mutable_alive() { return &alive_; }
 
   /**
    * Gives access to the internally-kept list of servers that are deemed to be "unhealthy," i.e.
@@ -306,7 +307,23 @@ public:
    * @return a pointer that allows modifying the list of internally kept unhealthy servers.
    * @deprecated access to this is thread-unsafe; this method will be removed.
    */
-  ServerRecordsSet* const mutable_suspected() { return &suspected_; }
+  ServerRecordsSet *const mutable_suspected() { return &suspected_; }
+
+  /**
+   * Prepares a report that can then be sent to neighbors to gossip about.
+   *
+   * @return a list of all known alive and suspected servers, including only those that have been
+   *    added since the last time a report was sent (i.e., the ones we haven't gossiped about yet).
+   */
+  SwimReport PrepareReport() const;
+
+  /**
+   * @return From the set of `alive` neighbors, it will return a randomly chosen one.
+   * @throws `swim::empty_set` if the set of alive neighbors is empty.
+   */
+  Server GetRandomNeighbor() const;
+
+  bool ReportSuspect(const Server &server);
 };
 
 

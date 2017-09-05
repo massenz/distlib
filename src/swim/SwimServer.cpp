@@ -113,4 +113,68 @@ void SwimServer::onPingRequest(Server* sender, Server* destination) {
   VLOG(2) << "Updating status for " << *sender << " as ALIVE";
   onUpdate(sender);
 }
+
+SwimReport SwimServer::PrepareReport() const {
+  SwimReport report;
+
+  report.mutable_sender()->CopyFrom(self());
+
+  {
+    std::lock_guard<std::mutex> lock(alive_mutex_);
+
+    for (const auto &item : alive_) {
+      if (!item->didgossip()) {
+        ServerRecord *prec = report.mutable_alive()->Add();
+        prec->CopyFrom(*item);
+      }
+    }
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(suspected_mutex_);
+
+    for (const auto &item : suspected_) {
+      if (!item->didgossip()) {
+        ServerRecord *prec = report.mutable_suspected()->Add();
+        prec->CopyFrom(*item);
+      }
+    }
+  }
+
+  return report;
+}
+
+Server SwimServer::GetRandomNeighbor() const {
+  if (alive_empty()) {
+    throw empty_set();
+  }
+  std::uniform_int_distribution<unsigned long> distribution(0, alive_size() - 1);
+  auto num = distribution(swim::random_engine);
+
+  std::lock_guard<std::mutex> lock(alive_mutex_);
+  auto iterator = alive_.begin();
+  advance(iterator, num);
+
+  assert(iterator != alive_.end());
+  VLOG(2) << "Picked " << num << "-th server (of " << alive_size() << ")";
+
+  return (*iterator)->server();
+}
+
+bool SwimServer::ReportSuspect(const Server &server) {
+  size_t num{0};
+  std::shared_ptr<ServerRecord> suspectRecord = MakeRecord(server);
+  
+  // First remove it from the alive set, if there.
+  {
+    std::lock_guard<std::mutex> lock(alive_mutex_);
+    num = alive_.erase(suspectRecord);
+  }
+  VLOG(2) << "Removed " << num << " servers from the alive set.";
+  
+  // Then add it to the suspected set.
+  std::lock_guard<std::mutex> lock(suspected_mutex_);
+  auto inserted = suspected_.insert(suspectRecord);
+  return inserted.second;
+}
 } // namespace swim
