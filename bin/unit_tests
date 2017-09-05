@@ -1,14 +1,6 @@
 #!/bin/bash
 
-set -e
-
-function run_tests {
-    for filter in "-Gossip*" "Gossip*"; do
-        ./tests/bin/distlib_test --gtest_filter=${filter}
-    done
-}
-
 cd $(dirname $0)/../build
 
 cmake --build . --target distlib_test
-time run_tests
+time ./tests/bin/distlib_test

@@ -15,6 +15,8 @@ namespace swim {
 const unsigned long SwimClient::DEFAULT_TIMEOUT_MSEC = 25;
 const unsigned int SwimClient::DEFAULT_SOCKET_LINGER_MSEC = 0;
 
+std::default_random_engine random_engine{};
+
 SwimClient::SwimClient(const Server &dest, int self_port, unsigned long timeout) :
     dest_(dest), timeout_(timeout) {
   self_.set_hostname(utils::Hostname());

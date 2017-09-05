@@ -21,6 +21,15 @@ inline ::google::protobuf::uint64 TimestampToFixed64(const Timestamp &timestamp)
   return std::chrono::system_clock::to_time_t(timestamp);
 }
 
+/**
+ * Thrown when the set from which the caller is trying to obtain an element is empty.
+ */
+struct empty_set : public std::exception {
+  virtual const char* what() { return "empty set"; };
+};
+
+extern std::default_random_engine random_engine;
+
 
 /**
  * Creates a Protobuf representation of the given hostname:port server.

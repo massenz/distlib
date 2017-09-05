@@ -58,7 +58,7 @@ protected:
    * @param client the server that just sent the message; the callee obtains ownership of the
    *        pointer and is responsible for freeing the memory.
    */
-  virtual void onUpdate(Server* client) {
+  virtual void onUpdate(Server *client) {
     // Make sure client will be deleted, even if an exception is thrown.
     std::unique_ptr<Server> ps(client);
 
@@ -91,7 +91,7 @@ protected:
    *        update its membership list.
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
-  virtual void onReport(Server* sender, SwimReport* report) {
+  virtual void onReport(Server *sender, SwimReport *report) {
     std::unique_ptr<Server> ps(sender);
 
     VLOG(2) << self() << " received: " << *report;
@@ -169,7 +169,7 @@ protected:
    *        ping and report status back.
    * @param timestamp when the message was sent (according to the `client`'s clock).
    */
-  virtual void onPingRequest(Server* sender, Server* destination);
+  virtual void onPingRequest(Server *sender, Server *destination);
 
 public:
 
@@ -268,45 +268,48 @@ public:
   bool suspected_empty() const { return suspected_size() == 0; }
 
   /**
-   * @deprecated this will soon be removed; avoid use
+   * Prepares a report that can then be sent to neighbors to gossip about.
+   *
+   * @return a list of all known alive and suspected servers, including only those that have been
+   *    added since the last time a report was sent (i.e., the ones we haven't gossiped about yet).
    */
-  const ServerRecordsSet& alive() const { return alive_; }
+  SwimReport PrepareReport() const;
 
   /**
-   * @deprecated this will soon be removed; avoid use
+   * @return From the set of `alive` neighbors, it will return a randomly chosen one.
+   * @throws `swim::empty_set` if the set of alive neighbors is empty.
    */
-  const ServerRecordsSet& suspected() const { return suspected_; }
+  Server GetRandomNeighbor() const;
 
   /**
-   * Gives access to the internally-kept list of servers that are deemed to be "alive" and
-   * responding to pings (or, conversely, have just recently pinged this server).
+   * Used to report a non-responding server.
    *
-   * <p>The returned pointer, while guaranteed to be valid for the duration of this object's
-   * lifetime, should not be stored and should only be assumed valide temporarily.
-   *
-   * <p>If you only need access to the set of servers, without modifying it, it is best to use
-   * the `alive()` method instead.
-   *
-   * @return a pointer that allows modifying the list of internally kept healthy servers.
-   * @deprecated access to this is thread-unsafe; this method will be removed.
+   * @param server that failed to respond to a ping request and thus is suspected of being in a
+   * failed state
+   * @return whethet adding `server` to the `suspected_` set was successful
    */
-  ServerRecordsSet* const mutable_alive() { return &alive_; }
+  bool ReportSuspect(const Server &);
 
   /**
-   * Gives access to the internally-kept list of servers that are deemed to be "unhealthy," i.e.
-   * not responding to pings from this server; but not for long enough (`grace_period()`) to have
-   * been considered "dead."
+   * Use this for either a newly discovered neighbor, or for a `suspected_` server that was in
+   * fact found to be in a healthy state.
    *
-   * <p>The returned pointer, while guaranteed to be valid for the duration of this object's
-   * lifetime, should not be stored and should only be assumed valide temporarily.
-   *
-   * <p>If you only need access to the set of servers, without modifying it, it is best to use
-   * the `suspected()` method instead.
-   *
-   * @return a pointer that allows modifying the list of internally kept unhealthy servers.
-   * @deprecated access to this is thread-unsafe; this method will be removed.
+   * @param server that will be added to the `alive_` set (and, if necessary, removed from the
+   * `suspected_` one).
+   * @return whether adding `server` to `alive_` set was successful
    */
-  ServerRecordsSet* const mutable_suspected() { return &suspected_; }
+  bool AddAlive(const Server&);
+
+  /**
+   * Removes the given server from the suspected set, thus marking it as terminally unreachable
+   * (unless subsequently added back using `AddAlive(const Server&)`).
+   *
+   * <p>Typically used when the `grace_period()` expires and the `server` has not been
+   * successfully contacted, by either this `SwimServer` or other "forwarders."
+   *
+   * @param server to remove from the set
+   */
+  void RemoveSuspected(const Server&);
 };
 
 

@@ -220,8 +220,8 @@ TEST_F(SwimServerTests, receiveReport) {
   two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(1, server_->alive().size());
-  ASSERT_EQ(1, server_->suspected().size());
+  ASSERT_EQ(1, server_->alive_size());
+  ASSERT_EQ(1, server_->suspected_size());
 }
 
 TEST_F(SwimServerTests, receiveReportMany) {
@@ -257,8 +257,8 @@ TEST_F(SwimServerTests, receiveReportMany) {
   }
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(10, server_->alive().size());
-  ASSERT_EQ(5, server_->suspected().size());
+  ASSERT_EQ(10, server_->alive_size());
+  ASSERT_EQ(5, server_->suspected_size());
 }
 
 
@@ -280,8 +280,8 @@ TEST_F(SwimServerTests, reconcileReports) {
   two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(0, server_->alive().size());
-  ASSERT_EQ(1, server_->suspected().size());
+  ASSERT_EQ(0, server_->alive_size());
+  ASSERT_EQ(1, server_->suspected_size());
 
   // Make some time pass so that timestamps genuinely differ.
   std::this_thread::sleep_for(seconds(1));
@@ -295,8 +295,8 @@ TEST_F(SwimServerTests, reconcileReports) {
   two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(1, server_->alive().size());
-  ASSERT_EQ(0, server_->suspected().size());
+  ASSERT_EQ(1, server_->alive_size());
+  ASSERT_EQ(0, server_->suspected_size());
 }
 
 
@@ -318,8 +318,8 @@ TEST_F(SwimServerTests, ignoreStaleReports) {
   two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(0, server_->alive().size());
-  ASSERT_EQ(1, server_->suspected().size());
+  ASSERT_EQ(0, server_->alive_size());
+  ASSERT_EQ(1, server_->suspected_size());
 
   report.clear_suspected();
 
@@ -332,8 +332,8 @@ TEST_F(SwimServerTests, ignoreStaleReports) {
   two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(0, server_->alive().size());
-  ASSERT_EQ(1, server_->suspected().size());
+  ASSERT_EQ(0, server_->alive_size());
+  ASSERT_EQ(1, server_->suspected_size());
 }
 
 TEST_F(SwimServerTests, servesPingRequests) {
@@ -349,17 +349,17 @@ TEST_F(SwimServerTests, servesPingRequests) {
   ASSERT_TRUE(client.RequestPing(other.release()));
 
   // This is the sender (us).
-  ASSERT_EQ(1, server_->alive().size());
+  ASSERT_EQ(1, server_->alive_size());
 
   // We need to wait a bit for the ping to time out.
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-  // THis is the fakeserver, definitely dead.
-  ASSERT_EQ(1, server_->suspected().size());
+  SwimReport report = server_->PrepareReport();
+  // This is the fake server.
+  ASSERT_EQ(1, report.suspected_size());
+  const ServerRecord& record = report.suspected(0);
 
-  for (auto record : server_->suspected()) {
-    ASSERT_EQ(*MakeServer("fakeserver", 9098), record->server());
-  }
+  ASSERT_EQ(*MakeServer("fakeserver", 9098), record.server());
 }
 
 
