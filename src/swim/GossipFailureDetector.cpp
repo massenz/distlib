@@ -103,14 +103,16 @@ void GossipFailureDetector::SendReport() const {
 
 
 void GossipFailureDetector::GarbageCollectSuspected() const {
-  auto suspects = gossip_server_->mutable_suspected();
+  SwimReport report = gossip_server_->PrepareReport();
+
   auto expiredTime = ::utils::CurrentTime() - grace_period().count();
   VLOG(2) << "Evicting suspects last seen before " << expiredTime;
-  for (const auto &suspect : *suspects) {
-    if (suspect->timestamp() < expiredTime) {
-      VLOG(2) << "Server " << suspect->server() << " last seen at: "
-              << suspect->timestamp() << " exceeded grace period, presumed dead";
-      suspects->erase(suspect);
+
+  for (const auto &suspectRecord : report.suspected()) {
+    if (suspectRecord.timestamp() < expiredTime) {
+      VLOG(2) << "Server " << suspectRecord.server() << " last seen at: "
+              << suspectRecord.timestamp() << " exceeded grace period, presumed dead";
+      gossip_server_->RemoveSuspected(suspectRecord.server());
     }
   }
 }

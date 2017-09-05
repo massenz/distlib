@@ -323,7 +323,35 @@ public:
    */
   Server GetRandomNeighbor() const;
 
-  bool ReportSuspect(const Server &server);
+  /**
+   * Used to report a non-responding server.
+   *
+   * @param server that failed to respond to a ping request and thus is suspected of being in a
+   * failed state
+   * @return whethet adding `server` to the `suspected_` set was successful
+   */
+  bool ReportSuspect(const Server &);
+
+  /**
+   * Use this for either a newly discovered neighbor, or for a `suspected_` server that was in
+   * fact found to be in a healthy state.
+   *
+   * @param server that will be added to the `alive_` set (and, if necessary, removed from the
+   * `suspected_` one).
+   * @return whether adding `server` to `alive_` set was successful
+   */
+  bool AddAlive(const Server&);
+
+  /**
+   * Removes the given server from the suspected set, thus marking it as terminally unreachable
+   * (unless subsequently added back using `AddAlive(const Server&)`).
+   *
+   * <p>Typically used when the `grace_period()` expires and the `server` has not been
+   * successfully contacted, by either this `SwimServer` or other "forwarders."
+   *
+   * @param server to remove from the set
+   */
+  void RemoveSuspected(const Server&);
 };
 
 

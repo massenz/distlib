@@ -164,17 +164,38 @@ Server SwimServer::GetRandomNeighbor() const {
 bool SwimServer::ReportSuspect(const Server &server) {
   size_t num{0};
   std::shared_ptr<ServerRecord> suspectRecord = MakeRecord(server);
-  
+
   // First remove it from the alive set, if there.
   {
     std::lock_guard<std::mutex> lock(alive_mutex_);
     num = alive_.erase(suspectRecord);
   }
   VLOG(2) << "Removed " << num << " servers from the alive set.";
-  
+
   // Then add it to the suspected set.
   std::lock_guard<std::mutex> lock(suspected_mutex_);
   auto inserted = suspected_.insert(suspectRecord);
   return inserted.second;
+}
+
+bool SwimServer::AddAlive(const Server &server) {
+  RemoveSuspected(server);
+
+  std::shared_ptr<ServerRecord> aliveRecord = MakeRecord(server);
+  std::lock_guard<std::mutex> lock(alive_mutex_);
+  auto inserted = alive_.insert(aliveRecord);
+  return inserted.second;
+}
+
+void SwimServer::RemoveSuspected(const Server &server) {
+  std::shared_ptr<ServerRecord> aliveRecord = MakeRecord(server);
+  size_t num{0};
+  {
+    std::lock_guard<std::mutex> lock(suspected_mutex_);
+    num = suspected_.erase(aliveRecord);
+  }
+  if (num > 0) {
+    VLOG(2) << "Removed " << num << " entry from the suspected set";
+  }
 }
 } // namespace swim
