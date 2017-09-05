@@ -152,16 +152,9 @@ public:
    * passing a temporary variable that gets destroyed after this call will not cause any issue.
    */
   void AddNeighbor(const Server& host) {
-    std::shared_ptr<ServerRecord> record = std::make_shared<ServerRecord>();
-
-    Server *server = record->mutable_server();
-    server->set_hostname(host.hostname());
-    server->set_port(host.port());
-    record->set_timestamp(utils::CurrentTime());
-    record->set_didgossip(false);
-
-    ServerRecordsSet* ps = gossip_server_->mutable_alive();
-    ps->insert(record);
+    if (!gossip_server_->AddAlive(host)) {
+      LOG(WARNING) << "Failed to add host " << host << " to neighbors sets";
+    }
   }
 
   /**

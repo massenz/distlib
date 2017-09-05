@@ -267,48 +267,6 @@ public:
    */
   bool suspected_empty() const { return suspected_size() == 0; }
 
-
-  /**
-   * @deprecated this will soon be removed; avoid use
-   */
-  const ServerRecordsSet &alive() const { return alive_; }
-
-  /**
-   * @deprecated this will soon be removed; avoid use
-   */
-  const ServerRecordsSet &suspected() const { return suspected_; }
-
-  /**
-   * Gives access to the internally-kept list of servers that are deemed to be "alive" and
-   * responding to pings (or, conversely, have just recently pinged this server).
-   *
-   * <p>The returned pointer, while guaranteed to be valid for the duration of this object's
-   * lifetime, should not be stored and should only be assumed valide temporarily.
-   *
-   * <p>If you only need access to the set of servers, without modifying it, it is best to use
-   * the `alive()` method instead.
-   *
-   * @return a pointer that allows modifying the list of internally kept healthy servers.
-   * @deprecated access to this is thread-unsafe; this method will be removed.
-   */
-  ServerRecordsSet *const mutable_alive() { return &alive_; }
-
-  /**
-   * Gives access to the internally-kept list of servers that are deemed to be "unhealthy," i.e.
-   * not responding to pings from this server; but not for long enough (`grace_period()`) to have
-   * been considered "dead."
-   *
-   * <p>The returned pointer, while guaranteed to be valid for the duration of this object's
-   * lifetime, should not be stored and should only be assumed valide temporarily.
-   *
-   * <p>If you only need access to the set of servers, without modifying it, it is best to use
-   * the `suspected()` method instead.
-   *
-   * @return a pointer that allows modifying the list of internally kept unhealthy servers.
-   * @deprecated access to this is thread-unsafe; this method will be removed.
-   */
-  ServerRecordsSet *const mutable_suspected() { return &suspected_; }
-
   /**
    * Prepares a report that can then be sent to neighbors to gossip about.
    *

@@ -109,9 +109,9 @@ TEST_F(IntegrationTests, gossipSpreads) {
     // TODO: this needs to change to == 2 once we fix didGossip (see #149950890)
     // Until then, this test is flaky, as the value depends on whether `neighbor` gets pinged
     // first or `flaky` does.
-        return neighbor->alive().size() >= 1;
+        return neighbor->alive_size() >= 1;
       }, milliseconds(6000))
-  ) << neighbor->alive();
+  ) << "Failed to register new 'flaky' neighbor before timeout";
 
   flaky->stop();
   ASSERT_TRUE(::tests::WaitAtMostFor([&flaky]() -> bool {
@@ -126,7 +126,7 @@ TEST_F(IntegrationTests, gossipSpreads) {
 
   // It should now be suspected, but still the grace period should have not expired.
   std::this_thread::sleep_for(seconds(1));
-  EXPECT_EQ(1, neighbor->suspected().size());
+  EXPECT_EQ(1, neighbor->suspected_size());
 
   neighbor->stop();
   ASSERT_TRUE(::tests::WaitAtMostFor([&]() -> bool { return !neighbor->isRunning(); },

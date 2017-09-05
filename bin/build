@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 if [[ -n ${COMMON_UTILS_DIR} ]]; then
   UTILS="-DCOMMON_UTILS_DIR=${COMMON_UTILS_DIR}"

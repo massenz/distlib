@@ -156,8 +156,6 @@ TEST_F(GossipFailureDetectorTests, addNeighbors) {
 }
 
 
-// TODO: this test will need to be changed, once we remove explicit access to
-//       the alive() and suspected() inner collections (thread-safety).
 TEST_F(GossipFailureDetectorTests, prepareReport) {
   for (int i = 0; i < 3; ++i) {
     std::string host = "host_" + std::to_string(i) + ".example.com";
@@ -175,16 +173,9 @@ TEST_F(GossipFailureDetectorTests, prepareReport) {
   // sure there is no other thread accessing these collections.
   SwimServer& swimServer = const_cast<SwimServer&> (detector_->gossip_server());
 
-  auto first = *(swimServer.alive().begin());
-  first->set_didgossip(true);
-
+  swimServer.ReportSuspect(*MakeServer("host_1.example.com", 4457));
   report = detector_->gossip_server().PrepareReport();
   ASSERT_EQ(2, report.alive_size());
-
-  swimServer.mutable_suspected()->insert(
-      MakeRecord(*MakeServer("another.example.com", 4456)));
-
-  report = detector_->gossip_server().PrepareReport();
   ASSERT_EQ(1, report.suspected_size());
 }
 
