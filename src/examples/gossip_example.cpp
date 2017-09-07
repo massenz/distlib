@@ -191,11 +191,14 @@ int main(int argc, const char *argv[]) {
               << " is running. Starting all background threads";
     detector->InitAllBackgroundThreads();
 
-    LOG(INFO) << "Threads started; press Ctrl-C to terminate server...";
+    LOG(INFO) << "Threads started; detector process running"; // TODO: << PID?
 
-    // TODO: is there a way to "trap" the Ctrl-C and execute a graceful exit?
+    // TODO: "trap" the KILL and execute a graceful exit
     while (true) {
-      std::this_thread::sleep_for(seconds(3));
+      std::this_thread::sleep_for(seconds(10));
+      std::cout << "~~~>>>>> S T A T U S   R E P O R T <<<<<~~~" << std::endl;
+      std::cout << detector->gossip_server().PrepareReport() << std::endl;
+      std::cout << "~~~ >>>> ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<< ~~~" << std::endl;
     }
 
   } catch (::utils::parse_error& error) {

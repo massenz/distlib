@@ -56,7 +56,6 @@ void GossipFailureDetector::InitAllBackgroundThreads() {
 }
 
 void GossipFailureDetector::PingNeighbor() const {
-//  const ServerRecordsSet& neighbors = gossip_server_->alive();
   if (!gossip_server_->alive_empty()) {
     const Server server = gossip_server_->GetRandomNeighbor();
     VLOG(2) << "Pinging " << server;

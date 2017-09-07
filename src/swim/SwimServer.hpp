@@ -41,6 +41,7 @@ class SwimServer {
 
   // Access to the collection of servers must be thread-safe;
   // use a std::lock_guard to protect access.
+  // TODO: std::mutex is not re-entrant: use a std::unique_lock instead.
   mutable std::mutex alive_mutex_;
   mutable std::mutex suspected_mutex_;
 protected:
@@ -242,8 +243,12 @@ public:
    * @return the number of currently detected `alive` neighbors.
    */
   unsigned long alive_size() const {
-    std::lock_guard<std::mutex> lock(alive_mutex_);
-    return alive_.size();
+    unsigned long num;
+    {
+      std::lock_guard<std::mutex> lock(alive_mutex_);
+      num = alive_.size();
+    }
+    return num;
   }
 
   /**

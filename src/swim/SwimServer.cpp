@@ -1,6 +1,7 @@
 // Copyright (c) 2016 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 11/22/16.
 
+#include <iostream>
 #include "utils/network.h"
 #include "SwimServer.hpp"
 
@@ -101,9 +102,10 @@ void SwimServer::onPingRequest(Server* sender, Server* destination) {
       SwimClient respond(from, port_);
       respond.Send(report);
     } else {
-      VLOG(2) << "Forwarded requested PING failed to " << *destination;
+      std::lock_guard<std::mutex> lock(suspected_mutex_);
       suspected_.insert(MakeRecord(*destination));
-      VLOG(2) << "Server " << *destination << " added to SUSPECTED list";
+      VLOG(2) << "Forwarded request for PING to " << *destination
+              << " failed: added to SUSPECTED list here too.";
     }
   }).detach();
 
@@ -116,7 +118,6 @@ void SwimServer::onPingRequest(Server* sender, Server* destination) {
 
 SwimReport SwimServer::PrepareReport() const {
   SwimReport report;
-
   report.mutable_sender()->CopyFrom(self());
 
   {
@@ -145,10 +146,16 @@ SwimReport SwimServer::PrepareReport() const {
 }
 
 Server SwimServer::GetRandomNeighbor() const {
-  if (alive_empty()) {
+
+  // It is IMPORTANT that calls to alive_size() (and _empty()) are done OUTSIDE of
+  // the critical section guarded by the mutex, as it is NOT re-entrant and thus causes
+  // the thread to wait indefinitely.
+  auto size = alive_size();
+  if (size == 0) {
     throw empty_set();
   }
-  std::uniform_int_distribution<unsigned long> distribution(0, alive_size() - 1);
+
+  std::uniform_int_distribution<unsigned long> distribution(0,  size - 1);
   auto num = distribution(swim::random_engine);
 
   std::lock_guard<std::mutex> lock(alive_mutex_);
@@ -156,9 +163,9 @@ Server SwimServer::GetRandomNeighbor() const {
   advance(iterator, num);
 
   assert(iterator != alive_.end());
-  VLOG(2) << "Picked " << num << "-th server (of " << alive_size() << ")";
+  VLOG(2) << "Picked " << num << "-th server (of " << size << ")";
 
-  return (*iterator)->server();
+  return  (*iterator)->server();
 }
 
 bool SwimServer::ReportSuspect(const Server &server) {

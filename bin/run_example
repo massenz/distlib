@@ -4,10 +4,15 @@ set -e
 
 WORKDIR=$(dirname $0)
 PORTS="8081 8082 8083"
+QUIET=${1:-}
+DEBUG='--debug'
 
-if [[ -n $1 ]]; then
-    echo "Setting up verbose output logs"
-    DEBUG="$1"
+
+if [[ ${QUIET} == "-q" ]]; then
+    echo "Setting quiet logging; minimal echo to console"
+    DEBUG="--no-debug"
+    GLOG_v=2
+    GLOG_logtostderr=1
 fi
 
 cd ${WORKDIR}/../build
