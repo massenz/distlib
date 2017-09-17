@@ -10,7 +10,10 @@ if [[ -n ${LOCAL_INSTALL_DIR} ]]; then
   INSTALL="-DINSTALL_DIR=${LOCAL_INSTALL_DIR}"
 fi
 
-cd $(dirname $0)/../build
+
+BUILD_DIR="$(dirname $0)/../build"
+mkdir -p ${BUILD_DIR}
+cd ${BUILD_DIR}
 
 cmake  -DCMAKE_CXX_COMPILER=/usr/local/bin/clang++ ${UTILS} ${INSTALL} ..
 cmake --build . --target all -- -j 6

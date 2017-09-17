@@ -8,7 +8,7 @@
 
 #include <zmq.hpp>
 
-#include "config.h"
+#include "version.h"
 
 
 namespace utils {

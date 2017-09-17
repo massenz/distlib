@@ -17,5 +17,4 @@ if [[ ${VERBOSE} == "-v" ]]; then
     export GLOG_logtostderr=true
 fi
 
-cmake --build . --clean-first
 time run_tests
