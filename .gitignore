@@ -9,6 +9,7 @@
 .project
 .settings/
 .conan/
+docs/html/
 
 # CMake files
 CMakeCache.txt
