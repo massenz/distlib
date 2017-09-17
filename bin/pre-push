@@ -30,15 +30,14 @@ if [[ "${branch}" == "gh-pages" ]]; then
     exit 0
 fi
 
-echo "[INFO] Pushing changes from ${branch}"
+echo -e "\n=======================\n[INFO] Pushing changes from ${branch}\n\n"
 
-./bin/build && ./bin/test && ./bin/publish_docs
+./bin/build && ./bin/test && ./bin/publish_docs > /dev/null
 
 if [[ $? != 0 ]]; then
     echo "[FAILURE] We failed to build and test ${branch}; cannot push"
     exit 1
 fi
 
-echo "[SUCCESS] All tests passed; docs published to ${docs}"
-
+echo -e "\n\n[SUCCESS] All tests passed; docs published to ${docs}\n\n=======================\n"
 exit 0

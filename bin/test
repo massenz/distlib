@@ -7,7 +7,7 @@ VERBOSE=${1:-}
 
 function run_tests {
     ./tests/bin/distlib_test
-    #./tests/bin/integration_tests
+    ./tests/bin/integration_tests
 }
 
 cd ${WORKDIR}
