@@ -10,7 +10,7 @@ PROJECT_NAME = "distlib"
 PROJECT_NUMBER = "0.8.0"
 PROJECT_BRIEF = "Library of C++ utilities for Distributed Systems."
 PROJECT_LOGO  = "docs/images/logo.png"
-OUTPUT_DIRECTORY = "docs"
+OUTPUT_DIRECTORY = "/tmp/distlib"
 
 CREATE_SUBDIRS = NO
 ALLOW_UNICODE_NAMES = NO

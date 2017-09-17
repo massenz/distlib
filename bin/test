@@ -7,7 +7,7 @@ VERBOSE=${1:-}
 
 function run_tests {
     ./tests/bin/distlib_test
-    ./tests/bin/integration_tests
+    #./tests/bin/integration_tests
 }
 
 cd ${WORKDIR}
@@ -17,5 +17,4 @@ if [[ ${VERBOSE} == "-v" ]]; then
     export GLOG_logtostderr=true
 fi
 
-cmake --build . --clean-first
 time run_tests

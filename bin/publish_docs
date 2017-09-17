@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+# Generates Doxygen docs and pushes to Github GH-Pages
+# See: https://massenz.github.io/distlib/
+
+branch=${1:-$(git rev-parse --abbrev-ref HEAD)}
+
+doxygen
+
+git checkout gh-pages
+cp -r /tmp/distlib/html/* ./
+git add .
+git commit -m"Published docs; Release 0.8.0"
+git push
+
+echo "Checking out branch ${branch}"
+git checkout ${branch}
