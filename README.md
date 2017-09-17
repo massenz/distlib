@@ -1,4 +1,4 @@
-# libdist - C++ utilities for Distributed Computing
+# libdist - C++ utilities for Distributed Computing 
 
 
  distlib| 0.6.1
@@ -55,7 +55,9 @@ The [SWIM gossip protocol implementation](#swim_gossip_and_consensus_algorithm) 
 Protobuf as the serialization protocol to exchange status messages between servers.
 
 The code in this project has been tested using
-[Protocol Buffers 2.6.1](https://github.com/google/protobuf/releases/tag/v2.6.1), installed via Conan's [Protobuf/2.6.1@memsharded](https://conan.io/source/Protobuf/2.6.1/memsharded/testing) package.
+[Protocol Buffers 2.6.1](https://github.com/google/protobuf/releases/tag/v2.6.1), 
+installed via Conan's [Protobuf 2.6.1](https://conan.io/source/Protobuf/2.6.1/memsharded/testing) 
+package.
 
 
 ## Build & testing
