@@ -16,22 +16,23 @@
 /**
  * A "bucket" abstracts the concept of a hashed partition, using consistent hashing.
  *
- * Each Bucket, further, owns a number of `partitions` that are essentially points on the unity
+ * <p>Each Bucket, further, owns a number of `partitions` that are essentially points on the unity
  * circle and which determine which items will be allocated to this Bucket (respective to
  * other buckets, if any).
  *
- * A Bucket holds no information about the items that (nominally) assigned to it, however, it has
- * a `name` that can be used as a unique ID (or, e.g., a hostname) when distributing items to a
- * set of nodes; the only information the bucket holds is around the number of its `partitions`
- * and their position on the unit circle.
+ * <p>A Bucket holds no information about the items that are (nominally) assigned to it,
+ * however, it has a `#name_` that can be used as a unique ID (or, e.g., a hostname) when
+ * distributing items to a set of nodes; the only information the bucket holds is about the number
+ * of its `#partitions_` and their position on the unit circle.
  *
- * The `partition_points` are assumed (but not guaranteed) to be roughly equally (and randomly,
- * but deterministically - once the {@link hashing_function()} is given) spaced around the unit
+ * <p>The `partition_points()` are assumed (but not guaranteed) to be roughly equally (and randomly,
+ * but deterministically, according to a hashing function) spaced around the unit
  * circle, thus providing an approximately uniform and constant time-complexity for lookups (more
  * specifically, the lookup complexity has been demonstrated to be O(log(C)), where C is the
  * number of caches, or Buckets, used).
  *
- * For more details, see the `Consistent Hashing` paper.
+ * <p>For more details, see the [Consistent Hashing](http://www.cs.princeton.edu/courses/archive/fall07/cos518/papers/chash.pdf)
+ * paper.
  */
 class Bucket {
 private:
@@ -49,6 +50,11 @@ public:
   Bucket operator=(const Bucket&) = delete;
 
 
+  /**
+   * Every `Bucket` should have a unique name that can be used to identify it.
+   *
+   * @return the bucket's name
+   */
   const std::string name() const {
     return name_;
   }
@@ -60,14 +66,8 @@ public:
    *
    * @return the set of {@link partitions()} points that define this bucket
    */
-  const std::shared_ptr<std::vector<float>> partition_points() const {
-    // Make a copy, do not return the original vector.
-    std::shared_ptr<std::vector<float>> ret(new std::vector<float>());
-
-    for (auto x : hash_points_) {
-      ret->push_back(x);
-    }
-    return ret;
+  const std::vector<float> partition_points() const {
+    return hash_points_;
   }
 
   float partition_point(int i) const {
@@ -79,7 +79,7 @@ public:
   }
 
   /**
-   * Given a point on the unit circle, we return the closest {@link partition_point(int)} as well
+   * Given a point on the unit circle, we return the closest {@link #partition_point()} as well
    * as its index.
    *
    * @param x a point in the [0, 1] interval.

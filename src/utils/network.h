@@ -29,7 +29,7 @@ std::string InetAddress(const std::string& hostname = "");
  * format for the server to be listening on (e.g., "tcp://0.0.0.0:5000").
  *
  * @param port the host port the server would like to listen to
- * @return a string suitable for use with ZMQ {@link socket_t socket()} call.
+ * @return a string suitable for use with ZMQ `socket()` call.
  *      Or an empty string, if no suitable socket is available.
  */
 std::string SocketAddress(unsigned int port);

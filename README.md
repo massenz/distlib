@@ -1,32 +1,17 @@
 # libdist - C++ utilities for Distributed Computing 
 
 
- distlib| 0.6.1
+ distlib| 0.8.0
 :-------|---------------------------------:
 Author  | [M. Massenzio](https://www.linkedin.com/in/mmassenzio)
-Updated | 2017-06-19
-
-
-[![cryptopp/5.6.3@riebl/testing](https://img.shields.io/badge/conan.io-cryptopp%2F5.6.3-green.svg?logo=data:image/png;base64%2CiVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAAA1VBMVEUAAABhlctjlstkl8tlmMtlmMxlmcxmmcxnmsxpnMxpnM1qnc1sn85voM91oM11oc1xotB2oc56pNF6pNJ2ptJ8ptJ8ptN9ptN8p9N5qNJ9p9N9p9R8qtOBqdSAqtOAqtR%2BrNSCrNJ/rdWDrNWCsNWCsNaJs9eLs9iRvNuVvdyVv9yXwd2Zwt6axN6dxt%2Bfx%2BChyeGiyuGjyuCjyuGly%2BGlzOKmzOGozuKoz%2BKqz%2BOq0OOv1OWw1OWw1eWx1eWy1uay1%2Baz1%2Baz1%2Bez2Oe02Oe12ee22ujUGwH3AAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfgBQkREyOxFIh/AAAAiklEQVQI12NgAAMbOwY4sLZ2NtQ1coVKWNvoc/Eq8XDr2wB5Ig62ekza9vaOqpK2TpoMzOxaFtwqZua2Bm4makIM7OzMAjoaCqYuxooSUqJALjs7o4yVpbowvzSUy87KqSwmxQfnsrPISyFzWeWAXCkpMaBVIC4bmCsOdgiUKwh3JojLgAQ4ZCE0AMm2D29tZwe6AAAAAElFTkSuQmCC)](http://www.conan.io/source/cryptopp/5.6.3/riebl/testing)
-
-[![glog/0.3.4@dwerner/testing](https://img.shields.io/badge/conan.io-glog%2F0.3.4-green.svg?logo=data:image/png;base64%2CiVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAAA1VBMVEUAAABhlctjlstkl8tlmMtlmMxlmcxmmcxnmsxpnMxpnM1qnc1sn85voM91oM11oc1xotB2oc56pNF6pNJ2ptJ8ptJ8ptN9ptN8p9N5qNJ9p9N9p9R8qtOBqdSAqtOAqtR%2BrNSCrNJ/rdWDrNWCsNWCsNaJs9eLs9iRvNuVvdyVv9yXwd2Zwt6axN6dxt%2Bfx%2BChyeGiyuGjyuCjyuGly%2BGlzOKmzOGozuKoz%2BKqz%2BOq0OOv1OWw1OWw1eWx1eWy1uay1%2Baz1%2Baz1%2Bez2Oe02Oe12ee22ujUGwH3AAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfgBQkREyOxFIh/AAAAiklEQVQI12NgAAMbOwY4sLZ2NtQ1coVKWNvoc/Eq8XDr2wB5Ig62ekza9vaOqpK2TpoMzOxaFtwqZua2Bm4makIM7OzMAjoaCqYuxooSUqJALjs7o4yVpbowvzSUy87KqSwmxQfnsrPISyFzWeWAXCkpMaBVIC4bmCsOdgiUKwh3JojLgAQ4ZCE0AMm2D29tZwe6AAAAAElFTkSuQmCC)](http://www.conan.io/source/glog/0.3.4/dwerner/testing)
-
-[![gtest/1.8.0@lasote/stable](https://img.shields.io/badge/conan.io-gtest%2F1.8.0-green.svg?logo=data:image/png;base64%2CiVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAAA1VBMVEUAAABhlctjlstkl8tlmMtlmMxlmcxmmcxnmsxpnMxpnM1qnc1sn85voM91oM11oc1xotB2oc56pNF6pNJ2ptJ8ptJ8ptN9ptN8p9N5qNJ9p9N9p9R8qtOBqdSAqtOAqtR%2BrNSCrNJ/rdWDrNWCsNWCsNaJs9eLs9iRvNuVvdyVv9yXwd2Zwt6axN6dxt%2Bfx%2BChyeGiyuGjyuCjyuGly%2BGlzOKmzOGozuKoz%2BKqz%2BOq0OOv1OWw1OWw1eWx1eWy1uay1%2Baz1%2Baz1%2Bez2Oe02Oe12ee22ujUGwH3AAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfgBQkREyOxFIh/AAAAiklEQVQI12NgAAMbOwY4sLZ2NtQ1coVKWNvoc/Eq8XDr2wB5Ig62ekza9vaOqpK2TpoMzOxaFtwqZua2Bm4makIM7OzMAjoaCqYuxooSUqJALjs7o4yVpbowvzSUy87KqSwmxQfnsrPISyFzWeWAXCkpMaBVIC4bmCsOdgiUKwh3JojLgAQ4ZCE0AMm2D29tZwe6AAAAAElFTkSuQmCC)](http://www.conan.io/source/gtest/1.8.0/lasote/stable)
-
-[![badge](https://img.shields.io/badge/conan.io-libzmq%2F4.1.5-green.svg?logo=data:image/png;base64%2CiVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAAA1VBMVEUAAABhlctjlstkl8tlmMtlmMxlmcxmmcxnmsxpnMxpnM1qnc1sn85voM91oM11oc1xotB2oc56pNF6pNJ2ptJ8ptJ8ptN9ptN8p9N5qNJ9p9N9p9R8qtOBqdSAqtOAqtR%2BrNSCrNJ/rdWDrNWCsNWCsNaJs9eLs9iRvNuVvdyVv9yXwd2Zwt6axN6dxt%2Bfx%2BChyeGiyuGjyuCjyuGly%2BGlzOKmzOGozuKoz%2BKqz%2BOq0OOv1OWw1OWw1eWx1eWy1uay1%2Baz1%2Baz1%2Bez2Oe02Oe12ee22ujUGwH3AAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfgBQkREyOxFIh/AAAAiklEQVQI12NgAAMbOwY4sLZ2NtQ1coVKWNvoc/Eq8XDr2wB5Ig62ekza9vaOqpK2TpoMzOxaFtwqZua2Bm4makIM7OzMAjoaCqYuxooSUqJALjs7o4yVpbowvzSUy87KqSwmxQfnsrPISyFzWeWAXCkpMaBVIC4bmCsOdgiUKwh3JojLgAQ4ZCE0AMm2D29tZwe6AAAAAElFTkSuQmCC)](http://www.conan.io/source/libzmq/4.1.5/memsharded/stable)
-
-[![badge](https://img.shields.io/badge/conan.io-OpenSSL%2F1.0.2j-green.svg?logo=data:image/png;base64%2CiVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAAA1VBMVEUAAABhlctjlstkl8tlmMtlmMxlmcxmmcxnmsxpnMxpnM1qnc1sn85voM91oM11oc1xotB2oc56pNF6pNJ2ptJ8ptJ8ptN9ptN8p9N5qNJ9p9N9p9R8qtOBqdSAqtOAqtR%2BrNSCrNJ/rdWDrNWCsNWCsNaJs9eLs9iRvNuVvdyVv9yXwd2Zwt6axN6dxt%2Bfx%2BChyeGiyuGjyuCjyuGly%2BGlzOKmzOGozuKoz%2BKqz%2BOq0OOv1OWw1OWw1eWx1eWy1uay1%2Baz1%2Baz1%2Bez2Oe02Oe12ee22ujUGwH3AAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfgBQkREyOxFIh/AAAAiklEQVQI12NgAAMbOwY4sLZ2NtQ1coVKWNvoc/Eq8XDr2wB5Ig62ekza9vaOqpK2TpoMzOxaFtwqZua2Bm4makIM7OzMAjoaCqYuxooSUqJALjs7o4yVpbowvzSUy87KqSwmxQfnsrPISyFzWeWAXCkpMaBVIC4bmCsOdgiUKwh3JojLgAQ4ZCE0AMm2D29tZwe6AAAAAElFTkSuQmCC)](http://www.conan.io/source/OpenSSL/1.0.2j/lasote/stable)
-
-[![Protobuf/2.6.1@memsharded/testing](https://img.shields.io/badge/conan.io-Protobuf%2F2.6.1-green.svg?logo=data:image/png;base64%2CiVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAAA1VBMVEUAAABhlctjlstkl8tlmMtlmMxlmcxmmcxnmsxpnMxpnM1qnc1sn85voM91oM11oc1xotB2oc56pNF6pNJ2ptJ8ptJ8ptN9ptN8p9N5qNJ9p9N9p9R8qtOBqdSAqtOAqtR%2BrNSCrNJ/rdWDrNWCsNWCsNaJs9eLs9iRvNuVvdyVv9yXwd2Zwt6axN6dxt%2Bfx%2BChyeGiyuGjyuCjyuGly%2BGlzOKmzOGozuKoz%2BKqz%2BOq0OOv1OWw1OWw1eWx1eWy1uay1%2Baz1%2Baz1%2Bez2Oe02Oe12ee22ujUGwH3AAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfgBQkREyOxFIh/AAAAiklEQVQI12NgAAMbOwY4sLZ2NtQ1coVKWNvoc/Eq8XDr2wB5Ig62ekza9vaOqpK2TpoMzOxaFtwqZua2Bm4makIM7OzMAjoaCqYuxooSUqJALjs7o4yVpbowvzSUy87KqSwmxQfnsrPISyFzWeWAXCkpMaBVIC4bmCsOdgiUKwh3JojLgAQ4ZCE0AMm2D29tZwe6AAAAAElFTkSuQmCC)](http://www.conan.io/source/Protobuf/2.6.1/memsharded/testing)
+Updated | 2017-09-17
 
 
 # Install & Build
 
-## Conan package
+## Conan packages
 
-See [http://conan.io](http://conan.io) for more information.
-
-TO build the project, you need to first donwload/build the necessary binary dependencies, as
+To build the project, you need to first donwload/build the necessary binary dependencies, as
 listed in `conanfile.text`.
 
 This is done as follows:
@@ -48,6 +33,16 @@ version 3.6 installed).
 
 See also `CMakeLists.txt` for the changes necessary to add Conan's builds to the targets.
 
+We use the following packages in this project:
+
+- [cryptopp 5.6.3](http://www.conan.io/source/cryptopp/5.6.3/riebl/testing)
+- [glog 0.3.4](http://www.conan.io/source/glog/0.3.4/dwerner/testing)
+- [gtest 1.8.0](http://www.conan.io/source/gtest/1.8.0/lasote/stable)
+- [ZMQ 4.1.5](http://www.conan.io/source/libzmq/4.1.5/memsharded/stable)
+- [OpenSSL 1.0.2j](http://www.conan.io/source/OpenSSL/1.0.2j/lasote/stable)
+- [Protobuf 2.6.1](http://www.conan.io/source/Protobuf/2.6.1/memsharded/testing)
+
+See [conan.io](http://conan.io) for more information.
 
 ### Google Protocol Buffers
 
@@ -56,8 +51,7 @@ Protobuf as the serialization protocol to exchange status messages between serve
 
 The code in this project has been tested using
 [Protocol Buffers 2.6.1](https://github.com/google/protobuf/releases/tag/v2.6.1), 
-installed via Conan's [Protobuf 2.6.1](https://conan.io/source/Protobuf/2.6.1/memsharded/testing) 
-package.
+installed via the [Conan's memshared package](https://conan.io/source/Protobuf/2.6.1/memsharded/testing).
 
 
 ## Build & testing
@@ -82,6 +76,10 @@ See also the other binaries in the `build/bin` folder for more options.
 
 # Projects
 
+## API Documentations
+
+All the classes are documented using [Doxygen](https://massenz.github.io/distlib/).
+
 ## Consistent Hashing
 
 See the [Consistent Hash paper](http://www.cs.princeton.edu/courses/archive/fall07/cos518/papers/chash.pdf)
@@ -103,29 +101,45 @@ See [this post](https://codetrips.com/2016/06/19/implementing-a-merkle-tree-in-c
 
 ## SWIM Gossip and Consensus algorithm
 
-References:
+### PING demo server
 
- * [SWIM: Scalable Weakly-consistent Infection-style Process Group Membership Protocol](SWIM);
- * [Unreliable Distributed Failure Detectors for Reliable Systems](detectors); and
- * [A Gossip-Style Failure Detection Service](gossip)
+This is based on [ZeroMQ C++ bindings](http://api.zeromq.org/2-1:zmq-cpp) and is an example
+implementation using the `SwimServer` class.
 
- ### PING server
+The same binary can act both as one continuously listening on a given 
+`port` or as a client sending a one-off status update to a `destination` TCP socket.
 
- This is based on [ZeroMQ C++ bindings](http://api.zeromq.org/2-1:zmq-cpp).
+See the [Install & Build](#install_and_build) section above to build the `swim_server_demo` target,
+then start the listening server:
+```
+./build/bin/swim_server_demo receive --port=3003
+```
 
- There are currently two types of servers: one continuously listening on a given `port` and a
- client sending a one-off status update to a `destination` TCP socket.
+and it will be listening for incoming [`SwimStatus`](proto/swim.proto) messages on port
+`3003`; a client can then send a message updates for five seconds using:
 
- Starting the listening server is done like this:
- ```
-    ./bin/server receive 3003
- ```
- and it will cause it to listen for incoming [`SwimStatus`](proto/swim.proto) messages on port
- `3003`; a client can then send a message update using:
- ```
-    ./bin/server send tcp://localhost:3003
- ```
+```
+./build/bin/swim_server_demo send --host=tcp://localhost:3003 --duration=5
+```
 (obviously, change the hostname if you are running the two on separate machines/VMs/containers).
+
+Use the `--help` option to see the full list of available options.
+
+### Full-fledged SWIM Detector implementation
+
+A reference implementatio of a failure detector based on the SWIM Gossip protocol is provided in 
+the [`gossip_example`](src/examples/gossip_example.cpp) demo.
+
+Again, use:
+
+    $ ./build/bin/gossip_detector_example -h
+
+to see all the available options; [`bin/run_example`](bin/run_example) will start three detectors
+in background and will connect each other to demonstrate how they can detect failures (you can 
+keep killing and restarting them, and see how the reports change).
+
+Below is a short description of how this works, full details of the protocol in the 
+[references](#references).
 
 ### Server states
 
@@ -166,7 +180,7 @@ See the [SWIM Paper](SWIM) for more details.
 
 __Gossip__
 
-At regular intervals, a gossiper will pick at random from the list of `Alive` peers one server,
+At regular intervals, a gossiper will pick at random from the list of `Alive` peers _k_ server,
 to which it will send a `SwimReport` containing __only__ the changes since the last report that 
 was sent out (regardless of _who_ it was send out to), as gossipers do not care much for old news.
 
@@ -177,6 +191,13 @@ time.
 
 `TODO: this has not been addressed for now`
 
+---
+
+# References
+
+ * [SWIM: Scalable Weakly-consistent Infection-style Process Group Membership Protocol](SWIM)
+ * [Unreliable Distributed Failure Detectors for Reliable Systems](detectors)
+ * [A Gossip-Style Failure Detection Service](gossip)
 
 
 [SWIM]: https://goo.gl/VUn4iQ

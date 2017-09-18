@@ -36,7 +36,7 @@ class SwimClient {
   /**
    * Builds the URI for the `dest` server, using the hostname and port.
    *
-   * @return a string of the form {@literal tcp://hostname:port}
+   * @return a string of the form `tcp://hostname:port`
    */
   const std::string destinationUri() const {
     return "tcp://" + dest_.hostname() + ":" + std::to_string(dest_.port());

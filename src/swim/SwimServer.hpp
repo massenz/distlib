@@ -90,7 +90,6 @@ protected:
    *        pointer and is responsible for freeing the memory.
    * @param report the `SwimReport` that the `client` sent and can be used by this server to
    *        update its membership list.
-   * @param timestamp when the message was sent (according to the `client`'s clock).
    */
   virtual void onReport(Server *sender, SwimReport *report) {
     std::unique_ptr<Server> ps(sender);
@@ -168,7 +167,6 @@ protected:
    *        pointer and is responsible for freeing the memory.
    * @param destination the other server that the requestor (`client`) is asksing this server to
    *        ping and report status back.
-   * @param timestamp when the message was sent (according to the `client`'s clock).
    */
   virtual void onPingRequest(Server *sender, Server *destination);
 

@@ -13,8 +13,8 @@ TEST(BucketTests, CanCreate) {
   EXPECT_EQ(3, b.partitions());
 
   for (int i = 0; i < b.partitions(); ++i) {
-    EXPECT_GT((*b.partition_points())[i], 0.0);
-    EXPECT_LT((*b.partition_points())[i], 1.0);
+    EXPECT_GT((b.partition_points())[i], 0.0);
+    EXPECT_LT((b.partition_points())[i], 1.0);
   }
   EXPECT_EQ("test_bucket", b.name());
 }
@@ -40,7 +40,7 @@ TEST(BucketTests, CanFindNearest) {
   //  4  0.90553
   int i;
   for (i = 0; i < 5; ++i) {
-    if ((*points)[i] > hv) break;
+    if ((points)[i] > hv) break;
   }
   ASSERT_EQ(std::make_pair(i, b.partition_point(i)), b.nearest_partition_point(hv));
 
@@ -49,7 +49,7 @@ TEST(BucketTests, CanFindNearest) {
   hv = consistent_hash("a different test string");
 
   for (i = 0; i < 5; ++i) {
-    if ((*points)[i] > hv) break;
+    if ((points)[i] > hv) break;
   }
   ASSERT_EQ(std::make_pair(i, b.partition_point(i)), b.nearest_partition_point(hv));
 

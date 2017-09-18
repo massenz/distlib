@@ -282,9 +282,9 @@ public:
   }
 
   /**
-   * Gets the value of the `--flag=value` option.
+   * Gets the value of the `--name=value` option.
    *
-   * @param flag the name of the flag
+   * @param name the name of the option to lookup
    * @param defaultValue the default value to return if no flag was passed in
    * @return the value of the named option if specified, or the empty string instead.
    */

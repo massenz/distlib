@@ -81,8 +81,10 @@ inline std::unique_ptr<ServerRecord> MakeRecord(
  * to the either the name or the IP address (if present); it is simply a means to allow us to store
  * `ServerRecord` objects into a `set`.
  *
- * @param other the ServerRecord to compare against
- * @return whether this server record is logically "less than" `other`
+ * @param lhs the left-hand side ServerRecord for the comparison
+ * @param rhs the right-hand side of the comparison
+ * @return whether `lhs` is less than `rhs`, according to a lexicographic ordering of their
+ *      respective `ServerRecord#server()`
  */
 bool operator<(const ServerRecord &lhs, const ServerRecord &rhs);
 
