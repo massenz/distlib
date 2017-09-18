@@ -102,7 +102,7 @@ void SwimServer::onPingRequest(Server* sender, Server* destination) {
       SwimClient respond(from, port_);
       respond.Send(report);
     } else {
-      std::lock_guard<std::mutex> lock(suspected_mutex_);
+      mutex_guard lock(suspected_mutex_);
       suspected_.insert(MakeRecord(*destination));
       VLOG(2) << "Forwarded request for PING to " << *destination
               << " failed: added to SUSPECTED list here too.";
@@ -121,7 +121,7 @@ SwimReport SwimServer::PrepareReport() const {
   report.mutable_sender()->CopyFrom(self());
 
   {
-    std::lock_guard<std::mutex> lock(alive_mutex_);
+    mutex_guard lock(alive_mutex_);
 
     for (const auto &item : alive_) {
       if (!item->didgossip()) {
@@ -132,7 +132,7 @@ SwimReport SwimServer::PrepareReport() const {
   }
 
   {
-    std::lock_guard<std::mutex> lock(suspected_mutex_);
+    mutex_guard lock(suspected_mutex_);
 
     for (const auto &item : suspected_) {
       if (!item->didgossip()) {
@@ -158,7 +158,7 @@ Server SwimServer::GetRandomNeighbor() const {
   std::uniform_int_distribution<unsigned long> distribution(0,  size - 1);
   auto num = distribution(swim::random_engine);
 
-  std::lock_guard<std::mutex> lock(alive_mutex_);
+  mutex_guard lock(alive_mutex_);
   auto iterator = alive_.begin();
   advance(iterator, num);
 
@@ -174,13 +174,13 @@ bool SwimServer::ReportSuspect(const Server &server) {
 
   // First remove it from the alive set, if there.
   {
-    std::lock_guard<std::mutex> lock(alive_mutex_);
+    mutex_guard lock(alive_mutex_);
     num = alive_.erase(suspectRecord);
   }
   VLOG(2) << "Removed " << num << " servers from the alive set.";
 
   // Then add it to the suspected set.
-  std::lock_guard<std::mutex> lock(suspected_mutex_);
+  mutex_guard lock(suspected_mutex_);
   auto inserted = suspected_.insert(suspectRecord);
   return inserted.second;
 }
@@ -189,7 +189,7 @@ bool SwimServer::AddAlive(const Server &server) {
   RemoveSuspected(server);
 
   std::shared_ptr<ServerRecord> aliveRecord = MakeRecord(server);
-  std::lock_guard<std::mutex> lock(alive_mutex_);
+  mutex_guard lock(alive_mutex_);
   auto inserted = alive_.insert(aliveRecord);
   return inserted.second;
 }
@@ -198,11 +198,101 @@ void SwimServer::RemoveSuspected(const Server &server) {
   std::shared_ptr<ServerRecord> aliveRecord = MakeRecord(server);
   size_t num{0};
   {
-    std::lock_guard<std::mutex> lock(suspected_mutex_);
+    mutex_guard lock(suspected_mutex_);
     num = suspected_.erase(aliveRecord);
   }
   if (num > 0) {
     VLOG(2) << "Removed " << num << " entry from the suspected set";
+  }
+}
+
+void SwimServer::onReport(Server *sender, SwimReport *report) {
+  std::unique_ptr<Server> ps(sender);
+
+  // TODO: grabbing two locks in sequence is a sure recipe for deadlocks: use unique_lock to
+  // add timeouts and backing off if exceeded.
+  //
+  // We grab both locks here in a very broad scope as this is the only method that requires
+  // BOTH mutexes, so we prevent it from running at all, if either lock is already taken.
+  VLOG(2) << "onReport: About to grab both mutexes";
+  mutex_guard alive_lock(alive_mutex_);
+  mutex_guard suspected_lock(suspected_mutex_);
+  VLOG(2) << "onReport: mutexes locked";
+
+  VLOG(2) << self() << " received: " << *report;
+  for (auto record : report->alive()) {
+    if (record.server() == self()) {
+      // yes, we know we are alive, thank you very much.
+      continue;
+    }
+
+    std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
+    pRecord->set_didgossip(false);
+
+    auto was_suspected = suspected_.find(pRecord);
+    if (was_suspected != suspected_.end() &&
+        (*was_suspected)->timestamp() < record.timestamp()) {
+      suspected_.erase(pRecord);
+      alive_.insert(pRecord);
+    } else if (was_suspected == suspected_.end()) {
+      alive_.insert(pRecord);
+    }
+  }
+
+  for (auto record : report->suspected()) {
+    if (record.server() == self()) {
+      // Reports of our death were greatly exaggerated.
+      VLOG(2) << *sender << " reported this server (" << self() << ") as 'suspected'; pinging";
+      SwimClient client(*sender, port());
+      client.Ping();
+      continue;
+    }
+
+    std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
+    if (suspected_.find(pRecord) == suspected_.end()) {
+
+      pRecord->set_didgossip(false);
+      pRecord->set_timestamp(::utils::CurrentTime());
+
+      auto was_alive = alive_.find(pRecord);
+      if (was_alive != alive_.end() && (*was_alive)->timestamp() < record.timestamp()) {
+        // This is genuine new news and we need to update our records.
+        suspected_.insert(pRecord);
+        alive_.erase(pRecord);
+      } else if (was_alive == alive_.end()) {
+        // If we are here, it means that we haven't seen this server before, and
+        // we should record it as "suspicious."
+        suspected_.insert(pRecord);
+      }
+    }
+  }
+
+  VLOG(2) << "After merging, alive: " << alive_
+          << "; suspected: " << suspected_;
+  VLOG(2) << "onReport: about to release both locks";
+}
+
+void SwimServer::onUpdate(Server *client) {
+  // Make sure client will be deleted, even if an exception is thrown.
+  std::unique_ptr<Server> ps(client);
+
+  std::shared_ptr<ServerRecord> record = MakeRecord(*client);
+  {
+    mutex_guard lock(alive_mutex_);
+    alive_.insert(record);
+  }
+
+  // If it was previously suspected of being unresponsive, this server is removed from the
+  // suspected list:
+  unsigned long removed;
+  {
+    mutex_guard lock(suspected_mutex_);
+    removed = suspected_.erase(record);
+  }
+  if (removed > 0) {
+    VLOG(2) << *client << " previously suspected; added back to healthy set";
+  } else {
+    VLOG(3) << "Received a ping from " << *client;
   }
 }
 } // namespace swim

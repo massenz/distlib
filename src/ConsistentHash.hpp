@@ -9,17 +9,13 @@
 /**
  * Exception thrown when errors encountered.
  */
-class md5_error {
-  // TODO: learn more about C++ exception handling.
+class md5_error : public std::exception {
+  std::string reason_;
+
+public:
+  explicit md5_error(const std::string& reason) : reason_(reason) {}
+  const char* what() const noexcept override { return reason_.c_str(); }
 };
-
-/**
- * Marker exception for unimplemented methods.
- */
-class not_implemented {
-
-};
-
 
 /**
  * Converts a char buffer into a hex string.

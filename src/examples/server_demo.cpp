@@ -17,6 +17,7 @@
 
 #include "utils/network.h"
 #include "utils/ParseArgs.hpp"
+#include "utils/utils.hpp"
 
 #include "swim/SwimClient.hpp"
 #include "swim/SwimServer.hpp"
@@ -72,8 +73,8 @@ int runClient(
     unsigned long timeout,
     unsigned long duration
 ) {
-  LOG(INFO) << "Running Demo Client - Ver. " << RELEASE_STR;
-  LOG(INFO) << "- for " << duration << " seconds; timeout: " << timeout << " msec.";
+  utils::PrintVersion();
+  LOG(INFO) << "Running for " << duration << " seconds; timeout: " << timeout << " msec.";
 
   auto server = MakeServer(host, port);
   SwimClient client(*server, 0, timeout);
@@ -110,7 +111,7 @@ int main(int argc, const char *argv[]) {
     return EXIT_SUCCESS;
   }
 
-  ::utils::printVersion();
+  ::utils::PrintVersion();
   if (parser.has("version")) {
     return EXIT_SUCCESS;
   }

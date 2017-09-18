@@ -39,10 +39,20 @@ class SwimServer {
    */
   ServerRecordsSet suspected_;
 
-  // Access to the collection of servers must be thread-safe;
-  // use a std::lock_guard to protect access.
-  // TODO: std::mutex is not re-entrant: use a std::unique_lock instead.
+  /**
+   * Access to the collection of "alive" servers must be thread-safe;
+   * use a std::lock_guard to protect access.
+   *
+   * @todo std::mutex is not re-entrant: use a std::unique_lock instead.
+   */
   mutable std::mutex alive_mutex_;
+
+  /**
+   * Access to the collection of "suspected" servers must be thread-safe;
+   * use a std::lock_guard to protect access.
+   *
+   * @todo std::mutex is not re-entrant: use a std::unique_lock instead.
+   */
   mutable std::mutex suspected_mutex_;
 protected:
 
@@ -52,29 +62,10 @@ protected:
    * <p>This is a callback method that will be invoked by the server's loop, in its
    * own thread.
    *
-   * <p><strong>Note</strong> that this server class is currently <strong>NOT</strong>
-   * thread-safe and that none of its members (apart from the `atomic<bool>` stopped_) should be
-   * modified while processing this call.
-   *
    * @param client the server that just sent the message; the callee obtains ownership of the
    *        pointer and is responsible for freeing the memory.
    */
-  virtual void onUpdate(Server *client) {
-    // Make sure client will be deleted, even if an exception is thrown.
-    std::unique_ptr<Server> ps(client);
-
-    std::shared_ptr<ServerRecord> record = MakeRecord(*client);
-    alive_.insert(record);
-
-    // If it was previously suspected of being unresponsive, this server is removed from the
-    // suspected list:
-    auto removed = suspected_.erase(record);
-    if (removed > 0) {
-      VLOG(2) << *client << " previously suspected; added back to healthy set";
-    } else {
-      VLOG(3) << "Received a ping from " << *client;
-    }
-  }
+  virtual void onUpdate(Server *client);
 
   /**
    * Invoked when the `client` sends a `SwimEnvelope::Type::STATUS_REPORT` message to this server.
@@ -82,69 +73,12 @@ protected:
    * <p>This is a callback method that will be invoked by the server's loop, in its
    * own thread.
    *
-   * <p><strong>Note</strong> that this server class is currently <strong>NOT</strong>
-   * thread-safe and that none of its members (apart from the `atomic<bool>` stopped_) should be
-   * modified while processing this call.
-   *
    * @param sender the server that just sent the message; the callee obtains ownership of the
    *        pointer and is responsible for freeing the memory.
    * @param report the `SwimReport` that the `client` sent and can be used by this server to
    *        update its membership list.
    */
-  virtual void onReport(Server *sender, SwimReport *report) {
-    std::unique_ptr<Server> ps(sender);
-
-    VLOG(2) << self() << " received: " << *report;
-    for (auto record : report->alive()) {
-      if (record.server() == self()) {
-        // yes, we know we are alive, thank you very much.
-        continue;
-      }
-
-      std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
-      pRecord->set_didgossip(false);
-
-      auto was_suspected = suspected_.find(pRecord);
-      if (was_suspected != suspected_.end() &&
-          (*was_suspected)->timestamp() < record.timestamp()) {
-        suspected_.erase(pRecord);
-        alive_.insert(pRecord);
-      } else if (was_suspected == suspected_.end()) {
-        alive_.insert(pRecord);
-      }
-    }
-
-    for (auto record : report->suspected()) {
-      if (record.server() == self()) {
-        // Reports of our death were greatly exaggerated.
-        VLOG(2) << *sender << " reported this server (" << self() << ") as 'suspected'; pinging";
-        SwimClient client(*sender, port());
-        client.Ping();
-        continue;
-      }
-
-      std::shared_ptr<ServerRecord> pRecord(new ServerRecord(record));
-      if (suspected_.find(pRecord) == suspected_.end()) {
-
-        pRecord->set_didgossip(false);
-        pRecord->set_timestamp(::utils::CurrentTime());
-
-        auto was_alive = alive_.find(pRecord);
-        if (was_alive != alive_.end() && (*was_alive)->timestamp() < record.timestamp()) {
-          // This is genuine new news and we need to update our records.
-          suspected_.insert(pRecord);
-          alive_.erase(pRecord);
-        } else if (was_alive == alive_.end()) {
-          // If we are here, it means that we haven't seen this server before, and
-          // we should record it as "suspicious."
-          suspected_.insert(pRecord);
-        }
-      }
-    }
-
-    VLOG(2) << "After merging, alive: " << alive_
-            << "; suspected: " << suspected_;
-  }
+  virtual void onReport(Server *sender, SwimReport *report);
 
   /**
    * Invoked when the `client` sends a `SwimEnvelope::Type::STATUS_REQUEST` message to this server.
@@ -158,10 +92,6 @@ protected:
    *
    * <p>If the `destination` does not respond, no action is taken, beyond marking it as a
    * `suspected` crashed server.
-   *
-   * <p><strong>Note</strong> that this server class is currently <strong>NOT</strong>
-   * thread-safe and that none of its members (apart from the `atomic<bool>` stopped_) should be
-   * modified while processing this call.
    *
    * @param sender the server that just sent the message; the callee obtains ownership of the
    *        pointer and is responsible for freeing the memory.
@@ -243,7 +173,7 @@ public:
   unsigned long alive_size() const {
     unsigned long num;
     {
-      std::lock_guard<std::mutex> lock(alive_mutex_);
+      mutex_guard lock(alive_mutex_);
       num = alive_.size();
     }
     return num;
@@ -254,7 +184,7 @@ public:
    * @return the number of currently detected `suspected` neighbors.
    */
   unsigned long suspected_size() const {
-    std::lock_guard<std::mutex> lock(suspected_mutex_);
+    mutex_guard lock(suspected_mutex_);
     return suspected_.size();
   }
 

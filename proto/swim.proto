@@ -40,6 +40,7 @@ message ServerRecord {
     // When building a report, only those records with this flag unset will be sent
     // to neighbors (we "gossip" about new things that have happened; old news are not
     // interesting).
+    // TODO: Deprecated, will be removed (see #150911982)
     required bool didGossip = 4 [default = false];
 }
 

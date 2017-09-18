@@ -3,6 +3,7 @@
 
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <iostream>
 #include <iomanip>
@@ -11,12 +12,13 @@
 #include <glog/logging.h>
 
 #include <zmq.hpp>
-#include <atomic>
 
-#include "utils/network.h"
-#include "utils/ParseArgs.hpp"
+#include "swim.pb.h"
 
 #include "swim/GossipFailureDetector.hpp"
+
+#include "utils/ParseArgs.hpp"
+#include "utils/utils.hpp"
 
 
 using namespace std;
@@ -72,29 +74,8 @@ void usage() {
     << "\t           ping\n"
     << "\tPING_SEC   interval, in seconds, between pings to servers in the Gossip Circle\n\n"
     << "\tThe server will run forever in foreground, use Ctrl-C to terminate.\n";
+  utils::PrintVersion();
 }
-
-/**
- * Converts a vector to a string, the concatenation of its element, separated by `sep`.
- * Only really useful for debugging purposes.
- *
- * @tparam T the type of the elements, MUST support emitting to an `ostream` via the `<<` operator
- * @param vec the vector whose element we are emitting
- * @param sep a separator string, by default a newline
- * @return the string resulting from the concatenation of all elements
- */
-template<typename T>
-std::string vec2str(const vector<T> &vec, const string &sep = "\n") {
-  bool first = true;
-  std::ostringstream out;
-
-  for (auto t : vec) {
-    if (!first) out << sep; else first = false;
-    out << t;
-  }
-  return out.str();
-}
-
 } // namespace
 
 
@@ -113,7 +94,7 @@ int main(int argc, const char *argv[]) {
     return EXIT_SUCCESS;
   }
 
-  ::utils::printVersion();
+  utils::PrintVersion();
   if (parser.has("version")) {
     return EXIT_SUCCESS;
   }
@@ -130,8 +111,7 @@ int main(int argc, const char *argv[]) {
     if (parser.enabled("http")) {
       int httpPort = parser.getInt("http-port", ::kDefaultHttpPort);
       LOG(INFO) << "Enabling HTTP REST API on port " << httpPort;
-
-      // TODO: implement an HTTP server to serve the REST API.
+      throw utils::not_implemented("HTTP Server");
     } else {
       LOG(INFO) << "REST API will not be available";
     }
@@ -152,15 +132,18 @@ int main(int argc, const char *argv[]) {
       LOG(ERROR) << "A list of peers (possibly just one) is required to start the Gossip Detector";
       return EXIT_FAILURE;
     }
+
+
     auto seedNames = ::utils::split(parser.get("seeds"));
-    LOG(INFO) << "Connecting to initial Gossip Circle: " << vec2str(seedNames, ", ");
+    LOG(INFO) << "Connecting to initial Gossip Circle: "
+              << ::utils::Vec2Str(seedNames, ", ");
 
     std::for_each(seedNames.begin(), seedNames.end(),
                    [&](const std::string &name) {
                      try {
                        auto ipPort = ::utils::ParseHostPort(name);
-                       std::string ip;
-                       std::string host{std::get<0>(ipPort)};
+                       string ip;
+                       string host{std::get<0>(ipPort)};
                        if (::utils::ParseIp(host)) {
                          ip = host;
                        } else {
@@ -175,11 +158,10 @@ int main(int argc, const char *argv[]) {
                        detector->AddNeighbor(server);
 
                      } catch (::utils::parse_error& e) {
-                       LOG(ERROR) << "Could not parse: " << name << e.what();
+                       LOG(ERROR) << "Could not parse '" << name << "': " << e.what();
                      }
                    }
     );
-
 
     LOG(INFO) << "Waiting for server to start...";
     int waitCycles = 10;

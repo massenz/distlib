@@ -71,6 +71,8 @@ void GossipFailureDetector::PingNeighbor() const {
       } else {
         LOG(WARNING) << "Could not add " << server << " to the suspected set";
       }
+    } else {
+
     }
   } else {
     VLOG(2) << "No servers in group, skipping ping";

@@ -147,7 +147,6 @@ target_link_libraries(swim_server_demo
 #
 link_directories(${INSTALL_DIR}/lib)
 add_executable(gossip_detector_example
-        ${SOURCE_DIR}/utils/misc.cpp
         ${SOURCE_DIR}/examples/gossip_example.cpp
 )
 target_link_libraries(gossip_detector_example

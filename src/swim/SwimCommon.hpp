@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <iomanip>
+#include <mutex>
 #include <set>
 
 #include "swim.pb.h"
@@ -29,6 +30,11 @@ struct empty_set : public std::exception {
 };
 
 extern std::default_random_engine random_engine;
+
+/**
+ * An alias for the lock guards used to protect the "alive" and "suspected" RecordSet sets.
+ */
+using mutex_guard = std::lock_guard<std::mutex>;
 
 
 /**
