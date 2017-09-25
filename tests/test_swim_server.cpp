@@ -210,17 +210,15 @@ TEST_F(SwimServerTests, receiveReport) {
   one->set_timestamp(utils::CurrentTime());
   one->mutable_server()->set_hostname("host1");
   one->mutable_server()->set_port(1234);
-  one->set_didgossip(false);
 
   auto suspected = report.mutable_suspected();
   ServerRecord* two = suspected->Add();
   two->set_timestamp(utils::CurrentTime());
   two->mutable_server()->set_hostname("host_susp");
   two->mutable_server()->set_port(9876);
-  two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(1, server_->alive_size());
+  ASSERT_EQ(2, server_->alive_size());
   ASSERT_EQ(1, server_->suspected_size());
 }
 
@@ -242,7 +240,6 @@ TEST_F(SwimServerTests, receiveReportMany) {
     one->set_timestamp(utils::CurrentTime());
     one->mutable_server()->set_hostname(host);
     one->mutable_server()->set_port(9900 + i);
-    one->set_didgossip(false);
   }
 
   auto suspected = report.mutable_suspected();
@@ -253,11 +250,10 @@ TEST_F(SwimServerTests, receiveReportMany) {
     two->set_timestamp(utils::CurrentTime());
     two->mutable_server()->set_hostname(host);
     two->mutable_server()->set_port(5500 + i);
-    two->set_didgossip(false);
   }
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(10, server_->alive_size());
+  ASSERT_EQ(11, server_->alive_size());
   ASSERT_EQ(5, server_->suspected_size());
 }
 
@@ -277,10 +273,9 @@ TEST_F(SwimServerTests, reconcileReports) {
   two->mutable_server()->set_hostname("host-suspect");
   two->set_timestamp(utils::CurrentTime() - 10);
   two->mutable_server()->set_port(5500);
-  two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(0, server_->alive_size());
+  ASSERT_EQ(1, server_->alive_size());
   ASSERT_EQ(1, server_->suspected_size());
 
   // Make some time pass so that timestamps genuinely differ.
@@ -292,10 +287,9 @@ TEST_F(SwimServerTests, reconcileReports) {
   two->mutable_server()->set_hostname("host-suspect");
   two->set_timestamp(utils::CurrentTime());
   two->mutable_server()->set_port(5500);
-  two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(1, server_->alive_size());
+  ASSERT_EQ(2, server_->alive_size());
   ASSERT_EQ(0, server_->suspected_size());
 }
 
@@ -315,10 +309,9 @@ TEST_F(SwimServerTests, ignoreStaleReports) {
   two->mutable_server()->set_hostname("host-suspect");
   two->set_timestamp(utils::CurrentTime());
   two->mutable_server()->set_port(5500);
-  two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(0, server_->alive_size());
+  ASSERT_EQ(1, server_->alive_size());
   ASSERT_EQ(1, server_->suspected_size());
 
   report.clear_suspected();
@@ -329,11 +322,44 @@ TEST_F(SwimServerTests, ignoreStaleReports) {
   // irrelevant and should be ignored.
   two->set_timestamp(utils::CurrentTime() - 600);
   two->mutable_server()->set_port(5500);
-  two->set_didgossip(false);
 
   ASSERT_TRUE(client.Send(report));
-  ASSERT_EQ(0, server_->alive_size());
+  ASSERT_EQ(1, server_->alive_size());
   ASSERT_EQ(1, server_->suspected_size());
+}
+
+TEST_F(SwimServerTests, ignoreStaleReports2) {
+  ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
+  ASSERT_TRUE(server_->isRunning());
+
+  auto svr = MakeServer("localhost", server_->port());
+  SwimClient client(*svr);
+
+  SwimReport report;
+  report.mutable_sender()->CopyFrom(client.self());
+
+  auto alive = report.mutable_alive();
+  ServerRecord *two = alive->Add();
+  two->mutable_server()->set_hostname("host-alive");
+  two->mutable_server()->set_port(5500);
+  two->set_timestamp(utils::CurrentTime());
+
+  ASSERT_TRUE(client.Send(report));
+  ASSERT_EQ(2, server_->alive_size());
+  ASSERT_EQ(0, server_->suspected_size());
+
+  report.clear_suspected();
+
+  two = report.mutable_suspected()->Add();
+  two->mutable_server()->set_hostname("host-alive");
+  // The information that this server was suspected 10 minutes ago is
+  // irrelevant and should be ignored.
+  two->set_timestamp(utils::CurrentTime() - 600);
+  two->mutable_server()->set_port(5500);
+
+  ASSERT_TRUE(client.Send(report));
+  ASSERT_EQ(2, server_->alive_size());
+  ASSERT_EQ(0, server_->suspected_size());
 }
 
 TEST_F(SwimServerTests, servesPingRequests) {

@@ -63,16 +63,17 @@ void GossipFailureDetector::PingNeighbor() const {
     SwimClient client(server, gossip_server().port(), ping_timeout().count());
     auto response = client.Ping();
     if (!response) {
-      // TODO: forward request to ping to a set of kForwarderCount neighbors.
-
       LOG(WARNING) << server << " is not responding to ping";
+
+      // TODO: forward request to ping to a set of kForwarderCount neighbors.
       if (gossip_server_->ReportSuspect(server)) {
         VLOG(2) << "Server " << server << " added to the suspected set";
       } else {
         LOG(WARNING) << "Could not add " << server << " to the suspected set";
       }
     } else {
-
+      // All is well, simply update the timestamp of when we last "saw" this healthy server.
+      gossip_server_->AddAlive(server);
     }
   } else {
     VLOG(2) << "No servers in group, skipping ping";

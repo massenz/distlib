@@ -86,17 +86,17 @@ protected:
    * <p>This is essentially a callback method that will be invoked by the server's loop, in its
    * own thread.
    *
-   * <p>This message requests this server to send a ping on behalf of the `sender`, to
-   * the `destination` server; if the latter responds within the given timeout, this server will
-   * send back a report to notify that it is alive.
+   * <p>This message requests this server to send a report on behalf of the `sender`, to
+   * the `destination` server; the latter, if indeed alive, will then contact back the original
+   * `sender` to update its status.
    *
    * <p>If the `destination` does not respond, no action is taken, beyond marking it as a
-   * `suspected` crashed server.
+   * `suspected` server.
    *
    * @param sender the server that just sent the message; the callee obtains ownership of the
    *        pointer and is responsible for freeing the memory.
-   * @param destination the other server that the requestor (`client`) is asksing this server to
-   *        ping and report status back.
+   * @param destination the that the requestor (`sender`) is asksing this server to try and reach.
+   *        This method is responsible for freeing the memory.
    */
   virtual void onPingRequest(Server *sender, Server *destination);
 

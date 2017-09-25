@@ -72,7 +72,6 @@ inline std::unique_ptr<ServerRecord> MakeRecord(
   psvr->set_ip_addr(server.ip_addr());
 
   record->set_timestamp(TimestampToFixed64(timestamp));
-  record->set_didgossip(false);
 
   return record;
 }

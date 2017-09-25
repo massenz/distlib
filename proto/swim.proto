@@ -36,12 +36,6 @@ message ServerRecord {
     // If this record is sent on behalf of another server,
     // the forwarder should enter its identity here.
     optional Server forwarder = 3;
-
-    // When building a report, only those records with this flag unset will be sent
-    // to neighbors (we "gossip" about new things that have happened; old news are not
-    // interesting).
-    // TODO: Deprecated, will be removed (see #150911982)
-    required bool didGossip = 4 [default = false];
 }
 
 
@@ -89,12 +83,12 @@ message SwimEnvelope {
         STATUS_UPDATE = 1;
 
         // This is used by servers to exchange status updates on the clusters.
-        // The sole payload is the `report` message.
+        // The payload must be a `SwimReport` message.
         STATUS_REPORT = 2;
 
         // Used by servers to request other nodes to ping the given `destination_server` on
         // their behalf; more info in the SWIM protocol document.
-        // The sole payload is the `destination_server` message.
+        // The payload must be `destination_server` message.
         STATUS_REQUEST = 3;
     }
 
@@ -107,5 +101,9 @@ message SwimEnvelope {
     required Server sender = 2;
 
     optional SwimReport report = 5;
+
+    // The server that is `suspected` and should be pinged by the receiver
+    // on behalf of the `sender`; this is only used when used in a Type::STATUS_REQUEST
+    // message.
     optional Server destination_server = 6;
 }
