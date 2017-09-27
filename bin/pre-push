@@ -19,7 +19,6 @@
 # This sample shows how to prevent push of commits where the log message starts
 # with "WIP" (work in progress).
 
-
 remote="$1"
 url="$2"
 branch=$(git rev-parse --abbrev-ref HEAD)
@@ -32,7 +31,12 @@ fi
 
 echo -e "\n=======================\n[INFO] Pushing changes from ${branch}\n\n"
 
-./bin/build && ./bin/test && ./bin/publish_docs > /dev/null
+if [[ -z ${SKIP_INTS} ]]; then
+    ./bin/build && ./bin/test && ./bin/publish_docs > /dev/null
+else
+    echo "[WARN] Skipping integration tests; make sure you are not pushing a broken build."
+    ./bin/unit_tests
+fi
 
 if [[ $? != 0 ]]; then
     echo "[FAILURE] We failed to build and test ${branch}; cannot push"
