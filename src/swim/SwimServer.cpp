@@ -112,7 +112,7 @@ void SwimServer::onPingRequest(Server *sender, Server *destination) {
     SwimClient client(*destination, port_);
     if (!client.Send(report)) {
       VLOG(2) << "Forwarded request to " << *destination << " failed; reporting SUSPECTED";
-      ReportSuspect(*destination);
+      ReportSuspected(*destination);
     }
   }};
   ping_t.detach();
@@ -120,27 +120,54 @@ void SwimServer::onPingRequest(Server *sender, Server *destination) {
 
 SwimReport SwimServer::PrepareReport() const {
   SwimReport report;
-  report.mutable_sender()->CopyFrom(self());
+  std::vector<ServerRecord> records;
 
+  report.mutable_sender()->CopyFrom(self());
   {
     mutex_guard lock(alive_mutex_);
 
-    for (const auto &item : alive_) {
-      ServerRecord *prec = report.mutable_alive()->Add();
-      prec->CopyFrom(*item);
+    // Defensive copy.
+    // Keep hold of the lock for the least amount of time necessary to read data.
+    for (const auto &record : alive_) {
+      records.push_back(*record);
     }
   }
-
+  addRecordsToBudget(report, records, kAlive);
+  records.clear();
   {
     mutex_guard lock(suspected_mutex_);
 
     for (const auto &item : suspected_) {
-      ServerRecord *prec = report.mutable_suspected()->Add();
-      prec->CopyFrom(*item);
+      records.push_back(*item);
     }
   }
+  addRecordsToBudget(report, records, kSuspected);
 
   return report;
+}
+
+void SwimServer::addRecordsToBudget(SwimReport &report,
+                                    std::vector<ServerRecord> &records,
+                                    const ReportSelector& which) const {
+  google::uint64 now = ::utils::CurrentTime();
+  double running_cost = 0.0;
+
+  // NOTE we are sorting in *descending* order, and adding most recent records first.
+  sort(records.begin(),
+       records.end(),
+       [](const ServerRecord& r1, const ServerRecord& r2) {
+              return r1.timestamp() > r2.timestamp();
+            });
+
+  for (const auto &item : records) {
+    google::uint64 dt = item.timestamp() - now;
+    running_cost += cost(dt);
+    if (running_cost > kTimeDecayBudget) break;
+    ServerRecord *prec = which == kAlive ?
+                         report.mutable_alive()->Add() :
+                         report.mutable_suspected()->Add();
+    prec->CopyFrom(item);
+  }
 }
 
 Server SwimServer::GetRandomNeighbor() const {
@@ -166,9 +193,11 @@ Server SwimServer::GetRandomNeighbor() const {
   return  (*iterator)->server();
 }
 
-bool SwimServer::ReportSuspect(const Server &server) {
+bool SwimServer::ReportSuspected(const Server &server,
+                                 google::uint64 timestamp) {
   size_t num{0};
   std::shared_ptr<ServerRecord> suspectRecord = MakeRecord(server);
+  suspectRecord->set_timestamp(timestamp);
 
   // First remove it from the alive set, if there.
   {
@@ -185,10 +214,12 @@ bool SwimServer::ReportSuspect(const Server &server) {
   return inserted.second;
 }
 
-bool SwimServer::AddAlive(const Server &server) {
+bool SwimServer::AddAlive(const Server &server,
+                          google::uint64 timestamp) {
   RemoveSuspected(server);
 
   std::shared_ptr<ServerRecord> aliveRecord = MakeRecord(server);
+  aliveRecord->set_timestamp(timestamp);
 
   mutex_guard lock(alive_mutex_);
   auto inserted = alive_.insert(aliveRecord);
@@ -198,7 +229,7 @@ bool SwimServer::AddAlive(const Server &server) {
   if (!inserted.second) {
     auto pr = alive_.find(aliveRecord);
     if (pr != alive_.end()) {
-      (*pr)->set_timestamp(::utils::CurrentTime());
+      (*pr)->set_timestamp(timestamp);
     }
   }
   return inserted.second;
@@ -238,7 +269,7 @@ void SwimServer::onReport(Server *sender, SwimReport *report) {
     }
     // This will either add a newly found healthy server; or simply update the timestamp for one
     // we already knew about.
-    AddAlive(record.server());
+    AddAlive(record.server(), record.timestamp());
   }
 
   for (const auto &record : report->suspected()) {
@@ -258,7 +289,7 @@ void SwimServer::onReport(Server *sender, SwimReport *report) {
         continue;
       }
     }
-    ReportSuspect(record.server());
+    ReportSuspected(record.server(), record.timestamp());
   }
 }
 

@@ -19,6 +19,38 @@
 
 namespace swim {
 
+/** Scales the slope of the quadratic cost function. */
+const static double kTimeDecayConstant = 0.01;
+
+/** Reporting budget, currently set to cutoff at around 2 minutes, with constant messages. */
+const static double kTimeDecayBudget = 300.0;
+
+/**
+ * Used in `SwimServer::AddRecordsToBudget()` to choose which part of the report to add the list
+ * of records.
+ */
+enum ReportSelector {
+  kAlive,
+  kSuspected
+};
+
+/**
+ * Time "cost function" computes the cost of adding a record to a report, once the record has age
+ * `t` seconds.
+ *
+ * <p>It uses a quadratic function, scaled by a constant `kTimeDecayConstant`.  We will continue
+ * to add records to our report, until the total "cost" of doing so exceeds a given budget, given
+ * by `kTimeDecayBudget`.
+ *
+ * @todo we may eventually decide to make both paramets configurable in a later release.
+ *
+ * @param t time, in seconds, since the record was last updated
+ * @return the associated "cost" of adding the record to the report
+ */
+inline double cost(long t) {
+  return kTimeDecayConstant * t * t;
+}
+
 class SwimServer {
 
   unsigned short port_;
@@ -54,6 +86,19 @@ class SwimServer {
    * @todo std::mutex is not re-entrant: use a std::unique_lock instead.
    */
   mutable std::mutex suspected_mutex_;
+
+  /**
+   * Using the `::utils::cost()` function, adds to the `report` as many records as the budget
+   * allows.
+   *
+   * @param report to which we are adding records
+   * @param records the records to add, which will be sorted according to their
+   *    timestamp and added from the most recent backwards, until the budget is reached
+   * @param which whether to add the records to the `alive` or `suspected` list
+   */
+  void addRecordsToBudget(SwimReport &report,
+                          std::vector<ServerRecord> &records,
+                          const ReportSelector& which = kAlive) const;
 protected:
 
   /**
@@ -218,20 +263,26 @@ public:
    * Used to report a non-responding server.
    *
    * @param server that failed to respond to a ping request and thus is suspected of being in a
-   * failed state
-   * @return whethet adding `server` to the `suspected_` set was successful
+   *    failed state
+   * @param timestamp an optional timestamp for when this server was reported as suspected;
+   *    defaults to `now()`
+   * @return whether adding `server` to the `suspected_` set was successful
    */
-  bool ReportSuspect(const Server &);
+  bool ReportSuspected(const Server &server,
+                       google::uint64 timestamp = ::utils::CurrentTime());
 
   /**
    * Use this for either a newly discovered neighbor, or for a `suspected_` server that was in
    * fact found to be in a healthy state.
    *
    * @param server that will be added to the `alive_` set (and, if necessary, removed from the
-   * `suspected_` one).
+   *    `suspected_` one).
+   * @param timestamp an optional timestamp for when this server was reported as suspected;
+   *    defaults to `now()`
    * @return whether adding `server` to `alive_` set was successful
    */
-  bool AddAlive(const Server&);
+  bool AddAlive(const Server &server,
+                google::uint64 timestamp = ::utils::CurrentTime());
 
   /**
    * Removes the given server from the suspected set, thus marking it as terminally unreachable

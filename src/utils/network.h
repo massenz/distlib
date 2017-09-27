@@ -40,7 +40,7 @@ std::string SocketAddress(unsigned int port);
  *
  * @return the current time (via `std::time()`).
  */
-google::protobuf::int64 CurrentTime();
+google::uint64 CurrentTime();
 
 /**
  * Tries to find this node's hostname, as returned by the OS.

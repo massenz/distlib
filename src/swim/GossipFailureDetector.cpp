@@ -66,7 +66,7 @@ void GossipFailureDetector::PingNeighbor() const {
       LOG(WARNING) << server << " is not responding to ping";
 
       // TODO: forward request to ping to a set of kForwarderCount neighbors.
-      if (gossip_server_->ReportSuspect(server)) {
+      if (gossip_server_->ReportSuspected(server)) {
         VLOG(2) << "Server " << server << " added to the suspected set";
       } else {
         LOG(WARNING) << "Could not add " << server << " to the suspected set";
@@ -99,7 +99,7 @@ void GossipFailureDetector::SendReport() const {
     // TODO: ask m forwarders to reach this server.
     // We managed to pick an unresponsive server; let's add to suspects.
     LOG(WARNING) << "Report sending failed; adding " << other << " to suspects";
-    gossip_server_->ReportSuspect(other);
+    gossip_server_->ReportSuspected(other);
   }
 }
 
