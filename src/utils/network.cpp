@@ -75,8 +75,8 @@ std::string SocketAddress(unsigned int port) {
 }
 
 
-google::protobuf::int64 CurrentTime() {
-  return std::time(nullptr);
+google::uint64 CurrentTime() {
+  return static_cast<google::uint64>(std::time(nullptr));
 }
 
 

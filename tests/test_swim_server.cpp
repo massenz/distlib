@@ -409,3 +409,29 @@ TEST_F(SwimServerTests, canRestart) {
   ASSERT_TRUE(server_->isRunning());
   ASSERT_TRUE(client.Ping());
 }
+
+TEST_F(SwimServerTests, testBudget) {
+  ASSERT_NO_FATAL_FAILURE(runServer()) << "Could not get the server started";
+  ASSERT_TRUE(server_->isRunning());
+
+  auto svr = MakeServer(server_->self().hostname(), server_->port());
+  SwimClient client(*svr);
+
+  SwimReport report;
+  report.mutable_sender()->CopyFrom(client.self());
+
+  auto suspected = report.mutable_suspected();
+  for (int i = 0; i < 100; ++i) {
+    ServerRecord *two = suspected->Add();
+    two->mutable_server()->set_hostname("host-suspect-" + std::to_string(i));
+    two->set_timestamp(utils::CurrentTime() - 2 * i);
+    two->mutable_server()->set_port(5500 + i);
+  }
+
+  ASSERT_TRUE(client.Send(report));
+
+  // With the current reporting budget, it should cut-off at around two minutes,
+  // i.e., less than 30 servers.
+  auto returned_report = server_->PrepareReport();
+  ASSERT_GT(30, returned_report.suspected_size());
+}

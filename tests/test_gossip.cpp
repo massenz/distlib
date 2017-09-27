@@ -171,9 +171,9 @@ TEST_F(GossipFailureDetectorTests, prepareReport) {
   // and suspected servers.
   // Generally speaking, this is **thread-unsafe** but here we can, as we can be
   // sure there is no other thread accessing these collections.
-  SwimServer& swimServer = const_cast<SwimServer&> (detector_->gossip_server());
+  auto & swimServer = const_cast<SwimServer&> (detector_->gossip_server());
 
-  swimServer.ReportSuspect(*MakeServer("host_1.example.com", 4457));
+  swimServer.ReportSuspected(*MakeServer("host_1.example.com", 4457));
   report = detector_->gossip_server().PrepareReport();
   ASSERT_EQ(2, report.alive_size());
   ASSERT_EQ(1, report.suspected_size());
