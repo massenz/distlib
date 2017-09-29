@@ -33,8 +33,6 @@ const unsigned int kDefaultHttpPort = 30396;
 
 // Default values for all of the GossipFailureDetector intervals/durations.
 // These defaults are for the example app usage only
-const unsigned int kDefaultTimeoutMsec = 3000;
-const unsigned int kDefaultUpdateIntervalSec = 5;
 const unsigned int kDefaultGracePeriodSec = 35;
 const unsigned int kDefaultPingIntervalSec = 5;
 
@@ -45,34 +43,34 @@ const unsigned int kDefaultPingIntervalSec = 5;
 void usage() {
   std::cout << "Usage: " << program_invocation_short_name << " --seeds=SEEDS_LIST [--port=PORT]\n"
     << "\t\t[--timeout=TIMEOUT] [--ping=PING_SEC] [--http [--http-port=HTTP_PORT]]\n"
+    << "\t\t[--grace-period=GRACE_PERIOD]\n"
     << "\t\t[--debug] [--version] [--help]\n\n"
-    << "\t--debug    verbose output (LOG_v = 2)\n"
-    << "\t--trace    trace output (LOG_v = 3)\n"
-    << "\t           Using either option will also cause the logs to be emitted to stdout,\n"
-    << "\t           otherwise the default Google Logs logging directory/files will be used.\n\n"
-    << "\t--help     prints this message and exits;\n"
-    << "\t--version  prints the version string for this demo and third-party libraries\n"
-    << "\t           and exits\n"
-    << "\t--http     whether this server should expose a REST API (true by default,\n"
-    << "\t           use --no-http to disable);\n\n"
-    << "\tPORT       an integer value specifying the TCP port the server will listen on,\n"
-    << "\t           if not specified, uses " << kDefaultPort << " by default;\n"
-    << "\tHTTP_PORT  the HTTP port for the REST API, if server exposes it (see --http);\n"
-    << "\t           if not specified, uses " << kDefaultHttpPort << " by default;\n"
-    << "\tSEEDS_LIST a comma-separated list of host:port of peers that this server will\n"
-    << "\t           initially connect to, and part of the Gossip ring: from these \"seeds\"\n"
-    << "\t           the server will learn eventually of ALL the other servers and\n"
-    << "\t           connect to them too.\n"
-    << "\t           Required.\n"
-    << "\t           The `host` part may be either an IP address (such as 192.168.1.1) or\n"
-    << "\t           the DNS-resolvable `hostname`; for example:\n\n"
-    << "\t             192.168.1.101:8080,192.168.1.102:8081\n"
-    << "\t             node1.example.com:9999,node1.example.com:9999,node3.example.com:9999\n\n"
-    << "\t           Both host and port are required and no spaces must be left\n"
-    << "\t           between entries; the hosts may not ALL be active.\n"
-    << "\tTIMEOUT    in milliseconds, how long to wait for the server to respond to the\n"
-    << "\t           ping\n"
-    << "\tPING_SEC   interval, in seconds, between pings to servers in the Gossip Circle\n\n"
+    << "\t--debug       verbose output (LOG_v = 2)\n"
+    << "\t--trace       trace output (LOG_v = 3)\n"
+    << "\t              Using either option will also cause the logs to be emitted to stdout,\n"
+    << "\t              otherwise the default Google Logs logging directory/files will be used.\n\n"
+    << "\t--help        prints this message and exits;\n"
+    << "\t--version     prints the version string for this demo and third-party libraries\n"
+    << "\t              and exits\n"
+    << "\t--http        whether this server should expose a REST API (true by default,\n"
+    << "\t              use --no-http to disable);\n\n"
+    << "\tPORT          an integer value specifying the TCP port the server will listen on,\n"
+    << "\t              if not specified, uses " << kDefaultPort << " by default;\n"
+    << "\tHTTP_PORT     the HTTP port for the REST API, if server exposes it (see --http);\n"
+    << "\t              if not specified, uses " << kDefaultHttpPort << " by default;\n"
+    << "\tTIMEOUT       in milliseconds, how long to wait for the server to respond to the ping\n"
+    << "\tGRACE_PERIOD  in seconds, how long to wait before evicting suspected servers\n"
+    << "\tPING_SEC      interval, in seconds, between pings to servers in the Gossip Circle\n"
+    << "\tSEEDS_LIST    a comma-separated list of host:port of peers that this server will\n"
+    << "\t              initially connect to, and part of the Gossip ring: from these \"seeds\"\n"
+    << "\t              the server will learn eventually of ALL the other servers and\n"
+    << "\t              connect to them too.\n"
+    << "\t              The `host` part may be either an IP address (such as 192.168.1.1) or\n"
+    << "\t              the DNS-resolvable `hostname`; for example:\n\n"
+    << "\t                192.168.1.101:8080,192.168.1.102:8081\n"
+    << "\t                node1.example.com:9999,node1.example.com:9999,node3.example.com:9999\n\n"
+    << "\t              Both host and port are required and no spaces must be left\n"
+    << "\t              between entries; the hosts may not ALL be active.\n\n"
     << "\tThe server will run forever in foreground, use Ctrl-C to terminate.\n";
   utils::PrintVersion();
 }
@@ -116,16 +114,15 @@ int main(int argc, const char *argv[]) {
       LOG(INFO) << "REST API will not be available";
     }
 
-    long ping_timeout_msec = parser.getInt("timeout", kDefaultTimeoutMsec);
+    long ping_timeout_msec = parser.getInt("timeout", swim::kDefaultTimeoutMsec);
     long ping_interval_sec = parser.getInt("ping", kDefaultPingIntervalSec);
+    long grace_period_sec = parser.getInt("grace-period", kDefaultGracePeriodSec);
 
     auto detector = std::make_shared<GossipFailureDetector>(
         port,
-        kDefaultUpdateIntervalSec,  // TODO: add CLI arg
-        kDefaultGracePeriodSec,     // TODO: add CLI arg
-        ping_timeout_msec,
-        ping_interval_sec
-    );
+        ping_interval_sec,
+        grace_period_sec,
+        ping_timeout_msec);
 
     if (!parser.has("seeds")) {
       usage();

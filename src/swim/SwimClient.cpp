@@ -12,8 +12,6 @@ using namespace utils;
 
 namespace swim {
 
-const unsigned long SwimClient::DEFAULT_TIMEOUT_MSEC = 25;
-const unsigned int SwimClient::DEFAULT_SOCKET_LINGER_MSEC = 0;
 
 std::default_random_engine random_engine{};
 
@@ -80,7 +78,7 @@ bool SwimClient::postMessage(SwimEnvelope *envelope) const {
 
   context_t ctx(1);
   socket_t socket(ctx, ZMQ_REQ);
-  socket.setsockopt (ZMQ_LINGER, &DEFAULT_SOCKET_LINGER_MSEC, sizeof (unsigned int));
+  socket.setsockopt (ZMQ_LINGER, &swim::kDefaultSocketLingerMsec, sizeof (unsigned int));
   socket.connect(destinationUri().c_str());
 
   message_t msg(buf, msgSize, nullptr);

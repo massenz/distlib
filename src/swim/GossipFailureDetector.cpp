@@ -5,16 +5,19 @@
 
 namespace swim {
 
-bool operator<(const ServerRecord &lhs, const ServerRecord& rhs) {
-  if (lhs.server().hostname() == rhs.server().hostname()) {
-    return lhs.server().port() < rhs.server().port();
-  }
-  return lhs.server().hostname() < rhs.server().hostname();
+bool operator<(const ServerRecord& lhs, const ServerRecord& rhs) {
+  return lhs.server() < rhs.server();
 }
 
-bool operator==(const Server &lhs, const Server &rhs) {
-  return lhs.hostname() == rhs.hostname()
-      && lhs.port() == rhs.port();
+bool operator<(const Server& lhs, const Server& rhs) {
+  if (lhs.hostname() == rhs.hostname()) {
+    return lhs.port() < rhs.port();
+  }
+  return lhs.hostname() < rhs.hostname();
+}
+
+bool operator==(const Server& lhs, const Server& rhs) {
+  return !(lhs < rhs) && !(rhs < lhs);
 }
 
 void GossipFailureDetector::InitAllBackgroundThreads() {
@@ -28,17 +31,8 @@ void GossipFailureDetector::InitAllBackgroundThreads() {
   threads_.push_back(std::unique_ptr<std::thread>(
       new std::thread([this]() {
         while (gossip_server().isRunning()) {
-          PingNeighbor();
-          std::this_thread::sleep_for(ping_interval());
-        }
-      }))
-  );
-
-  threads_.push_back(std::unique_ptr<std::thread>(
-      new std::thread([this]() {
-        while (gossip_server().isRunning()) {
           SendReport();
-          std::this_thread::sleep_for(update_round_interval());
+          std::this_thread::sleep_for(update_round_interval_);
         }
       }))
   );
@@ -47,7 +41,7 @@ void GossipFailureDetector::InitAllBackgroundThreads() {
       new std::thread([this]() {
         while (gossip_server().isRunning()) {
           GarbageCollectSuspected();
-          std::this_thread::sleep_for(ping_interval());
+          std::this_thread::sleep_for(update_round_interval_);
         }
       }))
   );
@@ -55,29 +49,22 @@ void GossipFailureDetector::InitAllBackgroundThreads() {
   LOG(INFO) << "All Gossiping threads for the SWIM Detector started";
 }
 
-void GossipFailureDetector::PingNeighbor() const {
-  if (!gossip_server_->alive_empty()) {
-    const Server server = gossip_server_->GetRandomNeighbor();
-    VLOG(2) << "Pinging " << server;
 
-    SwimClient client(server, gossip_server().port(), ping_timeout().count());
-    auto response = client.Ping();
-    if (!response) {
-      LOG(WARNING) << server << " is not responding to ping";
+std::set<Server> GossipFailureDetector::GetUniqueNeighbors(int k) const {
+  std::set<Server> others;
+  unsigned int collisions = 0;
+  const unsigned int kMaxCollisions = 3;
 
-      // TODO: forward request to ping to a set of kForwarderCount neighbors.
-      if (gossip_server_->ReportSuspected(server)) {
-        VLOG(2) << "Server " << server << " added to the suspected set";
-      } else {
-        LOG(WARNING) << "Could not add " << server << " to the suspected set";
-      }
-    } else {
-      // All is well, simply update the timestamp of when we last "saw" this healthy server.
-      gossip_server_->AddAlive(server);
+  for (int i = 0; i < std::min(num_reports_,
+                               static_cast<const unsigned int>(gossip_server_->alive_size())); ++i) {
+    const Server other = gossip_server_->GetRandomNeighbor();
+    auto inserted = others.insert(other);
+    if (!inserted.second && ++collisions > kMaxCollisions) {
+      // We are hitting too many already randomly-picked neighbors, clearly the set is exhausted.
+      break;
     }
-  } else {
-    VLOG(2) << "No servers in group, skipping ping";
   }
+  return others;
 }
 
 void GossipFailureDetector::SendReport() const {
@@ -90,16 +77,19 @@ void GossipFailureDetector::SendReport() const {
   VLOG(2) << "Sending report, alive: " << report.alive_size() << "; suspected: "
           << report.suspected_size();
 
-  // TODO: make the number of reports sent out configurable; only sending one at a time now.
-  const Server other = gossip_server_->GetRandomNeighbor();
-  auto client = SwimClient(other);
-  VLOG(2) << "Sending report to " << other;
+  for (auto other : GetUniqueNeighbors(num_reports_)) {
+    auto client = SwimClient(other);
+    VLOG(2) << "Sending report to " << other;
 
-  if (!client.Send(report)) {
-    // TODO: ask m forwarders to reach this server.
-    // We managed to pick an unresponsive server; let's add to suspects.
-    LOG(WARNING) << "Report sending failed; adding " << other << " to suspects";
-    gossip_server_->ReportSuspected(other);
+    if (!client.Send(report)) {
+      // We managed to pick an unresponsive server; let's add to suspects.
+      LOG(WARNING) << "Report sending failed; adding " << other << " to suspects";
+      // TODO: ask m forwarders to reach this server (see #150911899).
+      gossip_server_->ReportSuspected(other);
+    } else {
+      // All is well, simply update the timestamp of when we last "saw" this healthy server.
+      gossip_server_->AddAlive(other);
+    }
   }
 }
 

@@ -19,12 +19,6 @@
 
 namespace swim {
 
-/** Scales the slope of the quadratic cost function. */
-const static double kTimeDecayConstant = 0.01;
-
-/** Reporting budget, currently set to cutoff at around 2 minutes, with constant messages. */
-const static double kTimeDecayBudget = 300.0;
-
 /**
  * Used in `SwimServer::AddRecordsToBudget()` to choose which part of the report to add the list
  * of records.
@@ -148,27 +142,12 @@ protected:
 public:
 
   /** Number of parallel threads handling ZMQ socket requests. */
-  static const unsigned int NUM_THREADS = 5;
-
-  /**
-   * Default value for the interval in msec for the server to wait for incoming data, between checks
-   * of having been stopped.
-   *
-   * <p>This is a timeout value, so there is no adverse effect to set it at a higher value,
-   * however this will impact the time it takes for the server to stop or shutdown.
-   */
-  static const unsigned long DEFAULT_POLLING_INTERVAL_MSEC;
-
-  /**
-   * ZMQ allows the socket to linger after having been closed: currently this is set to 0
-   * to disable that.
-   */
-  static const unsigned int DEFAULT_SOCKET_LINGER_MSEC;
+  static const unsigned int kNumThreads = 5;
 
 
   SwimServer(unsigned short port,
-             unsigned int threads = NUM_THREADS,
-             unsigned long polling_interval = DEFAULT_POLLING_INTERVAL_MSEC
+             unsigned int threads = kNumThreads,
+             unsigned long polling_interval = kDefaultPollingIntervalMsec
   ) : port_(port), num_threads_(threads), stopped_(true), polling_interval_(polling_interval) {}
 
   virtual ~SwimServer() {
@@ -177,7 +156,7 @@ public:
     stop();
     while (isRunning() && retry_count-- > 0) {
       VLOG(2) << "Waiting for server to stop...";
-      std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_POLLING_INTERVAL_MSEC));
+      std::this_thread::sleep_for(std::chrono::milliseconds(polling_interval_));
     }
     if (retry_count == 0) {
       LOG(ERROR) << "Timed out waiting for server to shut down; giving up.";
