@@ -31,8 +31,7 @@ protected:
         ::tests::RandomPort(),
         1,  // time between reports
         2,  // grace period, dictates length of tests, must not be too long.
-        20, // ping timeout, in milliseconds: can be really short.
-        1   // interval between pings.
+        20  // ping timeout, in milliseconds: can be really short.
     ));
 
     // Wait for the Gossip Detector to start.

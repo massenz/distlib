@@ -10,12 +10,9 @@ using namespace zmq;
 
 namespace swim {
 
-const unsigned long SwimServer::DEFAULT_POLLING_INTERVAL_MSEC = 50;
-const unsigned int SwimServer::DEFAULT_SOCKET_LINGER_MSEC = 0;
-
 void SwimServer::start() {
 
-  context_t ctx(NUM_THREADS);
+  context_t ctx(kNumThreads);
   socket_t socket(ctx, ZMQ_REP);
   if (!socket) {
     LOG(ERROR) << "Could not initialize the socket, this is a critical error, aborting.";
@@ -23,7 +20,7 @@ void SwimServer::start() {
   }
 
   // No point in keeping the socket around when we exit.
-  socket.setsockopt(ZMQ_LINGER, &DEFAULT_SOCKET_LINGER_MSEC, sizeof (unsigned int));
+  socket.setsockopt(ZMQ_LINGER, &kDefaultSocketLingerMsec, sizeof (unsigned int));
   auto address = utils::SocketAddress(port_);
   socket.bind(address.c_str());
 
@@ -36,13 +33,8 @@ void SwimServer::start() {
   };
   stopped_ = false;
   while (!stopped_) {
-    // TODO: make timeout configurable; also confirm the timeout is in msec.
-    long timeout = 10;
-    int rc = zmq_poll(items, 1, timeout);
+    int rc = zmq_poll(items, 1, polling_interval_);
     if (rc > 0 && items[0].revents && ZMQ_POLLIN) {
-      // FIXME: without this noop wait, the server crashes with a SIGSEGV.
-      //    A yield() also won't work, as moving the message_t initialization place.
-      std::this_thread::sleep_for(std::chrono::milliseconds(0));
       message_t msg;
       if (!socket.recv(&msg)) {
         LOG(FATAL) << "Error receiving from socket";

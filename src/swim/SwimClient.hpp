@@ -25,9 +25,6 @@ namespace swim {
  */
 class SwimClient {
 
-  static const unsigned long DEFAULT_TIMEOUT_MSEC;
-  static const unsigned int DEFAULT_SOCKET_LINGER_MSEC;
-
   Server dest_;
   Server self_;
   unsigned long timeout_;
@@ -60,7 +57,8 @@ public:
    * @param self_port if this server is also listening on a port, specify it here.
    * @param timeout an optional timeout, in milliseconds.
    */
-  SwimClient(const Server &dest, int self_port = 0, unsigned long timeout = DEFAULT_TIMEOUT_MSEC);
+  SwimClient(const Server &dest, int self_port = 0,
+             unsigned long timeout = swim::kDefaultTimeoutMsec);
 
   virtual ~SwimClient() {}
 

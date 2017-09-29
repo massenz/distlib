@@ -18,6 +18,28 @@ using Timestamp = system_clock::time_point;
 
 namespace swim {
 
+////  All CONSTANTS should be defined here for ease of reference  ///
+
+/** Default timeout for all clients connecting to servers */
+const unsigned long kDefaultTimeoutMsec = 25;
+
+/** Default interval between polling, when waiting for incoming requests. */
+const unsigned long kDefaultPollingIntervalMsec = 50;
+
+/**
+ * Required to keep ZMQ happy and remove unnecessary sockets "lingering" after communication is
+ * closed.
+ */
+const unsigned int kDefaultSocketLingerMsec = 0;
+
+/** Scales the slope of the quadratic cost function. */
+const static double kTimeDecayConstant = 0.01;
+
+/** Reporting budget, currently set to cutoff at around 2 minutes, with constant messages. */
+const static double kTimeDecayBudget = 300.0;
+
+
+
 inline ::google::protobuf::uint64 TimestampToFixed64(const Timestamp &timestamp) {
   return std::chrono::system_clock::to_time_t(timestamp);
 }
@@ -77,6 +99,8 @@ inline std::unique_ptr<ServerRecord> MakeRecord(
 }
 
 
+bool operator<(const Server& lhs, const Server& rhs);
+
 /**
  * Ordering operator for server records, uses the `hostname`  as a total ordering
  * criterion.  For servers on the same host (IP), the port number is used; the timestamp is
@@ -91,7 +115,7 @@ inline std::unique_ptr<ServerRecord> MakeRecord(
  * @return whether `lhs` is less than `rhs`, according to a lexicographic ordering of their
  *      respective `ServerRecord#server()`
  */
-bool operator<(const ServerRecord &lhs, const ServerRecord &rhs);
+bool operator<(const ServerRecord& lhs, const ServerRecord& rhs);
 
 
 /**
@@ -102,7 +126,7 @@ bool operator<(const ServerRecord &lhs, const ServerRecord &rhs);
  * @param rhs the right-hand operand
  * @return `true` if both `hostname` and `port` match
  */
-bool operator==(const Server &lhs, const Server &rhs);
+bool operator==(const Server& lhs, const Server& rhs);
 
 /**
  * Without this, associative containers (such as `set`) would compare the value of the pointers
