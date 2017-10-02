@@ -45,6 +45,7 @@ add_executable(${TEST_TARGET}
 )
 target_link_libraries(${TEST_TARGET}
         ${GTEST}
+        protobuf
         distlib
 )
 

@@ -50,13 +50,13 @@ void GossipFailureDetector::InitAllBackgroundThreads() {
 }
 
 
-std::set<Server> GossipFailureDetector::GetUniqueNeighbors(int k) const {
+std::set<Server> GossipFailureDetector::GetUniqueNeighbors(unsigned int k) const {
   std::set<Server> others;
   unsigned int collisions = 0;
   const unsigned int kMaxCollisions = 3;
 
-  for (int i = 0; i < std::min(num_reports_,
-                               static_cast<const unsigned int>(gossip_server_->alive_size())); ++i) {
+  int n = std::min(k, static_cast<unsigned int>(gossip_server_->alive_size()));
+  for (int i = 0; i < n; ++i) {
     const Server other = gossip_server_->GetRandomNeighbor();
     auto inserted = others.insert(other);
     if (!inserted.second && ++collisions > kMaxCollisions) {
@@ -84,8 +84,18 @@ void GossipFailureDetector::SendReport() const {
     if (!client.Send(report)) {
       // We managed to pick an unresponsive server; let's add to suspects.
       LOG(WARNING) << "Report sending failed; adding " << other << " to suspects";
-      // TODO: ask m forwarders to reach this server (see #150911899).
       gossip_server_->ReportSuspected(other);
+      auto forwards = GetUniqueNeighbors(num_forwards_);
+      for (auto fwd : forwards) {
+        VLOG(2) << "Requesting " << fwd << " to ping " << other << " on our behalf";
+        client = SwimClient(fwd, gossip_server_->port());
+
+        // This is required, as `RequestPing` takes ownership of the pointer and
+        // will dispose of it.
+        auto ps = new Server();
+        ps->CopyFrom(other);
+        client.RequestPing(ps);
+      }
     } else {
       // All is well, simply update the timestamp of when we last "saw" this healthy server.
       gossip_server_->AddAlive(other);

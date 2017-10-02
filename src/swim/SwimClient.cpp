@@ -4,6 +4,7 @@
 
 
 #include <zmq.h>
+#include <iostream>
 #include "SwimClient.hpp"
 
 
@@ -68,7 +69,6 @@ void SwimClient::set_max_allowed_reports(unsigned int max_allowed_reports_) {
 }
 
 bool SwimClient::postMessage(SwimEnvelope *envelope) const {
-
   envelope->mutable_sender()->CopyFrom(self_);
   std::string msgAsStr = envelope->SerializeAsString();
 
@@ -84,9 +84,9 @@ bool SwimClient::postMessage(SwimEnvelope *envelope) const {
   message_t msg(buf, msgSize, nullptr);
 
 
-  VLOG(2) << "Connecting to " << destinationUri();
+  VLOG(2) << self_ << ": Connecting to " << destinationUri();
   if (!socket.send(msg)) {
-    LOG(ERROR) << "Failed to send message to " << destinationUri();
+    LOG(ERROR) << self_ << ": Failed to send message to " << destinationUri();
     return false;
   }
 
@@ -94,26 +94,23 @@ bool SwimClient::postMessage(SwimEnvelope *envelope) const {
   poll(items, 1, timeout());
 
   if (!items[0].revents & ZMQ_POLLIN) {
-    LOG(ERROR) << "Timed out waiting for response from " << destinationUri();
+    LOG(ERROR) << self_ << ": Timed out waiting for response from " << destinationUri();
     return false;
   }
 
-
-  VLOG(2) << "Connected to server";
   message_t reply;
   if (!socket.recv(&reply)) {
-    LOG(ERROR) << "Failed to receive reply from server" << destinationUri();
+    LOG(ERROR) << self_ << ": Failed to receive reply from server" << destinationUri();
     return false;
   }
 
   char response[reply.size() + 1];
-  VLOG(2) << "Received: " << reply.size() << " bytes from " << destinationUri();
+  VLOG(2) << self_ << ": Received: " << reply.size() << " bytes from " << destinationUri();
   memset(response, 0, reply.size() + 1);
   memcpy(response, reply.data(), reply.size());
-  VLOG(2) << "Response: " << response;
+  VLOG(2) << self_ << ": Response: " << response;
 
   return strcmp(response, "OK") == 0;
-//  return reply.size() == 2;
 }
 
 } // namespace swim

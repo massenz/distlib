@@ -18,7 +18,7 @@ using Timestamp = system_clock::time_point;
 
 namespace swim {
 
-////  All CONSTANTS should be defined here for ease of reference  ///
+////  Mark: Constants
 
 /** Default timeout for all clients connecting to servers */
 const unsigned long kDefaultTimeoutMsec = 25;
@@ -38,6 +38,7 @@ const static double kTimeDecayConstant = 0.01;
 /** Reporting budget, currently set to cutoff at around 2 minutes, with constant messages. */
 const static double kTimeDecayBudget = 300.0;
 
+//// Constants end.
 
 
 inline ::google::protobuf::uint64 TimestampToFixed64(const Timestamp &timestamp) {

@@ -90,9 +90,9 @@ class SwimServer {
    *    timestamp and added from the most recent backwards, until the budget is reached
    * @param which whether to add the records to the `alive` or `suspected` list
    */
-  void addRecordsToBudget(SwimReport &report,
+  void AddRecordsToBudget(SwimReport &report,
                           std::vector<ServerRecord> &records,
-                          const ReportSelector& which = kAlive) const;
+                          const ReportSelector &which = kAlive) const;
 protected:
 
   /**
@@ -104,7 +104,7 @@ protected:
    * @param client the server that just sent the message; the callee obtains ownership of the
    *        pointer and is responsible for freeing the memory.
    */
-  virtual void onUpdate(Server *client);
+  virtual void OnUpdate(Server *client);
 
   /**
    * Invoked when the `client` sends a `SwimEnvelope::Type::STATUS_REPORT` message to this server.
@@ -117,7 +117,7 @@ protected:
    * @param report the `SwimReport` that the `client` sent and can be used by this server to
    *        update its membership list.
    */
-  virtual void onReport(Server *sender, SwimReport *report);
+  virtual void OnReport(Server *sender, SwimReport *report);
 
   /**
    * Invoked when the `client` sends a `SwimEnvelope::Type::STATUS_REQUEST` message to this server.
@@ -125,8 +125,8 @@ protected:
    * <p>This is essentially a callback method that will be invoked by the server's loop, in its
    * own thread.
    *
-   * <p>This message requests this server to send a report on behalf of the `sender`, to
-   * the `destination` server; the latter, if indeed alive, will then contact back the original
+   * <p>This message requests this server to ping the `destination` server, on behalf of the 
+   * `sender`; the latter, if indeed alive, will then contact back the original
    * `sender` to update its status.
    *
    * <p>If the `destination` does not respond, no action is taken, beyond marking it as a
@@ -137,7 +137,7 @@ protected:
    * @param destination the that the requestor (`sender`) is asksing this server to try and reach.
    *        This method is responsible for freeing the memory.
    */
-  virtual void onPingRequest(Server *sender, Server *destination);
+  virtual void OnForwardRequest(Server *sender, Server *destination);
 
 public:
 
