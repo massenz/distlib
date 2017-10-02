@@ -93,7 +93,7 @@ target_link_libraries(${PROJECT_NAME}
         ${SWIM_LIBS})
 
 if (NOT ${INSTALL_DIR})
-    message(STATUS "Installing lib${PROJECT_NAME}.a static library to ${INSTALL_DIR}/lib\n"
+    message(STATUS "Installing lib${PROJECT_NAME}.so shared library to ${INSTALL_DIR}/lib\n"
                    "   and include files to ${INSTALL_DIR}/include/${PROJECT_NAME}")
     install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_DIR}/lib)
 
@@ -143,9 +143,8 @@ target_link_libraries(swim_server_demo
 ##
 # Gossip Server
 #
-# Full implementation of the `GossipFailureDetector` with associated HTTP REST API.
+# Full implementation of the `GossipFailureDetector`.
 #
-link_directories(${INSTALL_DIR}/lib)
 add_executable(gossip_detector_example
         ${SOURCE_DIR}/examples/gossip_example.cpp
 )

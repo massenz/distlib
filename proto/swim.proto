@@ -7,8 +7,10 @@
 // in the README doc.
 package swim;
 
-// We don't need reflection or any of the other features not supported by `MessageLite`.
-option optimize_for = LITE_RUNTIME;
+// We still want reflection and the full-fat version of Protobuf, but we can try to optimize for
+// code size.
+// See: https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.message_lite
+option optimize_for = CODE_SIZE;
 
 // A running SWIM service is uniquely identified by the hostname:port combination.
 // The optional IP address is only provided to help in those deployment where DNS

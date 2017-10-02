@@ -49,9 +49,9 @@ public:
   explicit TestServer(unsigned short port) : SwimServer(port, 1), wasUpdated_(false) {}
   virtual ~TestServer() = default;
 
-  void onUpdate(Server *client) override {
+  void OnUpdate(Server *client) override {
     if (client != nullptr) {
-      VLOG(2) << "TestServer::onUpdate " << client->hostname() << ":" << client->port();
+      VLOG(2) << "TestServer::OnUpdate " << client->hostname() << ":" << client->port();
       wasUpdated_ = true;
       delete (client);
     }
@@ -434,4 +434,81 @@ TEST_F(SwimServerTests, testBudget) {
   // i.e., less than 30 servers.
   auto returned_report = server_->PrepareReport();
   ASSERT_GT(30, returned_report.suspected_size());
+}
+
+TEST(SwimProtocolTests, testForwarding) {
+  auto sender_port = ::tests::RandomPort(),
+       forwarder_port = ::tests::RandomPort(),
+       suspected_port = ::tests::RandomPort();
+
+  SwimServer sender(sender_port);
+  SwimServer forwarder(forwarder_port);
+  SwimServer suspected(suspected_port);
+
+  for (auto server : {&sender, &forwarder, &suspected}) {
+    std::thread t([&server] () { server->start(); });
+    t.detach();
+    ::tests::WaitAtMostFor([=] () {return server->isRunning();}, std::chrono::milliseconds(200));
+  }
+  sender.ReportSuspected(suspected.self());
+
+  // This is necessary, as `set_allocated_xxx()` will cause PB to take ownership
+  // of the pointer, and deallocate it when done (which is what will happen when we
+  // call `RequestPing()`).
+  auto dest = new Server();
+  dest->CopyFrom(suspected.self());
+
+  // Before this call, suspected must be in sender's suspected set.
+  SwimReport report = sender.PrepareReport();
+  ASSERT_EQ(1, report.suspected_size());
+  ASSERT_EQ(suspected.self(), report.suspected(0).server());
+
+  SwimClient client(forwarder.self(), sender_port);
+  ASSERT_TRUE(client.RequestPing(dest));
+
+  // Upon the "suspected" hearing about the unfair assessment, it should set the record straight.
+  ::tests::WaitAtMostFor([&] () {
+    report = sender.PrepareReport();
+    return report.suspected_size() == 0 && report.alive_size() == 1;
+  }, std::chrono::milliseconds(250));
+}
+
+TEST(SwimProtocolTests, testForwardingStaysSuspected) {
+  auto sender_port = ::tests::RandomPort(),
+       forwarder_port = ::tests::RandomPort(),
+       suspected_port = ::tests::RandomPort();
+
+  SwimServer sender(sender_port);
+  SwimServer forwarder(forwarder_port);
+  SwimServer suspected(suspected_port);
+
+  // We are not starting the "suspected"; that one's a-goner.
+  for (auto server : {&sender, &forwarder}) {
+    std::thread t([&server] () { server->start(); });
+    t.detach();
+    ::tests::WaitAtMostFor([=] () {return server->isRunning();}, std::chrono::milliseconds(200));
+  }
+  sender.ReportSuspected(suspected.self());
+
+  // This is necessary, as `set_allocated_xxx()` will cause PB to take ownership
+  // of the pointer, and deallocate it when done (which is what will happen when we
+  // call `RequestPing()`).
+  auto dest = new Server();
+  dest->CopyFrom(suspected.self());
+
+  // Before this call, suspected must be in sender's suspected set.
+  SwimReport report = sender.PrepareReport();
+  ASSERT_EQ(1, report.suspected_size());
+  ASSERT_EQ(suspected.self(), report.suspected(0).server());
+
+
+  SwimClient client(forwarder.self(), sender_port);
+  ASSERT_TRUE(client.RequestPing(dest));
+
+  // Now, the news has spread to the "forwarder," and stays like that at the "sender."
+  ::tests::WaitAtMostFor([&] () {
+    SwimReport report = sender.PrepareReport();
+    SwimReport report2 = forwarder.PrepareReport();
+    return report.suspected_size() == 1 && report2.suspected_size() == 1;
+  }, std::chrono::milliseconds(250));
 }

@@ -47,15 +47,15 @@ void SwimServer::start() {
         switch (message.type()) {
           case SwimEnvelope_Type_STATUS_UPDATE:
             VLOG(2) << "Received a STATUS_UPDATE message";
-            onUpdate(message.release_sender());
+            OnUpdate(message.release_sender());
             break;
           case SwimEnvelope_Type_STATUS_REPORT:
             VLOG(2) << "Received a STATUS_REPORT message";
-            onReport(message.release_sender(), message.release_report());
+            OnReport(message.release_sender(), message.release_report());
             break;
           case SwimEnvelope_Type_STATUS_REQUEST:
             VLOG(2) << "Received a STATUS_REQUEST message";
-            onPingRequest(message.release_sender(), message.release_destination_server());
+            OnForwardRequest(message.release_sender(), message.release_destination_server());
             break;
           default:
             LOG(ERROR) << "Unexpected message type: '" << message.type();
@@ -76,7 +76,7 @@ void SwimServer::start() {
   LOG(WARNING) << "SERVER STOPPED: " << self();
 }
 
-void SwimServer::onPingRequest(Server *sender, Server *destination) {
+void SwimServer::OnForwardRequest(Server *sender, Server *destination) {
 
   // First off, the sender is alive and well.
   AddAlive(*sender);
@@ -98,12 +98,14 @@ void SwimServer::onPingRequest(Server *sender, Server *destination) {
     // By using the `allocated` versions of the setters we also ensure memory will be freed upon
     // destruction of the PB.
     report.set_allocated_sender(sender);
-    report.add_suspected()->set_allocated_server(destination);
+    auto record = ::swim::MakeRecord(*destination);
+    report.mutable_suspected()->AddAllocated(record.release());
 
     // TODO: the timeout should be a property that we could set; for now using the default value.
     SwimClient client(*destination, port_);
     if (!client.Send(report)) {
-      VLOG(2) << "Forwarded request to " << *destination << " failed; reporting SUSPECTED";
+      VLOG(2) << self() << ": Forwarded request to " << *destination
+              << " failed; reporting SUSPECTED";
       ReportSuspected(*destination);
     }
   }};
@@ -124,7 +126,7 @@ SwimReport SwimServer::PrepareReport() const {
       records.push_back(*record);
     }
   }
-  addRecordsToBudget(report, records, kAlive);
+  AddRecordsToBudget(report, records, kAlive);
   records.clear();
   {
     mutex_guard lock(suspected_mutex_);
@@ -133,14 +135,14 @@ SwimReport SwimServer::PrepareReport() const {
       records.push_back(*item);
     }
   }
-  addRecordsToBudget(report, records, kSuspected);
+  AddRecordsToBudget(report, records, kSuspected);
 
   return report;
 }
 
-void SwimServer::addRecordsToBudget(SwimReport &report,
+void SwimServer::AddRecordsToBudget(SwimReport &report,
                                     std::vector<ServerRecord> &records,
-                                    const ReportSelector& which) const {
+                                    const ReportSelector &which) const {
   google::uint64 now = ::utils::CurrentTime();
   double running_cost = 0.0;
 
@@ -239,10 +241,10 @@ void SwimServer::RemoveSuspected(const Server &server) {
   }
 }
 
-void SwimServer::onReport(Server *sender, SwimReport *report) {
+void SwimServer::OnReport(Server *sender, SwimReport *report) {
   std::unique_ptr<Server> ps(sender);
 
-  VLOG(2) << *sender << " sent: " << *report;
+  VLOG(2) << self() << ": " << *sender << " sent: " << *report;
   AddAlive(*sender);
 
   for (const auto &record : report->alive()) {
@@ -267,8 +269,9 @@ void SwimServer::onReport(Server *sender, SwimReport *report) {
   for (const auto &record : report->suspected()) {
     if (record.server() == self()) {
       // Reports of our death were greatly exaggerated.
-      VLOG(2) << *sender << " reported this server (" << self() << ") as 'suspected'; pinging";
-      SwimClient client(*sender, port());
+      VLOG(2) << self() << ": " << report->sender()
+              << " reported this server as 'suspected' pinging";
+      SwimClient client(report->sender(), port_);
       client.Ping();
       continue;
     }
@@ -285,7 +288,7 @@ void SwimServer::onReport(Server *sender, SwimReport *report) {
   }
 }
 
-void SwimServer::onUpdate(Server *client) {
+void SwimServer::OnUpdate(Server *client) {
   // Make sure pointer will be deleted, even if an exception is thrown.
   std::unique_ptr<Server> ps(client);
 

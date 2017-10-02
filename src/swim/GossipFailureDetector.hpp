@@ -60,6 +60,12 @@ class GossipFailureDetector {
    */
   unsigned int num_reports_;
 
+  /**
+   * When we find a "suspected" server for the first time, we ask `num_forwards_` neighbors to
+   * try and contact it on our behalf.
+   */
+  unsigned int num_forwards_;
+
 private:
 
   /**
@@ -82,7 +88,9 @@ public:
 
   GossipFailureDetector operator=(const GossipFailureDetector &&) = delete;
 
-  const unsigned int kNumReports = 6;
+  const unsigned int kDefaultNumReports = 6;
+
+  const unsigned int kDefaultNumForward = 3;
 
   /**
    * Creates a new detector and starts the embedded Gossip Server; the background threads are
@@ -98,11 +106,13 @@ public:
   GossipFailureDetector(unsigned short port,
                         const long interval,
                         const long grace_period,
-                        const long ping_timeout_msec) :
+                        const long ping_timeout_msec = kDefaultTimeoutMsec) :
       update_round_interval_(interval),
       grace_period_(grace_period),
-      ping_timeout_(ping_timeout_msec) {
-    num_reports_ = kNumReports;
+      ping_timeout_(ping_timeout_msec)
+  {
+    num_reports_ = kDefaultNumReports;
+    num_forwards_ = kDefaultNumForward;
     gossip_server_.reset(new SwimServer(port));
 
     std::thread t([this] { gossip_server_->start(); });
@@ -194,6 +204,23 @@ public:
     num_reports_ = num_reports;
   }
 
+  /**
+   * @return the configured number of servers to contact for forwarding requests to an
+   * unresponsive server.
+   */
+  unsigned int num_forwards() const {
+    return num_forwards_;
+  }
+
+  /**
+   * Sets the number of servers to contact when forwarding requests.
+   *
+   * @param num_reports how many servers to contact
+   */
+  void set_num_forwards(unsigned int num_forwards) {
+    num_forwards_ = num_forwards;
+  }
+
 
   /**
    * @return A reference to the embedded SwimServer that is used to connect to neighbors.
@@ -252,6 +279,6 @@ public:
    *        than `k`)
    * @return a set of at most `k` neighboring servers, known to be healthy.
    */
-  std::set<Server> GetUniqueNeighbors(int k) const;
+  std::set<Server> GetUniqueNeighbors(unsigned int k) const;
 };
 } // namespace swim
