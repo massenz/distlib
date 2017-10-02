@@ -10,7 +10,7 @@ doxygen
 git checkout gh-pages
 cp -r /tmp/distlib/html/* ./
 git add .
-git commit -m"Published docs; Release 0.8.0"
+git commit -m"Published docs; Release 0.9.0"
 git push
 
 echo "Checking out branch ${branch}"
