@@ -53,13 +53,19 @@ ELSE(${PROTOBUF_FOUND})
     message(FATAL_ERROR "Could not find Google Protocol Buffers libraries")
 ENDIF(${PROTOBUF_FOUND})
 
+# libmicrohttpd HTTP Server (https://www.gnu.org/software/libmicrohttpd)
+set(LIBMICROHTTPD_INSTALL ${INSTALL_DIR}/libmicrohttpd)
+
 include_directories(
         ${SOURCE_DIR}
         ${PROJECT_BINARY_DIR}
         ${CMAKE_BINARY_DIR}
         ${PROTOBUF_INCLUDE_DIRS}
         ${PROTO_HDRS}
+        ${LIBMICROHTTPD_INSTALL}/include
 )
+
+link_directories(${LIBMICROHTTPD_INSTALL}/lib)
 
 set(SOURCE_FILES
         ${SOURCE_DIR}/ConsistentHash.cpp
@@ -78,6 +84,7 @@ set(SWIM_SOURCES
 set(SWIM_LIBS
         crypto
         glog
+        microhttpd
         protobuf
         pthread
         zmq

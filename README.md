@@ -1,4 +1,4 @@
-# libdist - C++ utilities for Distributed Computing 
+# libdist - C++ utilities for Distributed Computing
 
 
  distlib| 0.8.0
@@ -50,8 +50,26 @@ The [SWIM gossip protocol implementation](#swim_gossip_and_consensus_algorithm) 
 Protobuf as the serialization protocol to exchange status messages between servers.
 
 The code in this project has been tested using
-[Protocol Buffers 2.6.1](https://github.com/google/protobuf/releases/tag/v2.6.1), 
+[Protocol Buffers 2.6.1](https://github.com/google/protobuf/releases/tag/v2.6.1),
 installed via the [Conan's memshared package](https://conan.io/source/Protobuf/2.6.1/memsharded/testing).
+
+### HTTP Server
+
+To serve the REST API, we use [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/), "a small C library that is supposed to make it easy to run an HTTP server as part of another application."
+
+This can be either installed directly as a package under most Linux distributions (for example, on Ubuntu, `sudo apt-get install libmicrohttpd-dev` will do the needful), or can be built from source:
+
+```
+wget http://open-source-box.org/libmicrohttpd/libmicrohttpd-0.9.55.tar.gz
+tar xfz libmicrohttpd-0.9.55.tar.gz
+cd libmicrohttpd-0.9.55/
+./configure --prefix ${INSTALL}/libmicrohttpd
+make && make install
+```
+
+The include file anhttps://www.gnu.org/software/libmicrohttpd/tutorial.htmld libraries will be, respectively, in `${INSTALL}/libmicrohttpd/include` and `lib` folders.
+
+See [the tutorial](https://www.gnu.org/software/libmicrohttpd/tutorial.html) for more information about usage.
 
 
 ## Build & testing
@@ -106,7 +124,7 @@ See [this post](https://codetrips.com/2016/06/19/implementing-a-merkle-tree-in-c
 This is based on [ZeroMQ C++ bindings](http://api.zeromq.org/2-1:zmq-cpp) and is an example
 implementation using the `SwimServer` class.
 
-The same binary can act both as one continuously listening on a given 
+The same binary can act both as one continuously listening on a given
 `port` or as a client sending a one-off status update to a `destination` TCP socket.
 
 See the [Install & Build](#install_and_build) section above to build the `swim_server_demo` target,
@@ -127,7 +145,7 @@ Use the `--help` option to see the full list of available options.
 
 ### Full-fledged SWIM Detector implementation
 
-A reference implementatio of a failure detector based on the SWIM Gossip protocol is provided in 
+A reference implementatio of a failure detector based on the SWIM Gossip protocol is provided in
 the [`gossip_example`](src/examples/gossip_example.cpp) demo.
 
 Again, use:
@@ -135,10 +153,10 @@ Again, use:
     $ ./build/bin/gossip_detector_example -h
 
 to see all the available options; [`bin/run_example`](bin/run_example) will start three detectors
-in background and will connect each other to demonstrate how they can detect failures (you can 
+in background and will connect each other to demonstrate how they can detect failures (you can
 keep killing and restarting them, and see how the reports change).
 
-Below is a short description of how this works, full details of the protocol in the 
+Below is a short description of how this works, full details of the protocol in the
 [references](#references).
 
 ### Server states
@@ -181,7 +199,7 @@ See the [SWIM Paper](SWIM) for more details.
 __Gossip__
 
 At regular intervals, a gossiper will pick at random from the list of `Alive` peers _k_ server,
-to which it will send a `SwimReport` containing __only__ the changes since the last report that 
+to which it will send a `SwimReport` containing __only__ the changes since the last report that
 was sent out (regardless of _who_ it was send out to), as gossipers do not care much for old news.
 
 _Timing_ is an issue at present, in that we want to prevent stale news to overwrite newer state

@@ -16,6 +16,7 @@
 #include "swim.pb.h"
 
 #include "swim/GossipFailureDetector.hpp"
+#include "swim/rest/ApiServer.hpp"
 
 #include "utils/ParseArgs.hpp"
 #include "utils/utils.hpp"
@@ -106,14 +107,6 @@ int main(int argc, const char *argv[]) {
     }
     LOG(INFO) << "Gossip Detector listening on incoming TCP port " << port;
 
-    if (parser.enabled("http")) {
-      int httpPort = parser.getInt("http-port", ::kDefaultHttpPort);
-      LOG(INFO) << "Enabling HTTP REST API on port " << httpPort;
-      throw utils::not_implemented("HTTP Server");
-    } else {
-      LOG(INFO) << "REST API will not be available";
-    }
-
     long ping_timeout_msec = parser.getInt("timeout", swim::kDefaultTimeoutMsec);
     long ping_interval_sec = parser.getInt("ping", kDefaultPingIntervalSec);
     long grace_period_sec = parser.getInt("grace-period", kDefaultGracePeriodSec);
@@ -172,20 +165,25 @@ int main(int argc, const char *argv[]) {
 
     LOG(INFO) << "Threads started; detector process running"; // TODO: << PID?
 
+
+    if (parser.enabled("http")) {
+      int httpPort = parser.getInt("http-port", ::kDefaultHttpPort);
+      LOG(INFO) << "Enabling HTTP REST API on port " << httpPort;
+      swim::rest::ApiServer apiServer(detector.get(), httpPort);
+
+    } else {
+      LOG(INFO) << "REST API will not be available";
+    }
+
     // TODO: "trap" the KILL and execute a graceful exit
     while (true) {
-      std::this_thread::sleep_for(seconds(10));
-      std::cout << "~~~>>>>> S T A T U S   R E P O R T <<<<<~~~" << std::endl;
-      std::cout << detector->gossip_server().PrepareReport() << std::endl;
-      std::cout << "~~~ >>>> ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<< ~~~" << std::endl;
+      std::this_thread::sleep_for(milliseconds(300));
     }
 
   } catch (::utils::parse_error& error) {
     LOG(ERROR) << "A parsing error occurred: " << error.what();
     return EXIT_FAILURE;
   }
-
-
 
   return EXIT_SUCCESS;
 }
