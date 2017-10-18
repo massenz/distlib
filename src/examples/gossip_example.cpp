@@ -168,7 +168,8 @@ int main(int argc, const char *argv[]) {
 
     if (parser.enabled("http")) {
       int httpPort = parser.getInt("http-port", ::kDefaultHttpPort);
-      LOG(INFO) << "Enabling HTTP REST API on port " << httpPort;
+      std::cout << "Enabling HTTP REST API: http://"
+                << utils::Hostname() << ":" << httpPort << std::endl;
       swim::rest::ApiServer apiServer(detector.get(), httpPort);
 
     } else {

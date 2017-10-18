@@ -107,13 +107,16 @@ void GossipFailureDetector::SendReport() const {
 void GossipFailureDetector::GarbageCollectSuspected() const {
   SwimReport report = gossip_server_->PrepareReport();
 
-  auto expiredTime = ::utils::CurrentTime() - grace_period().count();
-  VLOG(2) << "Evicting suspects last seen before " << expiredTime;
+  long expiredTime = ::utils::CurrentTime() - grace_period().count();
+  VLOG(2) << "Evicting suspects last seen before "
+          << std::put_time(std::gmtime(&expiredTime), "%c %Z");
 
   for (const auto &suspectRecord : report.suspected()) {
     if (suspectRecord.timestamp() < expiredTime) {
+      long ts = suspectRecord.timestamp();
       VLOG(2) << "Server " << suspectRecord.server() << " last seen at: "
-              << suspectRecord.timestamp() << " exceeded grace period, presumed dead";
+              << std::put_time(std::gmtime(&ts), "%c %Z")
+              << " exceeded grace period, presumed dead";
       gossip_server_->RemoveSuspected(suspectRecord.server());
     }
   }
