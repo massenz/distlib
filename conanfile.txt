@@ -4,18 +4,19 @@
 # See the README for more information or http://conan.io
 
 [requires]
-cryptopp/5.6.3@riebl/testing
+cryptopp/5.6.5@DonAlonzo/testing
 glog/0.3.4@dwerner/testing
 gtest/1.8.0@lasote/stable
 libzmq/4.1.5@memsharded/stable
 OpenSSL/1.0.2j@lasote/stable
-Protobuf/2.6.1@memsharded/testing
+#Protobuf/2.6.1@memsharded/testing
+Protobuf/3.1.0@inexorgame/stable
 
 
 [options]
 gtest:shared=False
 libzmq:shared=True
+Protobuf:shared=True
 
 [generators]
 cmake
-

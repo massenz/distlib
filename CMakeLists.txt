@@ -48,7 +48,11 @@ find_package(Protobuf REQUIRED)
 IF(${PROTOBUF_FOUND})
     PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_DIR}/swim.proto)
     message(STATUS "When generated, Protocol Buffer files will be in:\n"
-                   "\tHeaders: ${PROTO_HDRS}\n\tSources: ${PROTO_SRCS}")
+        "\tHeaders: ${PROTO_HDRS}\n\tSources: ${PROTO_SRCS}\n"
+        "protoc: ${PROTOBUF_PROTOC_EXECUTABLE}\n"
+        "protoc lib: ${PROTOBUF_PROTOC_LIBRARY}\n"
+        "protobuf lib: ${PROTOBUF_LIBRARY}"
+)
 ELSE(${PROTOBUF_FOUND})
     message(FATAL_ERROR "Could not find Google Protocol Buffers libraries")
 ENDIF(${PROTOBUF_FOUND})

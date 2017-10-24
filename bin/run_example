@@ -3,7 +3,8 @@
 set -e
 
 WORKDIR=$(dirname $0)
-PORTS="8081 8082 8083"
+PORTS="9091 9092 9093"
+
 QUIET=${1:-}
 DEBUG='--debug'
 
@@ -20,6 +21,7 @@ cd ${WORKDIR}/../build
 for port in ${PORTS}; do
     OUT="/tmp/detector_${port}.log"
     ./bin/gossip_detector_example ${DEBUG} --port=${port} \
-            --seeds=gondor:8081,gondor:8082,gondor:8083 >$OUT  2>&1 &
+            --http --http-port=$((${port} - 1000)) \
+            --seeds=gondor:9091,gondor:9092,gondor:9093 >$OUT  2>&1 &
     echo "[INFO] Started Detector on port ${port}; output in ${OUT}"
 done

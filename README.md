@@ -17,9 +17,9 @@ listed in `conanfile.text`.
 This is done as follows:
 
 ```bash
-$ sudo -H pip install -U conan
-$ mkdir .conan && cd .conan
-$ conan install .. -s compiler=clang -s compiler.version=3.6 \
+sudo -H pip install -U conan
+mkdir .conan && cd .conan
+conan install .. -s compiler=clang -s compiler.version=4.0 \
     -s compiler.libcxx=libstdc++11 --build=missing
 ```
 
