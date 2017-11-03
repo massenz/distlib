@@ -1,8 +1,8 @@
 // Copyright (c) 2016 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 11/22/16.
 
-#include <iostream>
-#include "utils/network.h"
+
+#include "utils/utils.hpp"
 #include "SwimServer.hpp"
 
 

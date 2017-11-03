@@ -73,7 +73,7 @@ void usage() {
     << "\t              Both host and port are required and no spaces must be left\n"
     << "\t              between entries; the hosts may not ALL be active.\n\n"
     << "\tThe server will run forever in foreground, use Ctrl-C to terminate.\n";
-  utils::PrintVersion();
+  utils::PrintVersion("SWIM Gossip Server Demo", RELEASE_STR);
 }
 } // namespace
 
@@ -93,7 +93,7 @@ int main(int argc, const char *argv[]) {
     return EXIT_SUCCESS;
   }
 
-  utils::PrintVersion();
+  utils::PrintVersion("SWIM Gossip Server Demo", RELEASE_STR);
   if (parser.has("version")) {
     return EXIT_SUCCESS;
   }

@@ -5,11 +5,14 @@
 
 namespace utils {
 
-std::ostream& PrintVersion(std::ostream &out) {
+std::ostream& PrintVersion(const std::string& server_name,
+                           const std::string& version,
+                           std::ostream &out) {
   int major, minor, patch;
   zmq::version(&major, &minor, &patch);
 
-  out << "Demo SWIM server Ver. " << RELEASE_STR
+  out << server_name << " Ver. " << version
+      << "\n- LibDist ver. " << RELEASE_STR
       << "\n- ZeroMQ ver. " << major << "." << minor << "." << patch
       << "\n- Google Protocol Buffer ver. "
       << ::google::protobuf::internal::VersionString(GOOGLE_PROTOBUF_VERSION) << std::endl;

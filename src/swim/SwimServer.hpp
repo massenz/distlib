@@ -10,10 +10,8 @@
 #include <mutex>
 #include <thread>
 
-#include <glog/logging.h>
-#include <zmq.hpp>
 
-#include "utils/network.h"
+#include "utils/utils.hpp"
 #include "SwimCommon.hpp"
 #include "SwimClient.hpp"
 
@@ -125,7 +123,7 @@ protected:
    * <p>This is essentially a callback method that will be invoked by the server's loop, in its
    * own thread.
    *
-   * <p>This message requests this server to ping the `destination` server, on behalf of the 
+   * <p>This message requests this server to ping the `destination` server, on behalf of the
    * `sender`; the latter, if indeed alive, will then contact back the original
    * `sender` to update its status.
    *
