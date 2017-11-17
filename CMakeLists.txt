@@ -72,6 +72,11 @@ include_directories(
 link_directories(${LIBMICROHTTPD_INSTALL}/lib)
 
 set(UTILS_SOURCES
+        ${SOURCE_DIR}/utils/misc.cpp
+        ${SOURCE_DIR}/utils/network.cpp
+)
+
+set(CONSISTENT_HASH_SOURCES
         ${SOURCE_DIR}/ConsistentHash.cpp
         ${SOURCE_DIR}/Bucket.cpp
         ${SOURCE_DIR}/View.cpp
@@ -81,8 +86,6 @@ set(SWIM_SOURCES
         ${SOURCE_DIR}/swim/SwimClient.cpp
         ${SOURCE_DIR}/swim/SwimServer.cpp
         ${SOURCE_DIR}/swim/GossipFailureDetector.cpp
-        ${SOURCE_DIR}/utils/misc.cpp
-        ${SOURCE_DIR}/utils/network.cpp
 )
 
 set(SWIM_LIBS
@@ -105,9 +108,10 @@ set(UTILS_LIBS
 # Shared (dynamic) library for the SWIM Gossip Protocol.
 #
 add_library(gossip SHARED
+        ${UTILS_SOURCES}
         ${SWIM_SOURCES}
         ${PROTO_SRCS}
-        )
+)
 target_link_libraries(gossip ${SWIM_LIBS})
 
 ##
@@ -115,7 +119,9 @@ target_link_libraries(gossip ${SWIM_LIBS})
 #
 # Shared (dynamic) library for various Distributed facilities.
 #
-add_library(distutils SHARED ${UTILS_SOURCES})
+add_library(distutils SHARED
+        ${CONSISTENT_HASH_SOURCES}
+)
 target_link_libraries(distutils ${UTILS_LIBS})
 
 
@@ -147,13 +153,15 @@ add_subdirectory(${TESTS_DIR})
 # Examples - demo execs/programs to show usage of the libraries/utilities.
 #########
 
+set(EXAMPLES_DIR ${SOURCE_DIR}/examples)
+
 # Examples will use the latest build for the shared libraries
 link_directories(${CMAKE_BINARY_DIR})
 
 ##
 # Merkle Tree Demo
 #
-add_executable(merkle_demo ${SOURCE_DIR}/merkle_demo.cpp)
+add_executable(merkle_demo ${EXAMPLES_DIR}/merkle_demo.cpp)
 target_link_libraries(merkle_demo distutils ${UTILS_LIBS})
 
 ##
@@ -163,7 +171,7 @@ target_link_libraries(merkle_demo distutils ${UTILS_LIBS})
 # Basic usage of the `SwimServer` class.
 #
 add_executable(swim_server_demo
-        ${SOURCE_DIR}/examples/server_demo.cpp
+        ${EXAMPLES_DIR}/server_demo.cpp
 )
 target_link_libraries(swim_server_demo gossip)
 
@@ -173,6 +181,6 @@ target_link_libraries(swim_server_demo gossip)
 # Full implementation of the `GossipFailureDetector`.
 #
 add_executable(gossip_detector_example
-        ${SOURCE_DIR}/examples/gossip_example.cpp
+        ${EXAMPLES_DIR}/gossip_example.cpp
 )
 target_link_libraries(gossip_detector_example gossip)

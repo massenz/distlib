@@ -4,7 +4,10 @@
 #include <iostream>
 #include <list>
 
+
 #include <glog/logging.h>
+
+#include "version.h"
 
 #include "ConsistentHash.hpp"
 #include "MerkleNode.hpp"
@@ -17,9 +20,13 @@ using std::list;
 using std::string;
 
 
+static unsigned int kNumNodes = 33;
+
+
 void usage(const std::string &prog) {
-  LOG(ERROR) << "Usage: " << prog << " string-to-hash";
-  exit(1);
+
+  cout << "Merkle Tree & Consistent Hash Demo - LibDist ver. " << RELEASE_STR
+       << "\n\nUsage: " << basename(prog.c_str()) << " string-to-hash [nodes]" << endl;
 }
 
 
@@ -35,6 +42,8 @@ int main(int argc, char *argv[]) {
 
   if (argc < 2) {
     usage(argv[0]);
+    LOG(ERROR) << "Missing one required argument `string-to-hash`";
+    exit(EXIT_FAILURE);
   }
 
   std::string mesg(argv[1]);
@@ -42,7 +51,13 @@ int main(int argc, char *argv[]) {
   LOG(INFO) << "'" << mesg << "' hashes to [" << hash_str(mesg) << "]";
   LOG(INFO) << "Its consistent hash is: " << consistent_hash(mesg);
 
-  for (int i = 0; i < 33; ++i) {
+  unsigned int num_nodes = kNumNodes;
+  if (argc > 2) {
+    num_nodes = static_cast<unsigned int>(atoi(argv[2]));
+  }
+
+  LOG(INFO) << "Building a Merkle Tree with " << num_nodes << " nodes";
+  for (int i = 0; i < num_nodes; ++i) {
     nodes.push_back("node #" + std::to_string(i));
   }
 
