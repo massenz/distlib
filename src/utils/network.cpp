@@ -2,11 +2,7 @@
 // Created by M. Massenzio (marco@alertavert.com) on 10/9/16.
 
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <iostream>
-
-#include "network.h"
+#include "utils.hpp"
 
 namespace utils {
 

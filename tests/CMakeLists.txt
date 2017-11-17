@@ -46,7 +46,8 @@ add_executable(${TEST_TARGET}
 target_link_libraries(${TEST_TARGET}
         ${GTEST}
         protobuf
-        distlib
+        gossip
+        distutils
 )
 
 add_executable(integration_tests
@@ -56,7 +57,7 @@ add_executable(integration_tests
 )
 target_link_libraries(integration_tests
         ${GTEST}
-        distlib
+        gossip
 )
 
 add_test(${TEST_TARGET} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_TARGET})

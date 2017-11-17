@@ -1,10 +1,10 @@
 # libdist - C++ utilities for Distributed Computing
 
 
- distlib| 0.8.0
+ distlib| 0.11.0
 :-------|---------------------------------:
 Author  | [M. Massenzio](https://www.linkedin.com/in/mmassenzio)
-Updated | 2017-09-17
+Updated | 2017-11-02
 
 
 # Install & Build

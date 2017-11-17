@@ -3,7 +3,6 @@
 
 
 #include <chrono>
-#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 #include <thread>
@@ -15,7 +14,6 @@
 
 #include "version.h"
 
-#include "utils/network.h"
 #include "utils/ParseArgs.hpp"
 #include "utils/utils.hpp"
 
@@ -73,7 +71,6 @@ int runClient(
     unsigned long timeout,
     unsigned long duration
 ) {
-  utils::PrintVersion();
   LOG(INFO) << "Running for " << duration << " seconds; timeout: " << timeout << " msec.";
 
   auto server = MakeServer(host, port);
@@ -100,7 +97,6 @@ int main(int argc, const char *argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = true;
 
-
   ::utils::ParseArgs parser(argv, argc);
   if (parser.enabled("debug")) {
     FLAGS_v = 2;
@@ -111,7 +107,7 @@ int main(int argc, const char *argv[]) {
     return EXIT_SUCCESS;
   }
 
-  ::utils::PrintVersion();
+  ::utils::PrintVersion("Server Demo", RELEASE_STR);
   if (parser.has("version")) {
     return EXIT_SUCCESS;
   }

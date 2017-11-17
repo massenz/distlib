@@ -5,6 +5,9 @@
 //
 // See [References](https://github.com/massenz/distlib#swim-gossip-and-consensus-algorithm)
 // in the README doc.
+
+// TODO: move to proto3 syntax.
+syntax = "proto2";
 package swim;
 
 // We still want reflection and the full-fat version of Protobuf, but we can try to optimize for

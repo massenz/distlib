@@ -3,11 +3,10 @@
 
 #pragma once
 
-#include <zmq.hpp>
 
 #include "swim.pb.h"
 
-#include "utils/network.h"
+#include "utils/utils.hpp"
 #include "SwimCommon.hpp"
 
 

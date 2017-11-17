@@ -11,7 +11,7 @@ include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 
 # Version number
 set(RELEASE_MAJOR 0)
-set(RELEASE_MINOR 10)
+set(RELEASE_MINOR 11)
 set(RELEASE_PATCH 0)
 
 IF (${COMMONS_FILE} STREQUAL NOTFOUND)
@@ -71,7 +71,12 @@ include_directories(
 
 link_directories(${LIBMICROHTTPD_INSTALL}/lib)
 
-set(SOURCE_FILES
+set(UTILS_SOURCES
+        ${SOURCE_DIR}/utils/misc.cpp
+        ${SOURCE_DIR}/utils/network.cpp
+)
+
+set(CONSISTENT_HASH_SOURCES
         ${SOURCE_DIR}/ConsistentHash.cpp
         ${SOURCE_DIR}/Bucket.cpp
         ${SOURCE_DIR}/View.cpp
@@ -81,12 +86,9 @@ set(SWIM_SOURCES
         ${SOURCE_DIR}/swim/SwimClient.cpp
         ${SOURCE_DIR}/swim/SwimServer.cpp
         ${SOURCE_DIR}/swim/GossipFailureDetector.cpp
-        ${SOURCE_DIR}/utils/misc.cpp
-        ${SOURCE_DIR}/utils/network.cpp
-        )
+)
 
 set(SWIM_LIBS
-        crypto
         glog
         microhttpd
         protobuf
@@ -94,19 +96,39 @@ set(SWIM_LIBS
         zmq
 )
 
-# Create a shared (dynamic) library.
-add_library(${PROJECT_NAME} SHARED
-        ${SOURCE_FILES}
+set(UTILS_LIBS
+        crypto
+        glog
+        pthread
+)
+
+##
+# libgossip.so
+#
+# Shared (dynamic) library for the SWIM Gossip Protocol.
+#
+add_library(gossip SHARED
+        ${UTILS_SOURCES}
         ${SWIM_SOURCES}
         ${PROTO_SRCS}
 )
-target_link_libraries(${PROJECT_NAME}
-        ${SWIM_LIBS})
+target_link_libraries(gossip ${SWIM_LIBS})
+
+##
+# libdistutils.so
+#
+# Shared (dynamic) library for various Distributed facilities.
+#
+add_library(distutils SHARED
+        ${CONSISTENT_HASH_SOURCES}
+)
+target_link_libraries(distutils ${UTILS_LIBS})
+
 
 if (NOT ${INSTALL_DIR})
-    message(STATUS "Installing lib${PROJECT_NAME}.so shared library to ${INSTALL_DIR}/lib\n"
-                   "   and include files to ${INSTALL_DIR}/include/${PROJECT_NAME}")
-    install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_DIR}/lib)
+    message(STATUS "Installing libgossip.so and libdistutils.so shared libraries to"
+                   " ${INSTALL_DIR}/lib and include files to ${INSTALL_DIR}/include/${PROJECT_NAME}")
+    install(TARGETS gossip distutils DESTINATION ${INSTALL_DIR}/lib)
 
     # Generated configuration file, containing version and build number.
     install(FILES ${PROJECT_BINARY_DIR}/version.h DESTINATION
@@ -131,11 +153,16 @@ add_subdirectory(${TESTS_DIR})
 # Examples - demo execs/programs to show usage of the libraries/utilities.
 #########
 
-# Example creating an exec using the shared lib.
-add_executable(merkle_demo ${SOURCE_DIR}/merkle_demo.cpp)
-target_link_libraries(merkle_demo
-        ${PROJECT_NAME}
-)
+set(EXAMPLES_DIR ${SOURCE_DIR}/examples)
+
+# Examples will use the latest build for the shared libraries
+link_directories(${CMAKE_BINARY_DIR})
+
+##
+# Merkle Tree Demo
+#
+add_executable(merkle_demo ${EXAMPLES_DIR}/merkle_demo.cpp)
+target_link_libraries(merkle_demo distutils ${UTILS_LIBS})
 
 ##
 # SWIM Server
@@ -143,13 +170,10 @@ target_link_libraries(merkle_demo
 # Demo server to either listen to incoming pings, or send.
 # Basic usage of the `SwimServer` class.
 #
-link_directories(${INSTALL_DIR}/lib)
 add_executable(swim_server_demo
-        ${SOURCE_DIR}/examples/server_demo.cpp
+        ${EXAMPLES_DIR}/server_demo.cpp
 )
-target_link_libraries(swim_server_demo
-        ${PROJECT_NAME}
-)
+target_link_libraries(swim_server_demo gossip)
 
 ##
 # Gossip Server
@@ -157,8 +181,6 @@ target_link_libraries(swim_server_demo
 # Full implementation of the `GossipFailureDetector`.
 #
 add_executable(gossip_detector_example
-        ${SOURCE_DIR}/examples/gossip_example.cpp
+        ${EXAMPLES_DIR}/gossip_example.cpp
 )
-target_link_libraries(gossip_detector_example
-        ${PROJECT_NAME}
-)
+target_link_libraries(gossip_detector_example gossip)

@@ -3,10 +3,16 @@
 
 #pragma once
 
+#include <arpa/inet.h>
+#include <ctime>
 #include <iostream>
+#include <memory>
+#include <netdb.h>
 #include <regex>
+#include <sstream>
 #include <vector>
 
+#include <glog/logging.h>
 #include <google/protobuf/stubs/common.h>
 
 #include <zmq.hpp>
@@ -33,13 +39,17 @@ public:
 };
 
 /**
- * Prints the current project's version, along with those of supporting frameworks (ZMQ and
- * Protobuf).
+ * Convenience method, can be used by projects using this library to emit their version
+ * string, alongside the library version, and those of supporting
+ * frameworks (ZMQ and Protobuf).
  *
+ * @param server_name the name for the server that uses this library
+ * @param version the server's version
  * @param out the stream to write out the version information
  * @return the same stream that was passed in, for ease of chaining
  */
-std::ostream& PrintVersion(std::ostream &out = std::cout);
+std::ostream& PrintVersion(const std::string& server_name,
+                           const std::string& version, std::ostream &out = std::cout);
 
 /**
  * Converts a vector to a string, the concatenation of its element, separated by `sep`.
@@ -61,4 +71,39 @@ std::string Vec2Str(const std::vector<T> &vec, const std::string &sep = "\n") {
   }
   return out.str();
 }
+
+/**
+ * Returns the IP address of the host whose name is `hostname`; if `hostname` is empty, the IP
+ * address of this server will be returned.
+ *
+ * @param hostname the host whose IP address we want to resolve.
+ * @return the IP address, in human-readable format.
+ */
+std::string InetAddress(const std::string& hostname = "");
+
+
+/**
+ * Given a port number will return a suitable socket address in string
+ * format for the server to be listening on (e.g., "tcp://0.0.0.0:5000").
+ *
+ * @param port the host port the server would like to listen to
+ * @return a string suitable for use with ZMQ `socket()` call.
+ *      Or an empty string, if no suitable socket is available.
+ */
+std::string SocketAddress(unsigned int port);
+
+/**
+ * Returns the current time in a format suitable for use as a timestamp field
+ * in a Protobuf.
+ *
+ * @return the current time (via `std::time()`).
+ */
+google::uint64 CurrentTime();
+
+/**
+ * Tries to find this node's hostname, as returned by the OS.
+ *
+ * @return the hostname, if available.
+ */
+std::string Hostname();
 } // namespace utils
