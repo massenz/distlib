@@ -86,6 +86,7 @@ set(SWIM_SOURCES
         ${SOURCE_DIR}/swim/SwimClient.cpp
         ${SOURCE_DIR}/swim/SwimServer.cpp
         ${SOURCE_DIR}/swim/GossipFailureDetector.cpp
+        ${SOURCE_DIR}/swim/rest/ApiServer.cpp
 )
 
 set(SWIM_LIBS

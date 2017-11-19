@@ -35,26 +35,7 @@ class ApiServer {
                       const char *version,
                       const char *upload_data,
                       size_t *upload_data_size,
-                      void **con_cls) {
-    struct MHD_Response *response;
-    int ret;
-
-    auto gfd = static_cast<const swim::GossipFailureDetector *>(cls);
-
-    std::stringstream stream;
-    stream << "<html><body><h3>Gossip Failure Detector: " << gfd->gossip_server().self()
-           << "</h3>"
-           << "<p>Report: <pre>" << gfd->gossip_server().PrepareReport() << "</pre></p>";
-    stream << "</body></html>";
-
-    response = MHD_create_response_from_buffer(stream.str().size(),
-                                               (void *) stream.str().c_str(),
-                                               MHD_RESPMEM_MUST_COPY);
-    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-    MHD_destroy_response(response);
-
-    return ret;
-  }
+                      void **con_cls);
 
 public:
   explicit ApiServer(const swim::GossipFailureDetector *detector, unsigned int port) :
