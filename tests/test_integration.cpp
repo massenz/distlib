@@ -10,6 +10,7 @@
 
 #include "swim/SwimClient.hpp"
 #include "swim/GossipFailureDetector.hpp"
+#include "swim/rest/ApiServer.hpp"
 
 #include "tests.h"
 
@@ -171,4 +172,10 @@ TEST_F(IntegrationTests, canStopThreads) {
   detector->InitAllBackgroundThreads();
   std::this_thread::sleep_for(seconds(6));
   EXPECT_TRUE(server().alive_empty());
+}
+
+TEST_F(IntegrationTests, canStartApiServer) {
+  std::shared_ptr<swim::rest::ApiServer> server =
+      std::make_shared<swim::rest::ApiServer>(detector.get(), 8088);
+  ASSERT_NE(nullptr, server.get());
 }

@@ -1,8 +1,6 @@
 # This file (c) 2016 AlertAvert.com.  All rights reserved.
 
 project(distlib_test)
-set(TEST_TARGET ${PROJECT_NAME})
-
 enable_testing()
 
 # Conan Packaging support
@@ -38,12 +36,12 @@ set(INTEGRATION_TESTS
 set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES
                             GENERATED TRUE)
 
-add_executable(${TEST_TARGET}
+add_executable(unit_tests
         ${UNIT_TESTS}
         tests.h
         all_tests.cpp
 )
-target_link_libraries(${TEST_TARGET}
+target_link_libraries(unit_tests
         ${GTEST}
         protobuf
         gossip
@@ -60,4 +58,5 @@ target_link_libraries(integration_tests
         gossip
 )
 
-add_test(${TEST_TARGET} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_TARGET})
+add_test(unit_tests ${CMAKE_CURRENT_BINARY_DIR}/unit_tests)
+add_test(integration_tests ${CMAKE_CURRENT_BINARY_DIR}/integration_tests)
