@@ -8,6 +8,9 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
+#include <SimpleHttpRequest.hpp>
+#include <google/protobuf/util/json_util.h>
+
 #include "swim/SwimClient.hpp"
 #include "swim/GossipFailureDetector.hpp"
 #include "swim/rest/ApiServer.hpp"
@@ -16,6 +19,7 @@
 
 using namespace swim;
 using namespace std::chrono;
+using namespace google::protobuf::util;
 
 
 class IntegrationTests : public ::testing::Test {
@@ -174,8 +178,44 @@ TEST_F(IntegrationTests, canStopThreads) {
   EXPECT_TRUE(server().alive_empty());
 }
 
-TEST_F(IntegrationTests, canStartApiServer) {
+
+TEST_F(IntegrationTests, reportsApiServer) {
+  auto neighbor = std::unique_ptr<SwimServer>(new SwimServer(::tests::RandomPort()));
+  std::thread neighbor_thread([&]() { neighbor->start(); });
+
+  ASSERT_TRUE(::tests::WaitAtMostFor([&]() -> bool {
+        return neighbor->isRunning();
+      }, milliseconds(500)));
+  detector->AddNeighbor(neighbor->self());
+
+
   std::shared_ptr<swim::rest::ApiServer> server =
-      std::make_shared<swim::rest::ApiServer>(detector.get(), 8088);
+      std::make_shared<swim::rest::ApiServer>(detector.get(), 8089);
   ASSERT_NE(nullptr, server.get());
+
+  // Verify that we can get an empty Report.
+  request::SimpleHttpRequest simpleClient;
+  try {
+    simpleClient.get("http://localhost:8089")
+        .on("error", [](request::Error &&err) {
+          LOG(ERROR) << "Could not connect to API Server";
+        }).on("response", [this, &neighbor](request::Response &&res) {
+          EXPECT_FALSE(res.str().empty());
+          SwimReport report;
+          auto status = JsonStringToMessage(res.str(), &report);
+          if (!status.ok()) {
+            FAIL() << "Cannot conver JSON (" << status.error_code()
+                   << "): " << status.error_message();
+          }
+          EXPECT_EQ(report.sender(), detector->gossip_server().self());
+
+          EXPECT_EQ(1, report.alive_size());
+          EXPECT_EQ(neighbor->self(), report.alive(0).server());
+        }).end();
+  } catch (const std::exception &e) {
+    LOG(ERROR) << "Caught: " << e.what();
+    FAIL() << e.what();
+  }
+  neighbor->stop();
+  neighbor_thread.join();
 }

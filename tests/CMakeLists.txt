@@ -7,6 +7,16 @@ enable_testing()
 include(../.conan/conanbuildinfo.cmake)
 conan_basic_setup()
 
+###
+# Third Party libraries
+set(THIRD_PARTY ${CMAKE_SOURCE_DIR}/third_party)
+set(SIMPLE_HTTP ${THIRD_PARTY}/SimpleHttpRequest)
+
+include_directories(${SIMPLE_HTTP}/include
+        ${SIMPLE_HTTP}/include/uv
+)
+link_directories(${SIMPLE_HTTP}/lib)
+
 
 find_library(GTEST gtest ${INSTALL_DIR}/lib)
 if (${GTEST} STREQUAL GTEST-NOTFOUND)
@@ -56,6 +66,8 @@ add_executable(integration_tests
 target_link_libraries(integration_tests
         ${GTEST}
         gossip
+        http_parser
+        uv
 )
 
 add_test(unit_tests ${CMAKE_CURRENT_BINARY_DIR}/unit_tests)
