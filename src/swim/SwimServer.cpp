@@ -189,6 +189,12 @@ Server SwimServer::GetRandomNeighbor() const {
 
 bool SwimServer::ReportSuspected(const Server &server,
                                  google::uint64 timestamp) {
+
+  if (server.port() == 0) {
+    VLOG(3) << "Refused to add a port 0 server to suspect set";
+    return false;
+  }
+
   size_t num{0};
   std::shared_ptr<ServerRecord> suspectRecord = MakeRecord(server);
   suspectRecord->set_timestamp(timestamp);
@@ -210,6 +216,11 @@ bool SwimServer::ReportSuspected(const Server &server,
 
 bool SwimServer::AddAlive(const Server &server,
                           google::uint64 timestamp) {
+  if (server.port() == 0) {
+    VLOG(3) << "Refused to add a port 0 server to alive set";
+    return false;
+  }
+
   RemoveSuspected(server);
 
   std::shared_ptr<ServerRecord> aliveRecord = MakeRecord(server);
@@ -244,7 +255,7 @@ void SwimServer::RemoveSuspected(const Server &server) {
 void SwimServer::OnReport(Server *sender, SwimReport *report) {
   std::unique_ptr<Server> ps(sender);
 
-  VLOG(2) << self() << ": " << *sender << " sent: " << *report;
+  VLOG(2) << self() << ": received Report from " << *sender;
   AddAlive(*sender);
 
   for (const auto &record : report->alive()) {

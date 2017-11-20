@@ -196,7 +196,7 @@ TEST_F(SwimServerTests, receiveReport) {
 
   ASSERT_TRUE(server_->isRunning());
   auto svr = MakeServer("localhost", server_->port());
-  SwimClient client(*svr);
+  SwimClient client(*svr, 9200);
 
   SwimReport report;
 
@@ -227,7 +227,7 @@ TEST_F(SwimServerTests, receiveReportMany) {
 
   ASSERT_TRUE(server_->isRunning());
   auto svr = MakeServer("localhost", server_->port());
-  SwimClient client(*svr);
+  SwimClient client(*svr, 9200);
 
   SwimReport report;
   report.mutable_sender()->CopyFrom(client.self());
@@ -263,7 +263,7 @@ TEST_F(SwimServerTests, reconcileReports) {
   ASSERT_TRUE(server_->isRunning());
 
   auto svr = MakeServer("localhost", server_->port());
-  SwimClient client(*svr);
+  SwimClient client(*svr, 9200);
 
   SwimReport report;
   report.mutable_sender()->CopyFrom(client.self());
@@ -299,7 +299,7 @@ TEST_F(SwimServerTests, ignoreStaleReports) {
   ASSERT_TRUE(server_->isRunning());
 
   auto svr = MakeServer("localhost", server_->port());
-  SwimClient client(*svr);
+  SwimClient client(*svr, 9200);
 
   SwimReport report;
   report.mutable_sender()->CopyFrom(client.self());
@@ -333,7 +333,7 @@ TEST_F(SwimServerTests, ignoreStaleReports2) {
   ASSERT_TRUE(server_->isRunning());
 
   auto svr = MakeServer("localhost", server_->port());
-  SwimClient client(*svr);
+  SwimClient client(*svr, 9200);
 
   SwimReport report;
   report.mutable_sender()->CopyFrom(client.self());
@@ -367,7 +367,7 @@ TEST_F(SwimServerTests, servesPingRequests) {
   ASSERT_TRUE(server_->isRunning());
 
   auto svr = MakeServer("localhost", server_->port());
-  SwimClient client(*svr);
+  SwimClient client(*svr, 9200);
 
   auto other = MakeServer("fakeserver", 9098);
 
