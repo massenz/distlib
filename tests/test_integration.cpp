@@ -49,13 +49,13 @@ protected:
   }
 
   void TearDown() override {
-    const_cast<SwimServer&>(detector->gossip_server()).stop();
+    const_cast<SwimServer &>(detector->gossip_server()).stop();
     ASSERT_TRUE(::tests::WaitAtMostFor([this]() -> bool {
       return !detector->gossip_server().isRunning();
     }, milliseconds(500)));
   }
 
-  const SwimServer& server() { return detector->gossip_server(); }
+  const SwimServer &server() { return detector->gossip_server(); }
 };
 
 TEST_F(IntegrationTests, detectFailingNeighbor) {
@@ -113,14 +113,14 @@ TEST_F(IntegrationTests, gossipSpreads) {
     // TODO: this needs to change to == 2 once we fix didGossip (see #149950890)
     // Until then, this test is flaky, as the value depends on whether `neighbor` gets pinged
     // first or `flaky` does.
-        return neighbor->alive_size() >= 1;
-      }, milliseconds(6000))
+    return neighbor->alive_size() >= 1;
+  }, milliseconds(6000))
   ) << "Failed to register new 'flaky' neighbor before timeout";
 
   flaky->stop();
   ASSERT_TRUE(::tests::WaitAtMostFor([&flaky]() -> bool {
-        return !flaky->isRunning();
-    }, milliseconds(200))
+    return !flaky->isRunning();
+  }, milliseconds(200))
   );
   flaky_thread.join();
 
@@ -134,7 +134,7 @@ TEST_F(IntegrationTests, gossipSpreads) {
 
   neighbor->stop();
   ASSERT_TRUE(::tests::WaitAtMostFor([&]() -> bool { return !neighbor->isRunning(); },
-                                     milliseconds (200)));
+                                     milliseconds(200)));
   neighbor_thread.join();
 
   // Give the detector enough time to evict all the now-gone servers.
@@ -181,11 +181,13 @@ TEST_F(IntegrationTests, canStopThreads) {
 
 TEST_F(IntegrationTests, wrongApiServerEndpointReturnsNotFound) {
   std::shared_ptr<swim::rest::ApiServer> server =
-      std::make_shared<swim::rest::ApiServer>(detector.get(), 9091);
+      std::make_shared<swim::rest::ApiServer>(detector.get(), 7999);
 
   try {
     request::SimpleHttpRequest simpleClient;
-    simpleClient.get("http://localhost:9091/not/valid/api")
+    simpleClient.timeout = 2500;
+
+    simpleClient.get("http://localhost:7999/not/valid/api")
         .on("error", [](request::Error &&err) -> void {
           FAIL() << "Could not connect to API Server: "
                  << err.message;
@@ -201,24 +203,25 @@ TEST_F(IntegrationTests, wrongApiServerEndpointReturnsNotFound) {
 
 
 TEST_F(IntegrationTests, reportsApiServer) {
-  auto neighbor = std::unique_ptr<SwimServer>(new SwimServer(::tests::RandomPort()));
+  auto neighbor = std::make_unique<SwimServer>(::tests::RandomPort());
   std::thread neighbor_thread([&]() { neighbor->start(); });
 
   ASSERT_TRUE(::tests::WaitAtMostFor([&]() -> bool {
-        return neighbor->isRunning();
-      }, milliseconds(500)));
+    return neighbor->isRunning();
+  }, milliseconds(500)));
   detector->AddNeighbor(neighbor->self());
 
 
   std::shared_ptr<swim::rest::ApiServer> server =
-      std::make_shared<swim::rest::ApiServer>(detector.get(), 8089);
+      std::make_shared<swim::rest::ApiServer>(detector.get(), 7999);
   ASSERT_NE(nullptr, server.get());
 
   // Verify that we can get an empty Report.
   request::SimpleHttpRequest simpleClient;
   try {
     simpleClient.setHeader("Accept", "application/json");
-    simpleClient.get("http://localhost:8089/api/v1/report")
+    simpleClient.timeout = 2500;
+    simpleClient.get("http://localhost:7999/api/v1/report")
         .on("error", [](request::Error &&err) {
           FAIL() << "Could not connect to API Server: "
                  << err.message;
@@ -234,7 +237,7 @@ TEST_F(IntegrationTests, reportsApiServer) {
                         [](std::pair<std::string, std::string> header) {
                           LOG(INFO) << header.first << ": " << header.second;
                         });
-          EXPECT_EQ("application/json", res.headers["Content-Type"]);
+          EXPECT_EQ("application/json", res.headers["content-type"]);
           EXPECT_EQ(report.sender(), detector->gossip_server().self());
           EXPECT_EQ(1, report.alive_size());
           EXPECT_EQ(neighbor->self(), report.alive(0).server());
@@ -252,28 +255,28 @@ TEST_F(IntegrationTests, reportsApiServer) {
 
 
 TEST_F(IntegrationTests, postApiServer) {
-  auto neighbor = std::unique_ptr<SwimServer>(new SwimServer(::tests::RandomPort()));
+  auto neighbor = std::make_unique<SwimServer>(::tests::RandomPort());
   Server svr = neighbor->self();
   std::string jsonBody;
   auto status = ::google::protobuf::util::MessageToJsonString(svr, &jsonBody);
   ASSERT_TRUE(status.ok()) << "Could not parse PB into JSON";
 
   std::shared_ptr<swim::rest::ApiServer> server =
-      std::make_shared<swim::rest::ApiServer>(detector.get(), 9090);
-  ASSERT_NE(nullptr, server.get());
-
+      std::make_shared<swim::rest::ApiServer>(detector.get(), 7999);
 
   // Verify that we can get an empty Report.
   request::SimpleHttpRequest simpleClient;
+  simpleClient.timeout = 2500;
+
   try {
     simpleClient.setHeader("Content-Type", "application/json");
-    simpleClient.post("http://localhost:8089/api/v1/server", jsonBody)
+    simpleClient.post("http://localhost:7999/api/v1/server", jsonBody)
         .on("error", [](request::Error &&err) {
           FAIL() << "Could not connect to API Server: "
                  << err.message;
         }).on("response", [this, &neighbor](request::Response &&res) {
           EXPECT_TRUE(res.good());
-          EXPECT_TRUE(res.str().empty());
+          EXPECT_EQ("OK", res.str());
           EXPECT_EQ(201, res.statusCode);
         }).end();
   } catch (const std::exception &e) {
