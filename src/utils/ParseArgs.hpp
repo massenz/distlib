@@ -319,6 +319,10 @@ public:
     return atoi(value.c_str());
   }
 
+  inline unsigned int getUInt(const std::string& name, int defaultInt = 0) {
+    return static_cast<unsigned int>(getInt(name, defaultInt));
+  }
+
   /**
    * @param pos the index of the positional argument
    * @return the value of the positional argument at position `pos`, if valid.

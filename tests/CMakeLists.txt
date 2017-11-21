@@ -1,7 +1,9 @@
-# This file (c) 2016 AlertAvert.com.  All rights reserved.
+# This file (c) 2016-2017 AlertAvert.com.  All rights reserved.
 
 project(distlib_test)
 enable_testing()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC")
+
 
 # Conan Packaging support
 include(../.conan/conanbuildinfo.cmake)
@@ -33,6 +35,9 @@ set(UNIT_TESTS
         ${TESTS_DIR}/test_utils_network.cpp
         ${TESTS_DIR}/test_view.cpp
 )
+
+# Add the build directory to the library search path
+link_directories(${CMAKE_BINARY_DIR})
 
 set(INTEGRATION_TESTS
         ${TESTS_DIR}/test_integration.cpp
