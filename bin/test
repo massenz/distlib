@@ -6,7 +6,7 @@ WORKDIR="$(dirname $0)/../build"
 VERBOSE=${1:-}
 
 function run_tests {
-    ./tests/bin/distlib_test
+    ./tests/bin/unit_tests
     ./tests/bin/integration_tests
 }
 
