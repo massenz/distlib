@@ -78,7 +78,7 @@ void GossipFailureDetector::SendReport() const {
           << report.suspected_size();
 
   for (auto other : GetUniqueNeighbors(num_reports_)) {
-    auto client = SwimClient(other);
+    auto client = SwimClient(other, gossip_server_->port());
     VLOG(2) << "Sending report to " << other;
 
     if (!client.Send(report)) {

@@ -76,7 +76,7 @@ protected:
 
 TEST_F(GossipFailureDetectorTests, updatesAlives) {
 
-  SwimClient client(*MakeServer("localhost", detector_->gossip_server().port()));
+  SwimClient client(*MakeServer("localhost", detector_->gossip_server().port()), 9000);
 
   ASSERT_TRUE(tests::WaitAtMostFor([&]() -> bool { return detector_->gossip_server().isRunning(); },
                        std::chrono::milliseconds(2000))) << "Detector didn't start";

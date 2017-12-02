@@ -1,13 +1,23 @@
-# This file (c) 2016 AlertAvert.com.  All rights reserved.
+# This file (c) 2016-2017 AlertAvert.com.  All rights reserved.
 
 project(distlib_test)
-set(TEST_TARGET ${PROJECT_NAME})
-
 enable_testing()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC")
+
 
 # Conan Packaging support
 include(../.conan/conanbuildinfo.cmake)
 conan_basic_setup()
+
+###
+# Third Party libraries
+set(THIRD_PARTY ${CMAKE_SOURCE_DIR}/third_party)
+set(SIMPLE_HTTP ${THIRD_PARTY}/SimpleHttpRequest)
+
+include_directories(${SIMPLE_HTTP}/include
+        ${SIMPLE_HTTP}/include/uv
+)
+link_directories(${SIMPLE_HTTP}/lib)
 
 
 find_library(GTEST gtest ${INSTALL_DIR}/lib)
@@ -26,6 +36,9 @@ set(UNIT_TESTS
         ${TESTS_DIR}/test_view.cpp
 )
 
+# Add the build directory to the library search path
+link_directories(${CMAKE_BINARY_DIR})
+
 set(INTEGRATION_TESTS
         ${TESTS_DIR}/test_integration.cpp
 )
@@ -38,12 +51,12 @@ set(INTEGRATION_TESTS
 set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES
                             GENERATED TRUE)
 
-add_executable(${TEST_TARGET}
+add_executable(unit_tests
         ${UNIT_TESTS}
         tests.h
         all_tests.cpp
 )
-target_link_libraries(${TEST_TARGET}
+target_link_libraries(unit_tests
         ${GTEST}
         protobuf
         gossip
@@ -58,6 +71,9 @@ add_executable(integration_tests
 target_link_libraries(integration_tests
         ${GTEST}
         gossip
+        http_parser
+        uv
 )
 
-add_test(${TEST_TARGET} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_TARGET})
+add_test(unit_tests ${CMAKE_CURRENT_BINARY_DIR}/unit_tests)
+add_test(integration_tests ${CMAKE_CURRENT_BINARY_DIR}/integration_tests)

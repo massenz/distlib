@@ -7,6 +7,7 @@
 #include <chrono>
 #include <iostream>
 #include <iomanip>
+#include <memory>
 #include <thread>
 
 #include <glog/logging.h>
@@ -166,12 +167,12 @@ int main(int argc, const char *argv[]) {
     LOG(INFO) << "Threads started; detector process running"; // TODO: << PID?
 
 
+    std::unique_ptr<swim::rest::ApiServer> apiServer;
     if (parser.enabled("http")) {
-      int httpPort = parser.getInt("http-port", ::kDefaultHttpPort);
+      unsigned int httpPort = parser.getUInt("http-port", ::kDefaultHttpPort);
       std::cout << "Enabling HTTP REST API: http://"
                 << utils::Hostname() << ":" << httpPort << std::endl;
-      swim::rest::ApiServer apiServer(detector.get(), httpPort);
-
+       apiServer = std::make_unique<swim::rest::ApiServer>(detector.get(), httpPort);
     } else {
       LOG(INFO) << "REST API will not be available";
     }

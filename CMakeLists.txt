@@ -2,6 +2,7 @@
 
 project(distlib)
 cmake_minimum_required(VERSION 3.4)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC")
 
 
 # Include common cmake utilities:
@@ -28,7 +29,6 @@ conan_basic_setup()
 set(RELEASE_STRING "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}-${BUILD_ID}")
 message(STATUS "Building Release: ${RELEASE_STRING}")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC")
 
 set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests)
@@ -86,6 +86,7 @@ set(SWIM_SOURCES
         ${SOURCE_DIR}/swim/SwimClient.cpp
         ${SOURCE_DIR}/swim/SwimServer.cpp
         ${SOURCE_DIR}/swim/GossipFailureDetector.cpp
+        ${SOURCE_DIR}/swim/rest/ApiServer.cpp
 )
 
 set(SWIM_LIBS
