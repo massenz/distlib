@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include "ConsistentHash.hpp"
+#include "../include/ConsistentHash.hpp"
 
 
 using namespace std;

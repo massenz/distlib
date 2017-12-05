@@ -31,17 +31,26 @@
  */
 class View {
 
-private:
-  int num_buckets_;
+  int num_buckets_ {0};
 
-  // Maps each bucket's partition point to the respective bucket.
+  /**
+   * Maps each bucket's partition point to the respective bucket.
+   */
+  // FIXME: cannot use a float as a map key.
   std::map<float, const Bucket*> partition_to_bucket_;
 
+  /**
+ * Streams a view, listing all the intervals and associated buckets; then emits a list of all
+ * the buckets.
+ */
   friend std::ostream& operator<<(std::ostream&, const View&);
-public:
-  View() : num_buckets_(0) {};
 
-  virtual ~View() {}
+public:
+  View() = default;
+  virtual ~View() = default;
+
+  View(const View&) = delete;
+  View(View&&) = delete;
 
   /** Adds a bucket to this `View` */
   void add(const Bucket *bucket);
@@ -68,9 +77,3 @@ public:
 
   std::set<const Bucket *> buckets() const;
 };
-
-/**
- * Streams a view, listing all the intervals and associated buckets; then emits a list of all
- * the buckets.
- */
-std::ostream& operator<<(std::ostream&, const View &);

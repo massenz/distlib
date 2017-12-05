@@ -4,8 +4,8 @@
 
 #include <gtest/gtest.h>
 
-#include "ConsistentHash.hpp"
-#include "Bucket.hpp"
+#include "../include/ConsistentHash.hpp"
+#include "../include/Bucket.hpp"
 
 TEST(BucketTests, CanCreate) {
   Bucket b("test_bucket", 3);

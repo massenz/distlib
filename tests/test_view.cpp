@@ -3,7 +3,7 @@
 
 
 #include <gtest/gtest.h>
-#include <View.hpp>
+#include "../include/View.hpp"
 
 using namespace std;
 

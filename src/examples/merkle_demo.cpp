@@ -9,8 +9,8 @@
 
 #include "version.h"
 
-#include "ConsistentHash.hpp"
-#include "MerkleNode.hpp"
+#include "../../include/ConsistentHash.hpp"
+#include "../../include/MerkleNode.hpp"
 
 
 using std::cin;

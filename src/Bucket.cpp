@@ -2,14 +2,14 @@
 // Created by M. Massenzio (marco@alertavert.com) on 3/6/16.
 
 
-#include "Bucket.hpp"
+#include "../include/Bucket.hpp"
 
 #include <algorithm>
 
 #include <cmath>
 #include <ios>
 
-#include "ConsistentHash.hpp"
+#include "../include/ConsistentHash.hpp"
 
 
 std::ostream& operator<<(std::ostream& out, const Bucket &bucket) {

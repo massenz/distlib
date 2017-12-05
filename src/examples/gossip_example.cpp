@@ -16,11 +16,11 @@
 
 #include "swim.pb.h"
 
-#include "swim/GossipFailureDetector.hpp"
-#include "swim/rest/ApiServer.hpp"
+#include "../../include/swim/GossipFailureDetector.hpp"
+#include "../../include/swim/rest/ApiServer.hpp"
 
-#include "utils/ParseArgs.hpp"
-#include "utils/utils.hpp"
+#include "../../include/utils/ParseArgs.hpp"
+#include "../../include/utils/utils.hpp"
 
 
 using namespace std;

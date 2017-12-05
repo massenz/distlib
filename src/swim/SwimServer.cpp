@@ -2,8 +2,8 @@
 // Created by M. Massenzio (marco@alertavert.com) on 11/22/16.
 
 
-#include "utils/utils.hpp"
-#include "SwimServer.hpp"
+#include "../../include/utils/utils.hpp"
+#include "../../include/swim/SwimServer.hpp"
 
 
 using namespace zmq;

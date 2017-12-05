@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include "utils/utils.hpp"
+#include "../include/utils/utils.hpp"
 
 using namespace utils;
 using namespace std;

@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include <MerkleNode.hpp>
+#include "../include/MerkleNode.hpp"
 
 using namespace std;
 

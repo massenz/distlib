@@ -8,9 +8,9 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#include <swim/SwimClient.hpp>
+#include "../include/swim/SwimClient.hpp"
 
-#include "swim/GossipFailureDetector.hpp"
+#include "../include/swim/GossipFailureDetector.hpp"
 
 #include "tests.h"
 

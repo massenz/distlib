@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include "utils/ParseArgs.hpp"
+#include "../include/utils/ParseArgs.hpp"
 
 
 TEST(ParseArgsTests, canParseSimple) {
