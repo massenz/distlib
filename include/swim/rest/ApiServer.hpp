@@ -6,7 +6,7 @@
 
 #include <microhttpd.h>
 
-#include "swim/GossipFailureDetector.hpp"
+#include "../GossipFailureDetector.hpp"
 
 namespace swim {
 namespace rest {

@@ -1,7 +1,7 @@
 // Copyright (c) 2017 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 8/6/17.
 
-#include "utils.hpp"
+#include "../../include/utils/utils.hpp"
 
 namespace utils {
 

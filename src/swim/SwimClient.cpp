@@ -5,7 +5,7 @@
 
 #include <zmq.h>
 #include <iostream>
-#include "SwimClient.hpp"
+#include "../../include/swim/SwimClient.hpp"
 
 
 using namespace zmq;

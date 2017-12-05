@@ -3,7 +3,7 @@
 
 
 #include <google/protobuf/util/json_util.h>
-#include "ApiServer.hpp"
+#include "../../../include/swim/rest/ApiServer.hpp"
 
 namespace swim {
 namespace rest {

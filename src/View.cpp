@@ -1,14 +1,11 @@
 // Copyright (c) 2016 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 3/6/16.
 
-#include "View.hpp"
-#include "ConsistentHash.hpp"
+#include "../include/View.hpp"
+#include "../include/ConsistentHash.hpp"
 
 #include <algorithm>
 #include <cmath>
-#include <set>
-
-#include <glog/logging.h>
 
 
 void View::add(const Bucket *bucket) {

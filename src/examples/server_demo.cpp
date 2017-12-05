@@ -14,11 +14,11 @@
 
 #include "version.h"
 
-#include "utils/ParseArgs.hpp"
-#include "utils/utils.hpp"
+#include "../../include/utils/ParseArgs.hpp"
+#include "../../include/utils/utils.hpp"
 
-#include "swim/SwimClient.hpp"
-#include "swim/SwimServer.hpp"
+#include "../../include/swim/SwimClient.hpp"
+#include "../../include/swim/SwimServer.hpp"
 
 
 using namespace zmq;

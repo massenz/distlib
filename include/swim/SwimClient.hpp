@@ -6,7 +6,7 @@
 
 #include "swim.pb.h"
 
-#include "utils/utils.hpp"
+#include "../utils/utils.hpp"
 #include "SwimCommon.hpp"
 
 

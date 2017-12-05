@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-#include "swim/SwimServer.hpp"
+#include "../include/swim/SwimServer.hpp"
 
 #include "tests.h"
 

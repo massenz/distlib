@@ -31,6 +31,7 @@ message(STATUS "Building Release: ${RELEASE_STRING}")
 
 
 set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
+set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests)
 set(PROTO_DIR ${PROJECT_SOURCE_DIR}/proto)
 set(PROJECT_BINARY_DIR ${PROJECT_SOURCE_DIR}/build)
@@ -61,7 +62,7 @@ ENDIF(${PROTOBUF_FOUND})
 set(LIBMICROHTTPD_INSTALL ${INSTALL_DIR}/libmicrohttpd)
 
 include_directories(
-        ${SOURCE_DIR}
+        ${INCLUDE_DIR}
         ${PROJECT_BINARY_DIR}
         ${CMAKE_BINARY_DIR}
         ${PROTOBUF_INCLUDE_DIRS}
