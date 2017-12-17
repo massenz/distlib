@@ -13,14 +13,14 @@
 #include <glog/logging.h>
 
 #include <zmq.hpp>
+#include <google/protobuf/util/json_util.h>
 
 #include "swim.pb.h"
 
-#include "../../include/swim/GossipFailureDetector.hpp"
-#include "../../include/swim/rest/ApiServer.hpp"
+#include "swim/GossipFailureDetector.hpp"
+#include "apiserver/api/rest/ApiServer.hpp"
 
-#include "../../include/utils/ParseArgs.hpp"
-#include "../../include/utils/utils.hpp"
+#include "utils/ParseArgs.hpp"
 
 
 using namespace std;
@@ -167,12 +167,45 @@ int main(int argc, const char *argv[]) {
     LOG(INFO) << "Threads started; detector process running"; // TODO: << PID?
 
 
-    std::unique_ptr<swim::rest::ApiServer> apiServer;
+    std::unique_ptr<api::rest::ApiServer> apiServer;
     if (parser.enabled("http")) {
       unsigned int httpPort = parser.getUInt("http-port", ::kDefaultHttpPort);
       std::cout << "Enabling HTTP REST API: http://"
                 << utils::Hostname() << ":" << httpPort << std::endl;
-       apiServer = std::make_unique<swim::rest::ApiServer>(detector.get(), httpPort);
+      apiServer = std::make_unique<api::rest::ApiServer>(httpPort);
+
+      apiServer->AddGet("report", [&detector] (const api::rest::Request& request) {
+        auto response = api::rest::Response::ok();
+        auto report = detector->gossip_server().PrepareReport();
+        std::string json_body;
+
+        ::google::protobuf::util::MessageToJsonString(report, &json_body);
+        response.set_body(json_body);
+        return response;
+      });
+
+      apiServer->AddPost("server", [&detector](const api::rest::Request &request) {
+        Server neighbor;
+
+        auto status = ::google::protobuf::util::JsonStringToMessage(request.body(), &neighbor);
+        if (status.ok()) {
+          detector->AddNeighbor(neighbor);
+          LOG(INFO) << "Added server " << neighbor;
+
+          std::string body{"{ \"result\": \"added\", \"server\": "};
+          std::string server;
+          ::google::protobuf::util::MessageToJsonString(neighbor, &server);
+          auto response = api::rest::Response::created();
+          response.set_body(body + server + "}");
+          return response;
+        }
+
+        LOG(ERROR) << "Not valid JSON: " << request.body();
+        return api::rest::Response::bad_request("Not a valid JSON representation of a server: "
+            + request.body());
+      });
+
+      apiServer->Start();
     } else {
       LOG(INFO) << "REST API will not be available";
     }
