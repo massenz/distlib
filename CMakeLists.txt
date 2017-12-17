@@ -68,6 +68,7 @@ include_directories(
         ${PROTOBUF_INCLUDE_DIRS}
         ${PROTO_HDRS}
         ${LIBMICROHTTPD_INSTALL}/include
+        ${INSTALL_DIR}/include
 )
 
 link_directories(${LIBMICROHTTPD_INSTALL}/lib)
@@ -87,7 +88,6 @@ set(SWIM_SOURCES
         ${SOURCE_DIR}/swim/SwimClient.cpp
         ${SOURCE_DIR}/swim/SwimServer.cpp
         ${SOURCE_DIR}/swim/GossipFailureDetector.cpp
-        ${SOURCE_DIR}/swim/rest/ApiServer.cpp
 )
 
 set(SWIM_LIBS
@@ -128,8 +128,8 @@ target_link_libraries(distutils ${UTILS_LIBS})
 
 
 if (NOT ${INSTALL_DIR})
-    message(STATUS "Installing libgossip.so and libdistutils.so shared libraries to"
-                   " ${INSTALL_DIR}/lib and include files to ${INSTALL_DIR}/include/${PROJECT_NAME}")
+    message(STATUS "Installing shared libraries to ${INSTALL_DIR}/lib "
+                   "and include files to ${INSTALL_DIR}/include/${PROJECT_NAME}")
     install(TARGETS gossip distutils DESTINATION ${INSTALL_DIR}/lib)
 
     # Generated configuration file, containing version and build number.
@@ -137,7 +137,7 @@ if (NOT ${INSTALL_DIR})
             "${INSTALL_DIR}/include/${PROJECT_NAME}")
 
     # Install Library headers.
-    install(DIRECTORY ${SOURCE_DIR}/ DESTINATION ${INSTALL_DIR}/include/${PROJECT_NAME}
+    install(DIRECTORY ${INCLUDE_DIR}/ DESTINATION ${INSTALL_DIR}/include/${PROJECT_NAME}
             FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 
     # Copy Proto headers to include folder.
@@ -158,7 +158,9 @@ add_subdirectory(${TESTS_DIR})
 set(EXAMPLES_DIR ${SOURCE_DIR}/examples)
 
 # Examples will use the latest build for the shared libraries
-link_directories(${CMAKE_BINARY_DIR})
+link_directories(${CMAKE_BINARY_DIR}
+                 ${INSTALL_DIR}/lib
+)
 
 ##
 # Merkle Tree Demo
@@ -185,4 +187,4 @@ target_link_libraries(swim_server_demo gossip)
 add_executable(gossip_detector_example
         ${EXAMPLES_DIR}/gossip_example.cpp
 )
-target_link_libraries(gossip_detector_example gossip)
+target_link_libraries(gossip_detector_example gossip apiserver)
