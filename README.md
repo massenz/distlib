@@ -145,7 +145,7 @@ Use the `--help` option to see the full list of available options.
 
 ### Full-fledged SWIM Detector implementation
 
-A reference implementatio of a failure detector based on the SWIM Gossip protocol is provided in
+A reference implementatio of a failure detector based on the [SWIM Gossip protocol](SWIM) is provided in
 the [`gossip_example`](src/examples/gossip_example.cpp) demo.
 
 Again, use:
@@ -194,6 +194,10 @@ and we will assume that each of the peers will take care of removing suspected s
 lists once the timeout (which is not necessarily the same for the entire pool - or even constant
 over time for a given server) expires.
 
+In the example below, `1` knows about `2` directly; and `2` knows about `7` indirectly (when it receives a `Report` from `5`, who learned in turn from `6`); `1` "suspects" `3` (either due to a transient network failure; or because `3` timed out, possibly due to a temporary load), but then confirms that it is indeed "alive" by asking `4` to forward a ping, and the latter successfully contacts `3`, reporting back to `1`.
+
+![SWIM Protocol](docs/images/SWIM-gossip.png)
+
 See the [SWIM Paper](SWIM) for more details.
 
 __Gossip__
@@ -218,6 +222,6 @@ time.
  * [A Gossip-Style Failure Detection Service](gossip)
 
 
-[SWIM]: https://goo.gl/VUn4iQ
+[SWIM]: https://www.cs.cornell.edu/projects/Quicksilver/public_pdfs/SWIM.pdf
 [detectors]: https://goo.gl/6yuh9T
 [gossip]: https://goo.gl/rxAIa6
