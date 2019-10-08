@@ -46,8 +46,7 @@ message ServerRecord {
 
 // A status report disseminated "infection-style" via the SWIM protocol, reporting
 // changes in the nodes' population status: the reporter will list newly detected (since last
-// report) `suspected` and `dead` nodes, as well as `alive` nodes (formerly "suspected" of being
-// dead).
+// report) `suspected` nodes, as well as `alive` nodes (formerly "suspected" of being dead).
 //
 // The report here may not contain the full list, as in the SWIM protocol, to ensure
 // constant-size messages and reduce network congestion as clusters' size grows, the size of the
