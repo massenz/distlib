@@ -46,25 +46,27 @@ TEST(ViewTests, CanEmitToStdout)
 
 TEST(ViewTests, CanRemoveBucket) {
   View v;
-  Bucket b1("test-1", 3), b2("test-2", 3), b3("test-3", 5);
+  Bucket b1("test-1", 3),
+         b2("test-2", 3),
+         b3("test-3", 5);
 
   v.add(&b1);
   v.add(&b2);
   v.add(&b3);
   EXPECT_EQ(3, v.num_buckets());
 
-  v.remove(&b2);
+  EXPECT_TRUE(v.remove(&b2));
   EXPECT_EQ(2, v.num_buckets());
 
-  v.remove(&b1);
-  v.remove(&b2);
+  EXPECT_TRUE(v.remove(&b1));
+  EXPECT_FALSE(v.remove(&b2));
   EXPECT_EQ(1, v.num_buckets());
 
-  v.remove(&b1);
-  v.remove(&b1);
+  EXPECT_FALSE(v.remove(&b1));
+  EXPECT_FALSE(v.remove(&b1));
   EXPECT_EQ(1, v.num_buckets());
 
-  v.remove(&b3);
+  EXPECT_TRUE(v.remove(&b3));
   EXPECT_EQ(0, v.num_buckets());
 }
 

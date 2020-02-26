@@ -36,13 +36,13 @@ class View {
   /**
    * Maps each bucket's partition point to the respective bucket.
    */
-  // FIXME: cannot use a float as a map key.
+  // FIXME: should not use a `float` as a map key.
   std::map<float, const Bucket*> partition_to_bucket_;
 
   /**
- * Streams a view, listing all the intervals and associated buckets; then emits a list of all
- * the buckets.
- */
+   * Streams a view, listing all the intervals and associated buckets; then emits a list of all
+   * the buckets.
+   */
   friend std::ostream& operator<<(std::ostream&, const View&);
 
 public:
@@ -56,7 +56,7 @@ public:
   void add(const Bucket *bucket);
 
   /** Removes the given bucket from this view. */
-  void remove(const Bucket *bucket);
+  bool remove(const Bucket *bucket);
 
   /**
    * @return the total number of buckets available in this view.

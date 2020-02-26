@@ -1,6 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Integration" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" PASS_PARENT_ENVS_2="true" PROJECT_NAME="distlib" TARGET_NAME="integration_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="distlib" RUN_TARGET_NAME="integration_tests" TEST_CLASS="IntegrationTests" TEST_MODE="SUITE_TEST">
-    <envs />
-    <method />
-  </configuration>
-</component>

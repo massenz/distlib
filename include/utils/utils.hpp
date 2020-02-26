@@ -15,7 +15,6 @@
 #include <glog/logging.h>
 #include <google/protobuf/stubs/common.h>
 
-#include <zmq.hpp>
 
 #include "version.h"
 
@@ -40,8 +39,7 @@ public:
 
 /**
  * Convenience method, can be used by projects using this library to emit their version
- * string, alongside the library version, and those of supporting
- * frameworks (ZMQ and Protobuf).
+ * string, alongside the library version.
  *
  * @param server_name the name for the server that uses this library
  * @param version the server's version

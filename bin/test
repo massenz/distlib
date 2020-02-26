@@ -6,15 +6,15 @@ WORKDIR="$(dirname $0)/../build"
 VERBOSE=${1:-}
 
 function run_tests {
-    ./tests/bin/unit_tests
-    ./tests/bin/integration_tests
+    ${WORKDIR}/tests/bin/unit_tests
 }
-
-cd ${WORKDIR}
 
 if [[ ${VERBOSE} == "-v" ]]; then
     export GLOG_v=2
     export GLOG_logtostderr=true
 fi
+
+export DYLD_LIBRARY_PATH=${WORKDIR}/lib:${DYLD_LIBRARY_PATH:-}
+echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}"
 
 time run_tests
