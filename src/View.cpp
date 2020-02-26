@@ -6,7 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
-
+#include <iostream>
 
 void View::add(const Bucket *bucket) {
   if (bucket == nullptr) {
@@ -21,20 +21,28 @@ void View::add(const Bucket *bucket) {
   num_buckets_++;
 }
 
-void View::remove(const Bucket *bucket) {
+bool View::remove(const Bucket *bucket) {
   bool found = false;
 
-  for (auto item : partition_to_bucket_) {
-    if (item.second == bucket) {
-      partition_to_bucket_.erase(item.first);
-      found = true;
+  for (auto item : bucket->partition_points()) {
+    if (partition_to_bucket_[item] == bucket) {
+      auto res = partition_to_bucket_.erase(item);
+      if (res > 0) {
+        found = true;
+        VLOG(2) << "Found matching partition point: " << item
+            << ", removed bucket: " << *bucket;
+      }
     }
   }
   // It is possible we were asked to remove a non-existent bucket;
   // in this case, we should not decrement the count.
   if (found) {
     num_buckets_--;
+    VLOG(2) << "Removed bucket from View, left " << num_buckets_;
+  } else {
+    VLOG(2) << "Bucket " << *bucket << " not found, not removed";
   }
+  return found;
 }
 
 const Bucket *const View::bucket(const std::string &key) {

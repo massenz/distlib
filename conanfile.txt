@@ -8,15 +8,11 @@ cryptopp/5.6.5@bincrafters/stable
 glog/0.4.0@bincrafters/stable
 gtest/1.8.0@bincrafters/stable
 OpenSSL/1.0.2@conan/stable
-protobuf/3.9.1@bincrafters/stable
-cppzmq/4.4.1@bincrafters/stable
-
 
 [options]
 glog:with_gflags=False
 gtest:shared=False
-zmq:shared=True
-Protobuf:shared=True
+glog:with_gflags=False
 
 [generators]
 cmake

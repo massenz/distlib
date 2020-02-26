@@ -1,6 +1,0 @@
-#!/bin/bash
-
-cd $(dirname $0)/../build
-
-cmake --build . --target distlib_test
-time ./tests/bin/distlib_test
