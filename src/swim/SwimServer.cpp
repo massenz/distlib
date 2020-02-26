@@ -2,8 +2,8 @@
 // Created by M. Massenzio (marco@alertavert.com) on 11/22/16.
 
 
-#include "../../include/utils/utils.hpp"
-#include "../../include/swim/SwimServer.hpp"
+#include "utils/utils.hpp"
+#include "swim/SwimServer.hpp"
 
 
 using namespace zmq;
@@ -22,9 +22,11 @@ void SwimServer::start() {
   // No point in keeping the socket around when we exit.
   socket.setsockopt(ZMQ_LINGER, &kDefaultSocketLingerMsec, sizeof (unsigned int));
   auto address = utils::SocketAddress(port_);
-  socket.bind(address.c_str());
+  VLOG(2) << "Binding Socket to: " << address << ":" << port_;
 
   LOG(INFO) << "Server listening on: " << address;
+  socket.bind(address.c_str());
+
 
   // Polling from socket, so stopping the server does not hang indefinitely in the absence of
   // incoming messages.

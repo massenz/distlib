@@ -26,7 +26,7 @@ static unsigned int kNumNodes = 33;
 void usage(const std::string &prog) {
 
   cout << "Merkle Tree & Consistent Hash Demo - LibDist ver. " << RELEASE_STR
-       << "\n\nUsage: " << basename(prog.c_str()) << " string-to-hash [nodes]" << endl;
+       << "\n\nUsage: " << prog.c_str() << " string-to-hash [nodes]" << endl;
 }
 
 

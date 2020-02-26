@@ -111,10 +111,14 @@ public:
       grace_period_(grace_period),
       ping_timeout_(ping_timeout_msec)
   {
+    VLOG(2) << "GossipFailureDetector (port: " << port << ", interval: " << interval
+      << ", grace_period: " << grace_period << ", ping_timeout_msec: " << ping_timeout_msec << ")";
     num_reports_ = kDefaultNumReports;
     num_forwards_ = kDefaultNumForward;
+
     gossip_server_.reset(new SwimServer(port));
 
+    VLOG(2) << "Starting SwimServer on port: " << port;
     std::thread t([this] { gossip_server_->start(); });
     t.detach();
   }

@@ -20,6 +20,13 @@
 #include "../../include/swim/SwimClient.hpp"
 #include "../../include/swim/SwimServer.hpp"
 
+// TODO: find Posix equivalent of GNU `program_invocation_short_name`
+#ifdef __linux__
+#define PROG_NAME program_invocation_short_name
+#else
+#define PROG_NAME "swim_server_demo"
+#endif
+
 
 using namespace zmq;
 using namespace swim;
@@ -31,7 +38,7 @@ namespace {
  * Prints out usage instructions for this application.
  */
 void usage() {
-  std::cout << "Usage: " << program_invocation_short_name << " --port=PORT [--host=HOST] \n"
+  std::cout << "Usage: " << PROG_NAME << " --port=PORT [--host=HOST] \n"
             << "\t\t[--timeout=TIMEOUT] [--duration=DURATION] ACTION\n"
             << "\t\t[--debug] [--version] [--help]\n\n"
             << "\t--debug    verbose output (LOG_v = 2)\n"

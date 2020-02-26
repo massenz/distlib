@@ -39,11 +39,18 @@ const unsigned int kDefaultGracePeriodSec = 35;
 const unsigned int kDefaultPingIntervalSec = 5;
 
 
+// TODO: find Posix equivalent of GNU `program_invocation_short_name`
+#ifdef __linux__
+#define PROG_NAME program_invocation_short_name
+#else
+#define PROG_NAME "gossip_detector_example"
+#endif
+
 /**
  * Prints out usage instructions for this application.
  */
 void usage() {
-  std::cout << "Usage: " << program_invocation_short_name << " --seeds=SEEDS_LIST [--port=PORT]\n"
+  std::cout << "Usage: " << PROG_NAME << " --seeds=SEEDS_LIST [--port=PORT]\n"
     << "\t\t[--timeout=TIMEOUT] [--ping=PING_SEC] [--http [--http-port=HTTP_PORT]]\n"
     << "\t\t[--grace-period=GRACE_PERIOD]\n"
     << "\t\t[--debug] [--version] [--help]\n\n"

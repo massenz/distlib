@@ -13,7 +13,7 @@
 
 #include "../include/swim/SwimClient.hpp"
 #include "../include/swim/GossipFailureDetector.hpp"
-#include "../include/swim/rest/ApiServer.hpp"
+#include "apiserver/api/rest/ApiServer.hpp"
 
 #include "tests.h"
 
@@ -180,8 +180,8 @@ TEST_F(IntegrationTests, canStopThreads) {
 
 
 TEST_F(IntegrationTests, wrongApiServerEndpointReturnsNotFound) {
-  std::shared_ptr<swim::rest::ApiServer> server =
-      std::make_shared<swim::rest::ApiServer>(detector.get(), 7999);
+  std::shared_ptr<api::rest::ApiServer> server =
+      std::make_shared<api::rest::ApiServer>(7999);
 
   try {
     request::SimpleHttpRequest simpleClient;
@@ -212,8 +212,8 @@ TEST_F(IntegrationTests, reportsApiServer) {
   detector->AddNeighbor(neighbor->self());
 
 
-  std::shared_ptr<swim::rest::ApiServer> server =
-      std::make_shared<swim::rest::ApiServer>(detector.get(), 7999);
+  std::shared_ptr<api::rest::ApiServer> server =
+      std::make_shared<api::rest::ApiServer>(7999);
   ASSERT_NE(nullptr, server.get());
 
   // Verify that we can get an empty Report.
@@ -261,8 +261,8 @@ TEST_F(IntegrationTests, postApiServer) {
   auto status = ::google::protobuf::util::MessageToJsonString(svr, &jsonBody);
   ASSERT_TRUE(status.ok()) << "Could not parse PB into JSON";
 
-  std::shared_ptr<swim::rest::ApiServer> server =
-      std::make_shared<swim::rest::ApiServer>(detector.get(), 7999);
+  std::shared_ptr<api::rest::ApiServer> server =
+      std::make_shared<api::rest::ApiServer>(7999);
 
   // Verify that we can get an empty Report.
   request::SimpleHttpRequest simpleClient;

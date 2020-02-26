@@ -27,7 +27,7 @@ class parse_error : public std::exception {
 public:
   explicit parse_error(const std::string& error) : what_(error) {}
 
-  virtual const char* what() const _GLIBCXX_USE_NOEXCEPT {
+  virtual const char* what() const _NOEXCEPT {
     return what_.c_str();
   }
 };
