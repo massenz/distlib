@@ -14,7 +14,13 @@ if [[ ${VERBOSE} == "-v" ]]; then
     export GLOG_logtostderr=true
 fi
 
-export DYLD_LIBRARY_PATH=${WORKDIR}/lib:${DYLD_LIBRARY_PATH:-}
-echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}"
+DIST=$(uname -s)
+if [[ ${DIST} == 'Darwin' ]]; then
+    export DYLD_LIBRARY_PATH=${WORKDIR}/lib:${DYLD_LIBRARY_PATH:-}
+    echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}"
+elif [[ ${DIST} == 'Linux' ]]; then
+    export LD_LIBRARY_PATH=${WORKDIR}/lib:${LD_LIBRARY_PATH:-}
+    echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
+fi
 
 time run_tests

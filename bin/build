@@ -2,12 +2,12 @@
 
 set -e
 
-if [[ -n ${COMMON_UTILS_DIR} ]]; then
+if [[ -d ${COMMON_UTILS_DIR} ]]; then
   UTILS="-DCOMMON_UTILS_DIR=${COMMON_UTILS_DIR}"
 fi
 
-if [[ -n ${LOCAL_INSTALL_DIR} ]]; then
-  INSTALL="-DINSTALL_DIR=${LOCAL_INSTALL_DIR}"
+if [[ -d ${INSTALL_DIR} ]]; then
+  INSTALL="-DINSTALL_DIR=${INSTALL_DIR}"
 fi
 
 

@@ -49,7 +49,7 @@ std::string SocketAddress(unsigned int port) {
 
   memset(&hints, 0, sizeof(struct addrinfo));
   hints.ai_socktype = SOCK_STREAM;
-  hints.ai_family = AF_UNSPEC;
+  hints.ai_family = AF_INET;
   hints.ai_flags = AI_PASSIVE | AI_NUMERICSERV;
 
   std::string retval;

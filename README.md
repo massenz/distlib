@@ -1,13 +1,13 @@
 # libdist - C++ utilities for Distributed Computing
 
 
- Project  |  libdist
-:---      |  ---:
+Project   | libdist
+:---      | ---:
 Author    | [M. Massenzio](https://bitbucket.org/marco)
-Release   | 0.11.0
+Release   | 0.12.0
 Updated   | 2020-02-26
 
-
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 # Install & Build
 
