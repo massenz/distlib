@@ -8,6 +8,21 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC")
 # Include common cmake utilities:
 include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 
+##
+#
+# Installation directory; this is both used to access
+# required libraries as well as to install the compiled artifacts.
+#
+# The INSTALL_DIR env variable must be set, unless -DINSTALL_DIR is used.
+if(NOT DEFINED INSTALL_DIR)
+    if(DEFINED ENV{INSTALL_DIR})
+        set(INSTALL_DIR $ENV{INSTALL_DIR})
+    else()
+        message(FATAL_ERROR
+                "INSTALL_DIR should be defined as an environment variable, or via -D notation")
+    endif()
+endif()
+
 ### Setting up common configuration variables
 
 # Version number

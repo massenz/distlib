@@ -1,19 +1,12 @@
 #!/bin/bash
 
-set -e
+set -eu
+source $(dirname $0)/env.sh
 
-if [[ -d ${COMMON_UTILS_DIR} ]]; then
-  UTILS="-DCOMMON_UTILS_DIR=${COMMON_UTILS_DIR}"
-fi
+mkdir -p ${BUILDDIR}
+cd ${BUILDDIR}
 
-if [[ -d ${INSTALL_DIR} ]]; then
-  INSTALL="-DINSTALL_DIR=${INSTALL_DIR}"
-fi
+conan install ${BASEDIR} -if=${BUILDDIR} -pr=default --build=missing
 
-
-BUILD_DIR="$(dirname $0)/../build"
-mkdir -p ${BUILD_DIR}
-cd ${BUILD_DIR}
-
-cmake  -DCMAKE_CXX_COMPILER=$(which clang++) ${UTILS} ${INSTALL} ..
+cmake  -DCMAKE_CXX_COMPILER=${CLANG} ${UTILS} ..
 cmake --build . --target all -- -j 6

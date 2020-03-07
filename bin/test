@@ -1,26 +1,17 @@
 #!/bin/bash
 
 set -eu
+source $(dirname $0)/env.sh
 
-WORKDIR="$(dirname $0)/../build"
-VERBOSE=${1:-}
 
 function run_tests {
-    ${WORKDIR}/tests/bin/unit_tests
+    ${BUILDDIR}/tests/bin/unit_tests $@
 }
 
-if [[ ${VERBOSE} == "-v" ]]; then
+if [[ ${1:-} == "-v" ]]; then
     export GLOG_v=2
     export GLOG_logtostderr=true
+    shift 1
 fi
 
-DIST=$(uname -s)
-if [[ ${DIST} == 'Darwin' ]]; then
-    export DYLD_LIBRARY_PATH=${WORKDIR}/lib:${DYLD_LIBRARY_PATH:-}
-    echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}"
-elif [[ ${DIST} == 'Linux' ]]; then
-    export LD_LIBRARY_PATH=${WORKDIR}/lib:${LD_LIBRARY_PATH:-}
-    echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
-fi
-
-time run_tests
+time run_tests $@
