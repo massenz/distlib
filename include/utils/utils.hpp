@@ -13,7 +13,6 @@
 #include <vector>
 
 #include <glog/logging.h>
-#include <google/protobuf/stubs/common.h>
 
 
 #include "version.h"

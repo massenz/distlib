@@ -32,6 +32,7 @@ add_executable(unit_tests
         tests.h
         all_tests.cpp
 )
+
 target_link_libraries(unit_tests
         ${GTEST}
         distutils
