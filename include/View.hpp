@@ -64,16 +64,19 @@ public:
   int num_buckets() const { return num_buckets_; }
 
   /**
-   * Retrieves the `Bucket` which is the nearest match for the given `key`.
+   * Retrieves the `Bucket` which the `hash` belongs to.
    *
-   * The `key` will be hashed and reduced to the [0, 1] interval (consistent hashing) and then
-   * the `Bucket` whose hash-point is the smallest partition point larger than the hash
+   * The `hash` must be in the [0, 1] interval (consistent hashing) and then
+   * the `Bucket` whose hash-point is the smallest partition point larger than the `hash`
    * will be found and returned.
    *
    * See the "Consistent Hash" paper for a summary of why this operation is a O(1) and for
    * implementation details.
+   *
+   * @param hash the hash value for a key, whose `Bucket` we wish to lookup
+   * @return a pointer to the `Bucket` which contains the value associated with the `hash`
    */
-  const Bucket* const bucket(const std::string& key);
+  const Bucket* bucket(float hash) const;
 
   std::set<const Bucket *> buckets() const;
 };

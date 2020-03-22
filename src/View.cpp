@@ -45,15 +45,12 @@ bool View::remove(const Bucket *bucket) {
   return found;
 }
 
-const Bucket *const View::bucket(const std::string &key) {
+const Bucket * View::bucket(float hash) const {
 
   if (partition_to_bucket_.empty()) {
     return nullptr;
   }
-
-  float hash_value = consistent_hash(key);
-
-  auto pos = partition_to_bucket_.upper_bound(hash_value);
+  auto pos = partition_to_bucket_.upper_bound(hash);
 
   if (pos == partition_to_bucket_.end()) {
     return partition_to_bucket_.begin()->second;

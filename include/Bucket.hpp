@@ -38,12 +38,15 @@ class Bucket {
 private:
   const std::string name_;
   std::vector<float> hash_points_;
-  int partitions_;
 
 public:
-  Bucket(const std::string &name, unsigned int replicas);
+  Bucket(std::string name, std::vector<float> hash_points);
 
   virtual ~Bucket() {}
+
+  void add_partition_point(float point);
+
+  void remove_partition_point(unsigned int i);
 
   // Explicitly disallow copy & assignment
   Bucket(const Bucket&) = delete;
@@ -71,23 +74,28 @@ public:
   }
 
   float partition_point(int i) const {
-    if (i >= partitions_) {
+    if (i >= partitions()) {
       LOG(FATAL) << "Out of bound: requesting partition point #" << i << ", when only "
-                 << partitions_ << " are available ('" << name_ << "')";
+                 << partitions() << " are available ('" << name_ << "')";
     }
     return hash_points_[i];
   }
 
   /**
-   * Given a point on the unit circle, we return the closest {@link #partition_point()} as well
-   * as its index.
+   * Given a point on the unit circle, we return the {@link #partition_point()} that is the
+   * next-greatest in the ``Bucket``.
+   *
+   * This is consistent with the usage in Consistent Hashing, where we partition the unit
+   * circle and then allocate each partition with all the points that are _smaller_ than
+   * the partition point.
    *
    * @param x a point in the [0, 1] interval.
-   * @return a pair of {index, point} values that determine which partition point is nearest to `x`.
+   * @return a pair of {index, point} values that determine which partition point is
+   *    the immediately greater than `x`.
    */
-  std::pair<int, float> nearest_partition_point(float x) const;
+  std::pair<int, float> partition_point(float x) const;
 
-  int partitions() const { return partitions_; }
+  int partitions() const { return hash_points_.size(); }
 };
 
 

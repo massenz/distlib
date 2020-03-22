@@ -52,6 +52,8 @@ message(STATUS "Building Release: ${RELEASE_STRING} (${CMAKE_BUILD_TYPE})")
 # Both the value of CMAKE_BUILD_TYPE and the `build_type` setting
 # in `~/.conan/profiles/default` need to match.
 #
+message("Build type: ${CMAKE_BUILD_TYPE}")
+
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     set(GLOG glogd)
 else()

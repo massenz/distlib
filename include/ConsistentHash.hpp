@@ -3,6 +3,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 #include <openssl/md5.h>
 
 
@@ -13,7 +14,7 @@ class md5_error : public std::exception {
   std::string reason_;
 
 public:
-  explicit md5_error(const std::string& reason) : reason_(reason) {}
+  explicit md5_error(std::string  reason) : reason_(std::move(reason)) {}
   const char* what() const noexcept override { return reason_.c_str(); }
 };
 
