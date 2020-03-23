@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 #include <ConsistentHash.hpp>
-#include "../include/View.hpp"
+#include "View.hpp"
 
 using namespace std;
 
@@ -129,3 +129,26 @@ TEST(ViewTests, RebalanceLoad) {
   ASSERT_LT(rebalance_counts, float(NUM_SAMPLES) / NUM_BUCKETS) << "REMOVE: Too many reshuffles " << rebalance_counts;
 }
 
+TEST(ViewTests, CreateBalancedViewThrows) {
+  try {
+    auto pv = make_balanced_view(-1, 10);
+    FAIL() << "It should have thrown here";
+  } catch (const std::invalid_argument &ex) {
+    SUCCEED();
+  }
+}
+
+TEST(ViewTests, CreateBalancedView) {
+  try {
+    auto pv = make_balanced_view(3, 10);
+    ASSERT_EQ(3, pv->num_buckets());
+
+    auto b = *pv->buckets().cbegin();
+    ASSERT_EQ(10, b->partitions());
+
+    pv->clear();
+
+  } catch (const std::invalid_argument &ex) {
+    FAIL() << "Creating the view throws: " << ex.what();
+  }
+}

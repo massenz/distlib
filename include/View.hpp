@@ -8,7 +8,16 @@
 #include <glog/logging.h>
 #include <map>
 
+#include "ConsistentHash.hpp"
 #include "Bucket.hpp"
+
+
+/**
+ * A `map` which compares its `float` keys with a given `Tolerance`.
+ *
+ * @see FloatLessWithTolerance
+ */
+typedef std::map<float, const Bucket*, FloatLessWithTolerance<>> MapWithTolerance;
 
 /**
  * A `View` is a mapping of the whole space of hashes onto a set of `Bucket`s, using
@@ -36,8 +45,7 @@ class View {
   /**
    * Maps each bucket's partition point to the respective bucket.
    */
-  // FIXME: should not use a `float` as a map key.
-  std::map<float, const Bucket*> partition_to_bucket_;
+   MapWithTolerance partition_to_bucket_;
 
   /**
    * Streams a view, listing all the intervals and associated buckets; then emits a list of all
@@ -55,13 +63,28 @@ public:
   /** Adds a bucket to this `View` */
   void add(const Bucket *bucket);
 
-  /** Removes the given bucket from this view. */
+  /**
+   * Removes the given bucket from this view.
+   *
+   * Note that this also deletes the associated pointer: if you need to access
+   * the `bucket` after it has been removed, make a copy.
+   *
+   * @param bucket the bucket to remove from this view and delete
+   */
   bool remove(const Bucket *bucket);
 
   /**
    * @return the total number of buckets available in this view.
    */
   int num_buckets() const { return num_buckets_; }
+
+  /**
+   * Removes all buckets and deallocates the associated pointers.
+   *
+   * The `~View` destructor does not delete the buckets' pointers (as the caller may
+   * still hold references to them); if you want to clear all the memory, use this method.
+   */
+  void clear();
 
   /**
    * Retrieves the `Bucket` which the `hash` belongs to.
@@ -80,3 +103,5 @@ public:
 
   std::set<const Bucket *> buckets() const;
 };
+
+std::unique_ptr<View> make_balanced_view(int num_buckets, int partitions_per_bucket = 5);

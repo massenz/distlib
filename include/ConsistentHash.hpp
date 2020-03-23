@@ -2,8 +2,11 @@
 
 #pragma once
 
+#include <cmath>
+#include <functional>
 #include <string>
 #include <utility>
+
 #include <openssl/md5.h>
 
 
@@ -67,3 +70,24 @@ float consistent_hash(const std::string &msg);
  * @return the size of the digest buffer.
  */
 size_t basic_hash(const char* value, size_t len, unsigned char** hash_value);
+
+/**
+ * Comparator function object, compares two floats, assuming
+ * they are equal if their values are within `eps` distance.
+ *
+ * See Item 40 of Effective STL.
+ */
+template <int Tolerance = 5>
+class FloatLessWithTolerance :
+    public std::binary_function<float, float, bool> {
+
+  double epsilon_;
+ public:
+  FloatLessWithTolerance() {
+    epsilon_ = pow(10, -Tolerance);
+  }
+
+  bool operator()( const float &left, const float &right  ) const {
+    return (std::abs(left - right) > epsilon_) && (left < right);
+  }
+};
