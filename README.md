@@ -5,7 +5,7 @@ Project   | libdist
 :---      | ---:
 Author    | [M. Massenzio](https://bitbucket.org/marco)
 Release   | 0.12.0
-Updated   | 2020-02-26
+Updated   | 2020-03-22
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
@@ -47,30 +47,32 @@ See [conan.io](http://conan.io) for more information.
 
 ## Build & testing
 
-To build the project, it is the usual `cmake` routine:
+To build the project:
 
-    $ mkdir build && cd build
-    $ cmake -DINSTALL_DIR=${INSTALL_DIR} \
-            -DCMAKE_CXX_COMPILER=/usr/local/bin/clang++ \
-            -DCOMMON_UTILS_DIR=/path/to/commons.cmake ..
-    $ cmake --build .
-
-Finally, to run the tests:
-
-    $ ./tests/bin/distlib_test
+    $ INSTALL_DIR=/some/path
+    $ ./bin/build && ./bin/test
 
 or to simply run a subset of the tests with full debug logging:
 
-    $ GLOG_v=2 ./tests/bin/distlib_test --gtest_filter=SwimServer*
+    $ GLOG_v=2 ./bin/test --gtest_filter=SwimServer*
 
-See also the other binaries in the `build/bin` folder for more options.
+To install the generated binaries (`.so` or `.dylib` shared libraries) 
+and headers so that other projects can find them:
+
+    $ cd build && make install
+
+See the scripts in the `bin` folder for more options.
+
 
 # Projects
 
 ## API Documentations
 
-All the classes are documented using [Doxygen](#).
-`TODO: this needs fixing, post moving out of GitHub Pages`
+All the classes are documented using [Doxygen](http://www.doxygen.nl/), just run:
+
+    $ doxygen
+
+from the main project directory and all apidocs will be generated in `docs/apidocs/html`.
 
 ## Consistent Hashing
 
