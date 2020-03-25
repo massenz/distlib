@@ -8,7 +8,7 @@
 #include <cmath>
 #include <iostream>
 
-void View::Add(const Bucket *bucket) {
+void View::Add(const BucketPtr& bucket) {
   if (bucket == nullptr) {
     LOG(FATAL) << "Cannot add a null Bucket to a View";
     return;
@@ -21,7 +21,7 @@ void View::Add(const Bucket *bucket) {
   num_buckets_++;
 }
 
-bool View::Remove(const Bucket *bucket) {
+bool View::Remove(BucketPtr bucket) {
   bool found = false;
 
   for (auto item : bucket->partition_points()) {
@@ -45,10 +45,10 @@ bool View::Remove(const Bucket *bucket) {
   return found;
 }
 
-const Bucket *View::FindBucket(float hash) const {
+BucketPtr View::FindBucket(float hash) const {
 
   if (partition_to_bucket_.empty()) {
-    return nullptr;
+    throw std::invalid_argument("No buckets in this View");
   }
   auto pos = partition_to_bucket_.upper_bound(hash);
 
@@ -68,10 +68,11 @@ std::ostream &operator<<(std::ostream &out, const View &view) {
   }
   return out;
 }
-std::set<const Bucket *> View::buckets() const {
-  std::set<const Bucket *> buckets;
 
-  for (auto item : partition_to_bucket_) {
+std::set<BucketPtr> View::buckets() const {
+  std::set<BucketPtr> buckets;
+
+  for (const auto& item : partition_to_bucket_) {
     buckets.insert(item.second);
   }
 
@@ -79,9 +80,7 @@ std::set<const Bucket *> View::buckets() const {
 }
 
 void View::Clear() {
-  for (auto bp : buckets()) {
-    delete (bp);
-  }
+  partition_to_bucket_.clear();
 }
 
 /**
@@ -118,7 +117,7 @@ std::unique_ptr<View> make_balanced_view(int num_buckets,
   }
 
   for (int i = 0; i < num_buckets; ++i) {
-    auto *pb = new Bucket("bucket-" + std::to_string(i), hash_points[i]);
+    auto pb = std::make_shared<Bucket>("bucket-" + std::to_string(i), hash_points[i]);
     pv->Add(pb);
   }
 

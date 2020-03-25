@@ -13,11 +13,16 @@
 
 
 /**
+ * Alias for a `shared_ptr<Bucket>`.
+ */
+using BucketPtr = std::shared_ptr<Bucket>;
+
+/**
  * A `map` which compares its `float` keys with a given `Tolerance`.
  *
  * @see FloatLessWithTolerance
  */
-typedef std::map<float, const Bucket*, FloatLessWithTolerance<>> MapWithTolerance;
+using MapWithTolerance = std::map<float, BucketPtr, FloatLessWithTolerance<>>;
 
 /**
  * A `View` is a mapping of the whole space of hashes onto a set of `Bucket`s, using
@@ -61,7 +66,7 @@ public:
   View(View&&) = delete;
 
   /** Adds a bucket to this `View` */
-  void Add(const Bucket *bucket);
+  void Add(const BucketPtr& bucket);
 
   /**
    * Removes the given bucket from this view.
@@ -71,7 +76,7 @@ public:
    *
    * @param bucket the bucket to remove from this view and delete
    */
-  bool Remove(const Bucket *bucket);
+  bool Remove(BucketPtr bucket);
 
   /**
    * @return the total number of buckets available in this view.
@@ -99,9 +104,9 @@ public:
    * @param hash the hash value for a key, whose `Bucket` we wish to lookup
    * @return a pointer to the `Bucket` which contains the value associated with the `hash`
    */
-  const Bucket* FindBucket(float hash) const;
+  BucketPtr FindBucket(float hash) const;
 
-  std::set<const Bucket *> buckets() const;
+  std::set<BucketPtr> buckets() const;
 };
 
 std::unique_ptr<View> make_balanced_view(int num_buckets, int partitions_per_bucket = 5);

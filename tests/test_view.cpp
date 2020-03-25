@@ -13,35 +13,34 @@ TEST(ViewTests, CanCreate) {
 }
 
 TEST(ViewTests, CanAddBucket) {
-  Bucket b("test_bucket", {0.2, 0.4, 0.6, 0.8, 0.9});
+  auto pb = std::make_shared<Bucket>("test_bucket",
+                                     std::vector<float>{0.2, 0.4, 0.6, 0.8, 0.9});
   View v;
-  ASSERT_NO_FATAL_FAILURE(v.Add(&b));
+  ASSERT_NO_FATAL_FAILURE(v.Add(pb));
 
   ASSERT_EQ(1, v.num_buckets());
 }
 
-
-TEST(ViewTests, CanFindBucket)
-{
-  Bucket b("test_bucket", {0.1, 0.3, 0.5, 0.7, 0.9});
+TEST(ViewTests, CanFindBucket) {
+  auto pb = std::make_shared<Bucket>("test_bucket",
+                                     std::vector<float>{0.1, 0.3, 0.5, 0.7, 0.9});
   View v;
-  ASSERT_NO_FATAL_FAILURE(v.Add(&b));
+  ASSERT_NO_FATAL_FAILURE(v.Add(pb));
 
   // As this is the only bucket, anything will be assigned to it.
   auto found = v.FindBucket(0.33);
-  ASSERT_EQ(&b, found);
+  ASSERT_EQ(pb, found);
 }
 
-TEST(ViewTests, CanEmitToStdout)
-{
+TEST(ViewTests, CanEmitToStdout) {
   View v;
-  Bucket b1("test-1", {0.2, 0.6, 0.9}),
-         b2("test-2", {0.4, 0.8, 0.7}),
-         b3("test-3", {0.3, 0.5, 0.8, 0.95});
+  auto pb1 = std::make_shared<Bucket>("test-1", std::vector<float>{0.2, 0.6, 0.9});
+  auto pb2 = std::make_shared<Bucket>("test-2", std::vector<float>{0.4, 0.8, 0.7});
+  auto pb3 = std::make_shared<Bucket>("test-3", std::vector<float>{0.3, 0.5, 0.8, 0.95});
 
-  v.Add(&b1);
-  v.Add(&b2);
-  v.Add(&b3);
+  v.Add(pb1);
+  v.Add(pb2);
+  v.Add(pb3);
   ASSERT_EQ(3, v.num_buckets());
 
   ASSERT_NO_FATAL_FAILURE(std::cout << v << std::endl);
@@ -49,27 +48,27 @@ TEST(ViewTests, CanEmitToStdout)
 
 TEST(ViewTests, CanRemoveBucket) {
   View v;
-  Bucket b1("test-1", {0.1, 0.4, 0.7}),
-         b2("test-2", {0.2, 0.5, 0.8}),
-         b3("test-3", {0.3, 0.6, 0.9});
+  auto pb1 = std::make_shared<Bucket>("test-1", std::vector<float>{0.2, 0.6, 0.9});
+  auto pb2 = std::make_shared<Bucket>("test-2", std::vector<float>{0.4, 0.8, 0.7});
+  auto pb3 = std::make_shared<Bucket>("test-3", std::vector<float>{0.3, 0.5, 0.8, 0.95});
 
-  v.Add(&b1);
-  v.Add(&b2);
-  v.Add(&b3);
+  v.Add(pb1);
+  v.Add(pb2);
+  v.Add(pb3);
   EXPECT_EQ(3, v.num_buckets());
 
-  EXPECT_TRUE(v.Remove(&b2));
+  EXPECT_TRUE(v.Remove(pb2));
   EXPECT_EQ(2, v.num_buckets());
 
-  EXPECT_TRUE(v.Remove(&b1));
-  EXPECT_FALSE(v.Remove(&b2));
+  EXPECT_TRUE(v.Remove(pb1));
+  EXPECT_FALSE(v.Remove(pb2));
   EXPECT_EQ(1, v.num_buckets());
 
-  EXPECT_FALSE(v.Remove(&b1));
-  EXPECT_FALSE(v.Remove(&b1));
+  EXPECT_FALSE(v.Remove(pb1));
+  EXPECT_FALSE(v.Remove(pb1));
   EXPECT_EQ(1, v.num_buckets());
 
-  EXPECT_TRUE(v.Remove(&b3));
+  EXPECT_TRUE(v.Remove(pb3));
   EXPECT_EQ(0, v.num_buckets());
 }
 
@@ -82,16 +81,18 @@ TEST(ViewTests, RebalanceLoad) {
   const int NUM_PARTS = 3;
 
   View v;
-  std::map<std::string, const Bucket*> map_items_to_hosts;
-  Bucket* buckets[NUM_BUCKETS];
+  std::map<std::string, BucketPtr> map_items_to_hosts;
+  BucketPtr buckets[NUM_BUCKETS];
 
   float delta = 1.0 / (NUM_BUCKETS * NUM_PARTS);
 
   for (int i = 0; i < NUM_BUCKETS; ++i) {
-    buckets[i] = new Bucket("host-" + std::to_string(i) + ".example.com",
-        {static_cast<float>(i * delta),
-         static_cast<float>(0.34 + i * delta),
-         static_cast<float>(0.67 + i * delta)});
+    buckets[i] = std::make_shared<Bucket>(
+        "host-" + std::to_string(i) + ".example.com",
+        std::vector<float>{static_cast<float>(i * delta),
+                           static_cast<float>(0.34 + i * delta),
+                           static_cast<float>(0.67 + i * delta)}
+    );
     v.Add(buckets[i]);
   }
 
@@ -100,11 +101,12 @@ TEST(ViewTests, RebalanceLoad) {
     map_items_to_hosts[s] = v.FindBucket(consistent_hash(s));
   }
 
-  Bucket new_bucket("new-host.example.com", {0.3, 0.6, 0.9});
-  v.Add(&new_bucket);
+  auto new_bucket = std::make_shared<Bucket>("new-host.example.com",
+      std::vector<float>{0.3, 0.6, 0.9});
+  v.Add(new_bucket);
 
   int rebalance_counts = 0;
-  for (const auto& item : map_items_to_hosts) {
+  for (const auto &item : map_items_to_hosts) {
     auto bucket = v.FindBucket(consistent_hash(item.first));
     if (bucket != item.second) {
       rebalance_counts++;
@@ -116,17 +118,19 @@ TEST(ViewTests, RebalanceLoad) {
   // Adding a node should cause around one C-th of items to be re-shuffled,
   // if C is the number of caches (in this case, 1/10-th).
   auto expected_reshuffles = 1.1 * float(NUM_SAMPLES) / NUM_BUCKETS;
-  ASSERT_LT(rebalance_counts, expected_reshuffles) << "ADD: Too many reshuffles " << rebalance_counts;
+  ASSERT_LT(rebalance_counts, expected_reshuffles)
+                << "ADD: Too many reshuffles " << rebalance_counts;
 
   v.Remove(buckets[8]);
   rebalance_counts = 0;
-  for (const auto& item : map_items_to_hosts) {
+  for (const auto &item : map_items_to_hosts) {
     if (v.FindBucket(consistent_hash(item.first)) != item.second) rebalance_counts++;
   }
   LOG(INFO) << "REMOVE: " << rebalance_counts;
 
   // Similarly, removing, should only cause the items with the removed node to be rebalanced.
-  ASSERT_LT(rebalance_counts, float(NUM_SAMPLES) / NUM_BUCKETS) << "REMOVE: Too many reshuffles " << rebalance_counts;
+  ASSERT_LT(rebalance_counts, float(NUM_SAMPLES) / NUM_BUCKETS)
+                << "REMOVE: Too many reshuffles " << rebalance_counts;
 }
 
 TEST(ViewTests, CreateBalancedViewThrows) {
