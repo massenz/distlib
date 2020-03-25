@@ -336,7 +336,7 @@ public:
     if (pos < size()) {
       return positional_args().at(pos);
     }
-    throw new std::out_of_range("Not enough positional arguments");
+    throw std::out_of_range("Not enough positional arguments");
   }
 
   /**
@@ -394,7 +394,7 @@ public:
     } else if (value == "off") {
       return false;
     }
-    throw new parse_error("Option '" + name + "' does not appear to be a flag (on/off): "
+    throw parse_error("Option '" + name + "' does not appear to be a flag (on/off): "
         "'" + value + "'");
   }
 };

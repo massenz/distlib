@@ -153,7 +153,7 @@ bool MerkleNode<T, hash_func, hash_len>::validate() const {
     return false;
   }
 
-  std::unique_ptr<const char> computedHash(hasChildren() ? computeHash() : hash_func(*value_));
+  std::shared_ptr<const char> computedHash {hasChildren() ? computeHash() : hash_func(*value_) };
   return memcmp(hash_, computedHash.get(), len()) == 0;
 }
 
