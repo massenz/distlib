@@ -61,7 +61,7 @@ public:
   View(View&&) = delete;
 
   /** Adds a bucket to this `View` */
-  void add(const Bucket *bucket);
+  void Add(const Bucket *bucket);
 
   /**
    * Removes the given bucket from this view.
@@ -71,7 +71,7 @@ public:
    *
    * @param bucket the bucket to remove from this view and delete
    */
-  bool remove(const Bucket *bucket);
+  bool Remove(const Bucket *bucket);
 
   /**
    * @return the total number of buckets available in this view.
@@ -84,7 +84,7 @@ public:
    * The `~View` destructor does not delete the buckets' pointers (as the caller may
    * still hold references to them); if you want to clear all the memory, use this method.
    */
-  void clear();
+  void Clear();
 
   /**
    * Retrieves the `Bucket` which the `hash` belongs to.
@@ -99,7 +99,7 @@ public:
    * @param hash the hash value for a key, whose `Bucket` we wish to lookup
    * @return a pointer to the `Bucket` which contains the value associated with the `hash`
    */
-  const Bucket* bucket(float hash) const;
+  const Bucket* FindBucket(float hash) const;
 
   std::set<const Bucket *> buckets() const;
 };

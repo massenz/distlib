@@ -15,7 +15,7 @@ TEST(ViewTests, CanCreate) {
 TEST(ViewTests, CanAddBucket) {
   Bucket b("test_bucket", {0.2, 0.4, 0.6, 0.8, 0.9});
   View v;
-  ASSERT_NO_FATAL_FAILURE(v.add(&b));
+  ASSERT_NO_FATAL_FAILURE(v.Add(&b));
 
   ASSERT_EQ(1, v.num_buckets());
 }
@@ -25,10 +25,10 @@ TEST(ViewTests, CanFindBucket)
 {
   Bucket b("test_bucket", {0.1, 0.3, 0.5, 0.7, 0.9});
   View v;
-  ASSERT_NO_FATAL_FAILURE(v.add(&b));
+  ASSERT_NO_FATAL_FAILURE(v.Add(&b));
 
   // As this is the only bucket, anything will be assigned to it.
-  auto found = v.bucket(0.33);
+  auto found = v.FindBucket(0.33);
   ASSERT_EQ(&b, found);
 }
 
@@ -39,9 +39,9 @@ TEST(ViewTests, CanEmitToStdout)
          b2("test-2", {0.4, 0.8, 0.7}),
          b3("test-3", {0.3, 0.5, 0.8, 0.95});
 
-  v.add(&b1);
-  v.add(&b2);
-  v.add(&b3);
+  v.Add(&b1);
+  v.Add(&b2);
+  v.Add(&b3);
   ASSERT_EQ(3, v.num_buckets());
 
   ASSERT_NO_FATAL_FAILURE(std::cout << v << std::endl);
@@ -53,23 +53,23 @@ TEST(ViewTests, CanRemoveBucket) {
          b2("test-2", {0.2, 0.5, 0.8}),
          b3("test-3", {0.3, 0.6, 0.9});
 
-  v.add(&b1);
-  v.add(&b2);
-  v.add(&b3);
+  v.Add(&b1);
+  v.Add(&b2);
+  v.Add(&b3);
   EXPECT_EQ(3, v.num_buckets());
 
-  EXPECT_TRUE(v.remove(&b2));
+  EXPECT_TRUE(v.Remove(&b2));
   EXPECT_EQ(2, v.num_buckets());
 
-  EXPECT_TRUE(v.remove(&b1));
-  EXPECT_FALSE(v.remove(&b2));
+  EXPECT_TRUE(v.Remove(&b1));
+  EXPECT_FALSE(v.Remove(&b2));
   EXPECT_EQ(1, v.num_buckets());
 
-  EXPECT_FALSE(v.remove(&b1));
-  EXPECT_FALSE(v.remove(&b1));
+  EXPECT_FALSE(v.Remove(&b1));
+  EXPECT_FALSE(v.Remove(&b1));
   EXPECT_EQ(1, v.num_buckets());
 
-  EXPECT_TRUE(v.remove(&b3));
+  EXPECT_TRUE(v.Remove(&b3));
   EXPECT_EQ(0, v.num_buckets());
 }
 
@@ -92,20 +92,20 @@ TEST(ViewTests, RebalanceLoad) {
         {static_cast<float>(i * delta),
          static_cast<float>(0.34 + i * delta),
          static_cast<float>(0.67 + i * delta)});
-    v.add(buckets[i]);
+    v.Add(buckets[i]);
   }
 
   for (int i = 0; i < NUM_SAMPLES; ++i) {
     std::string s("random " + std::to_string(i));
-    map_items_to_hosts[s] = v.bucket(consistent_hash(s));
+    map_items_to_hosts[s] = v.FindBucket(consistent_hash(s));
   }
 
   Bucket new_bucket("new-host.example.com", {0.3, 0.6, 0.9});
-  v.add(&new_bucket);
+  v.Add(&new_bucket);
 
   int rebalance_counts = 0;
   for (const auto& item : map_items_to_hosts) {
-    auto bucket = v.bucket(consistent_hash(item.first));
+    auto bucket = v.FindBucket(consistent_hash(item.first));
     if (bucket != item.second) {
       rebalance_counts++;
       map_items_to_hosts[item.first] = bucket;
@@ -118,10 +118,10 @@ TEST(ViewTests, RebalanceLoad) {
   auto expected_reshuffles = 1.1 * float(NUM_SAMPLES) / NUM_BUCKETS;
   ASSERT_LT(rebalance_counts, expected_reshuffles) << "ADD: Too many reshuffles " << rebalance_counts;
 
-  v.remove(buckets[8]);
+  v.Remove(buckets[8]);
   rebalance_counts = 0;
   for (const auto& item : map_items_to_hosts) {
-    if (v.bucket(consistent_hash(item.first)) != item.second) rebalance_counts++;
+    if (v.FindBucket(consistent_hash(item.first)) != item.second) rebalance_counts++;
   }
   LOG(INFO) << "REMOVE: " << rebalance_counts;
 
@@ -146,7 +146,7 @@ TEST(ViewTests, CreateBalancedView) {
     auto b = *pv->buckets().cbegin();
     ASSERT_EQ(10, b->partitions());
 
-    pv->clear();
+    pv->Clear();
 
   } catch (const std::invalid_argument &ex) {
     FAIL() << "Creating the view throws: " << ex.what();

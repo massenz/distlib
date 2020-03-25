@@ -8,7 +8,7 @@
 #include <cmath>
 #include <iostream>
 
-void View::add(const Bucket *bucket) {
+void View::Add(const Bucket *bucket) {
   if (bucket == nullptr) {
     LOG(FATAL) << "Cannot add a null Bucket to a View";
     return;
@@ -21,7 +21,7 @@ void View::add(const Bucket *bucket) {
   num_buckets_++;
 }
 
-bool View::remove(const Bucket *bucket) {
+bool View::Remove(const Bucket *bucket) {
   bool found = false;
 
   for (auto item : bucket->partition_points()) {
@@ -45,7 +45,7 @@ bool View::remove(const Bucket *bucket) {
   return found;
 }
 
-const Bucket *View::bucket(float hash) const {
+const Bucket *View::FindBucket(float hash) const {
 
   if (partition_to_bucket_.empty()) {
     return nullptr;
@@ -78,7 +78,7 @@ std::set<const Bucket *> View::buckets() const {
   return buckets;
 }
 
-void View::clear() {
+void View::Clear() {
   for (auto bp : buckets()) {
     delete (bp);
   }
@@ -119,7 +119,7 @@ std::unique_ptr<View> make_balanced_view(int num_buckets,
 
   for (int i = 0; i < num_buckets; ++i) {
     auto *pb = new Bucket("bucket-" + std::to_string(i), hash_points[i]);
-    pv->add(pb);
+    pv->Add(pb);
   }
 
   return pv;
