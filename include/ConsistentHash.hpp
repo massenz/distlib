@@ -8,17 +8,15 @@
 #include <utility>
 
 #include <openssl/md5.h>
+#include <utils/utils.hpp>
 
 
 /**
- * Exception thrown when errors encountered.
+ * Exception thrown when errors encountered using MD5 to hash values.
  */
-class md5_error : public std::exception {
-  std::string reason_;
-
+ class md5_error : public utils::base_error {
 public:
-  explicit md5_error(std::string  reason) : reason_(std::move(reason)) {}
-  const char* what() const noexcept override { return reason_.c_str(); }
+  explicit md5_error(std::string  reason) : base_error(std::move(reason)) { }
 };
 
 /**

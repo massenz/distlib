@@ -21,19 +21,31 @@
 namespace utils {
 
 /**
- * Marker exception for unimplemented methods.
+ * Base class for all exceptions in this library.
  */
-class not_implemented : public std::exception {
+class base_error : public std::exception {
+ protected:
   std::string what_;
 
-public:
-  explicit not_implemented(const std::string &method_or_class) {
-    what_ = method_or_class + " not implemented";
-  }
+ public:
+  explicit base_error(std::string  error) : what_(std::move(error)) {}
 
-  const char *what() const throw() override {
+#if defined( __linux__ )
+  virtual const char* what() const _GLIBCXX_NOTHROW {
+#elif defined( __APPLE__ )
+    virtual const char* what() const _NOEXCEPT {
+#endif
     return what_.c_str();
   }
+};
+
+/**
+ * Marker exception for unimplemented methods.
+ */
+class not_implemented : public base_error {
+public:
+  explicit not_implemented(const std::string &method_or_class) :
+      base_error { method_or_class + " not implemented" } { }
 };
 
 /**

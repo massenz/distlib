@@ -4,105 +4,114 @@
 
 #include <gtest/gtest.h>
 
-#include "../include/MerkleNode.hpp"
+#include "MerkleNode.hpp"
 
 using namespace std;
+using namespace merkle;
+
+int IdentityHash(const int& n) { return n; }
+int ConcatHash(const shared_ptr<int> &psl,
+    const shared_ptr<int> &psr) {
+  return IdentityHash(*psl + *psr);
+}
+
+using MerkleIntNode =
+    merkle::MerkleNode<int, int, IdentityHash, ConcatHash>;
 
 TEST(MerkleNodeTests, CanCreate) {
-  std::string s("leaves in spring");
+//  std::string s("leaves in spring");
 
-  MD5StringMerkleNode leaf(s);
-  ASSERT_TRUE(leaf.validate());
+  MerkleIntNode leaf(999);
+  ASSERT_TRUE(leaf.IsLeaf());
+  ASSERT_TRUE(leaf.IsValid());
+}
+
+TEST(MerkleNodeTests, CanCreateIntermediate) {
+//  std::string s("leaves in spring");
+
+  MerkleIntNode leaf1(999);
+  MerkleIntNode leaf2(777);
+  MerkleIntNode root(&leaf1, &leaf2);
+
+  ASSERT_FALSE(root.IsLeaf());
+  ASSERT_TRUE(root.IsValid());
+
+  auto values = GetAllValues(&root);
+
+  // Release the pointers before root's destructor tries to free stack-allocated memory
+  root.release_left();
+  root.release_right();
 }
 
 TEST(MerkleNodeTests, CanCreateTree) {
-  std::string sl[] = {"leaves", "winter", "spring", "flowers"};
-  MD5StringMerkleNode *leaves[4];
+  std::vector<int> sl {100, 101, 102, 103};
 
-  for (int i = 0; i < 4; ++i) {
-    leaves[i] = new MD5StringMerkleNode(sl[i]);
-  }
+  auto root = merkle::Build<int, int, IdentityHash, ConcatHash>(sl);
 
-  MD5StringMerkleNode *a = new MD5StringMerkleNode(leaves[0], leaves[1]);
-  MD5StringMerkleNode *b = new MD5StringMerkleNode(leaves[2], leaves[3]);
-  MD5StringMerkleNode root(a, b);
-
-  EXPECT_TRUE(root.hasChildren());
-  EXPECT_TRUE(b->left() != nullptr);
-  EXPECT_TRUE(leaves[3]->right() == nullptr);
-  EXPECT_TRUE(root.validate());
-}
-
-TEST(MerkleNodeTests, CannotForgeTree) {
-  std::string sl[]{"spring", "winter", "summer", "fall"};
-  MD5StringMerkleNode *leaves[4];
-
-  for (int i = 0; i < 4; ++i) {
-    leaves[i] = new MD5StringMerkleNode(sl[i]);
-  }
-
-  MD5StringMerkleNode *a = new MD5StringMerkleNode(leaves[0], leaves[1]);
-  MD5StringMerkleNode *b = new MD5StringMerkleNode(leaves[2], leaves[3]);
-  MD5StringMerkleNode root(a, b);
-
-  EXPECT_TRUE(root.hasChildren());
-  EXPECT_FALSE(b->left() == nullptr);
-  EXPECT_TRUE(root.validate());
-
-  MD5StringMerkleNode *fake = new MD5StringMerkleNode("autumn");
-  b->setNode(fake, MD5StringMerkleNode::RIGHT);
-  EXPECT_FALSE(root.validate());
-}
-
-TEST(MerkleNodeTests, hasChildren) {
-  MD5StringMerkleNode *a = new MD5StringMerkleNode("test");
-  EXPECT_FALSE(a->hasChildren());
-
-  MD5StringMerkleNode *b = new MD5StringMerkleNode("another node");
-  MD5StringMerkleNode parent(a, b);
-  EXPECT_TRUE(parent.hasChildren());
-}
-
-TEST(MerkleNodeTests, Equals) {
-  MD5StringMerkleNode a("test");
-  MD5StringMerkleNode b("test");
-
-  // First, must be equal to itself.
-  EXPECT_EQ(a, a);
-
-  // Then equal to an identically constructed other.
-  EXPECT_EQ(a, b);
-
-  // Then, non-equal to a different one.
-  MD5StringMerkleNode c("not a test");
-  EXPECT_NE(a, c);
+  ASSERT_NE(root, nullptr);
+  EXPECT_TRUE(root->IsValid());
+  EXPECT_FALSE(root->IsLeaf());
 }
 
 
-TEST(MerkleNodeTests, Build) {
-  std::string sl[]{"one", "two", "three", "four"};
+TEST(MerkleNodeTests, CanNavigateTree) {
+  std::vector<int> sl {100, 101, 102, 103};
 
-  std::list<std::string> nodes;
-  for (int i = 0; i < 4; ++i) {
-    nodes.push_back(sl[i]);
-  }
+  auto root = merkle::Build<int, int, IdentityHash, ConcatHash>(sl);
 
-  const MD5StringMerkleNode *root = build<std::string, MD5StringMerkleNode>(nodes);
-  ASSERT_NE(nullptr, root);
-  EXPECT_TRUE(root->validate());
-  delete (root);
+  ASSERT_NE(root, nullptr);
+  EXPECT_TRUE(root->IsValid());
+
+  auto values = merkle::GetAllValues(root.get());
+  ASSERT_EQ(4, values.size());
+
+  auto pos = values.begin();
+  ASSERT_EQ(100, *pos);
+  pos++; // 101
+  pos++; // 102
+  ASSERT_EQ(102, *pos);
+}
+
+// Some tests with a more challenging hash.
+
+// Simply concatenates the two buffers.
+string HashOfHashes(const shared_ptr<string> &psl,
+                        const shared_ptr<string> &psr) {
+  return *psl + *psr;
+}
+
+using MerkleStringNode =
+    merkle::MerkleNode<std::string, std::string, ::hash_str, HashOfHashes>;
+
+TEST(MerkleNodeTests, CanCreateStringsTree) {
+  std::vector<string> sl { "first", "second", "third", "fourth", "fifth" };
+
+  auto root = merkle::Build<std::string, std::string, ::hash_str, HashOfHashes>(sl);
+
+  ASSERT_NE(root, nullptr);
+  EXPECT_TRUE(root->IsValid());
+  EXPECT_FALSE(root->IsLeaf());
 }
 
 
-TEST(MerkleNodeTests, BuildOdd) {
+TEST(MerkleNodeTests, CanNavigateStringsTree) {
+  std::vector<string> sl { "first", "second", "third", "fourth", "fifth" };
+  auto root = merkle::Build<std::string, std::string, ::hash_str, HashOfHashes>(sl);
 
-  std::list<std::string> nodes;
-  for (int i = 0; i < 33; ++i) {
-    nodes.push_back("node #" + to_string(i));
-  }
+  ASSERT_NE(root, nullptr);
+  EXPECT_TRUE(root->IsValid());
 
-  const MD5StringMerkleNode *root = build<std::string, MD5StringMerkleNode>(nodes);
-  ASSERT_NE(nullptr, root);
-  EXPECT_TRUE(root->validate());
-  delete (root);
+  auto values = merkle::GetAllValues(root.get());
+  ASSERT_EQ(5, values.size());
+
+  auto pos = values.begin();
+  ASSERT_EQ("first", *pos);
+  pos++; // second
+  pos++; // third
+  pos++; // fourth
+  ASSERT_EQ("fourth", *pos);
 }
+
+
+
+
