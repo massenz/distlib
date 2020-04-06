@@ -11,7 +11,7 @@
 #include <vector>
 
 #include <glog/logging.h>
-
+#include "utils.hpp"
 
 namespace utils {
 
@@ -20,20 +20,9 @@ const std::regex kIpPortPattern{R"((\d{1,3}(\.\d{1,3}){3}):(\d+))"};
 const std::regex kHostPortPattern{R"((\S+(\.\S+)*):(\d+))"};
 const std::regex kIpPattern{R"(\d{1,3}(\.\d{1,3}){3})"};
 
-
-class parse_error : public std::exception {
-  std::string what_;
-
+class parse_error : public base_error {
 public:
-  explicit parse_error(const std::string& error) : what_(error) {}
-
-#if defined( __linux__ )
-  virtual const char* what() const _GLIBCXX_NOTHROW {
-#elif defined( __APPLE__ )
-  virtual const char* what() const _NOEXCEPT {
-#endif
-    return what_.c_str();
-  }
+  explicit parse_error(const std::string& error) : base_error { error } { }
 };
 
 

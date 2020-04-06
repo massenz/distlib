@@ -88,9 +88,9 @@ set(UTILS_SOURCES
         ${SOURCE_DIR}/utils/network.cpp
 )
 
-set(CONSISTENT_HASH_SOURCES
-        ${SOURCE_DIR}/ConsistentHash.cpp
+set(SOURCES
         ${SOURCE_DIR}/Bucket.cpp
+        ${SOURCE_DIR}/ConsistentHash.cpp
         ${SOURCE_DIR}/View.cpp
 )
 
@@ -106,7 +106,7 @@ set(UTILS_LIBS
 # Shared (dynamic) library for various Distributed facilities.
 #
 add_library(distutils SHARED
-        ${CONSISTENT_HASH_SOURCES}
+        ${SOURCES}
         ${UTILS_SOURCES}
 )
 target_link_libraries(distutils ${UTILS_LIBS})

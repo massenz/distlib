@@ -10,178 +10,243 @@
 #include <openssl/md5.h>
 #include <iostream>
 #include <cassert>
+#include <memory>
+#include <utility>
+#include <vector>
 
 #include "ConsistentHash.hpp"
+#include "utils/utils.hpp"
 
+
+namespace merkle {
+
+using std::unique_ptr;
+using std::shared_ptr;
+
+/**
+ * Exception thrown when the tree made of `MerkleNode` is found to be in an invalid state.
+ */
+class merkle_tree_invalid_state_exception : public utils::base_error {
+ public:
+  explicit merkle_tree_invalid_state_exception(std::string error) :
+      base_error { std::move(error) } { }
+
+  merkle_tree_invalid_state_exception() :
+      base_error("Merkle Tree failed to validate hashes") {}
+};
 
 /**
  * Abstract base class to model a Merkle Tree, whose nodes' values are the hash of the
  * concatenated values of their descendants' hashes.
  * The leaf nodes store both the `value` and its hash.
  *
- * <p>The `hash_func()` is a parameter for the template, as well as the length of the resultant
- * hash.
+ * <p>The `Hash` is a parameter for the template, and is the hashing function for the
+ * leaf nodes' values; the children hashes are computed with the `HashNode` function,
+ * which in turn takes the hashes and generates a new one.
  *
- * <p>Specializations of this class must "plug" in the actual hashing function that takes two
- * hash values (both of length `hash_len`) concatenates them, and then computes the hash (whose
- * result must equally be `hash_len` bytes).
+ * <p>In the most trivial case, two `U` objects can simply concatenated and the same
+ * `Hash` function can be applied, but this is left to the user of this class to
+ * decide and implement.
+ *
+ * <p>`HashNode` must return a correct value when either (or, possibly, both) arguments
+ * are `nullptr`s; however, the hashed values may differ for the same value passed, but
+ * in either positions, when the other is null; in other words, this MAY fail:
+ *
+ *      shared_ptr<U> myHash = someHash(aT);
+ *      ASSERT_EQ(HashNode(myHash, shared_ptr<U> {}), HashNode(shared_ptr<U> {}, myHash))
  *
  * <p>For more details on Merkle Trees, see:<br>
  * "Mastering Bitcoin", Andreas M. Antonopoulos, Chapter 7.
+ *
+  * @tparam T the type of the leaf nodes' values
+  * @tparam U the type of the hash operation, must be composable
+  * @tparam Hash the function that computes the hash of a `T` object
+  * @tparam HashNode a function that computes the hash of two `U` hash values
  */
-template<typename T, char *(hash_func)(const T &), size_t hash_len>
+template<typename T, typename U,
+     U (Hash)(const T &),
+     U (HashNode)(const shared_ptr<U> &, const shared_ptr<U> &)
+>
 class MerkleNode {
-protected:
+ protected:
 
   std::unique_ptr<const MerkleNode> left_, right_;
-  const char *hash_;
-  const std::shared_ptr<const T> value_;
+  U hash_;
+  const std::shared_ptr<T> value_;
 
-  /**
-   * Computes the hash of the children nodes' respective hashes.
-   * In other words, given a node N, with children (N1, N2), whose hash values are,
-   * respectively, H1 and H2, computes:
-   *
-   *     H = hash(H1 || H2)
-   *
-   * where `||` represents the concatenation operation.
-   * If the `right_` descendant is missing, it will simply duplicate the `left_` node's hash.
-   *
-   * For a "leaf" node (both descendants missing), it will use the `hash_func()` to compute the
-   * hash of the stored `value_`.
-   */
-  virtual const char *computeHash() const = 0;
-
-public:
-
-  typedef enum {
-    LEFT, RIGHT
-  } WhichNode;
-
-  // THIS SHOULD NOT BE USED.
-  // It has been defined purely for testing purposes: setting a child directly here will cause
-  // the entire tree's validation to fail.
-  //
-  // Use the ``::addLeaf()`` function instead.
-  void setNode(const MerkleNode *node, const WhichNode which) {
-    switch (which) {
-      case LEFT:
-        left_.reset(node);
-        break;
-      case RIGHT:
-        right_.reset(node);
-        break;
-      default:
-        return;
-    }
-    if (hash_) delete[](hash_);
-    hash_ = computeHash();
-  }
+ public:
+  using node_type = MerkleNode<T, U, Hash, HashNode>;
 
   /**
    * Builds a "leaf" node, with no descendants and a `value` that will be copied and stored.
-   * We also compute the hash (`hash_func()`) of the value and store it in this node.
+   * We also compute the hash (`hash_`) of the value and store it in this node.
    *
-   * We assume ownership of the pointer returned by the `hash_func()` which we assume has been
-   * freshly allocated, and will be released upon destruction of this node.
+   * @param value the value stored in the node and whose `Hash()` value is stored to validate
+   *    eventually the whole tree.
    */
-  MerkleNode(const T &value) : value_(new T(value)), left_(nullptr), right_(nullptr) {
-    hash_ = hash_func(value);
+  explicit MerkleNode(const T &value) : value_{ new T(value) }, left_(nullptr), right_(nullptr) {
+    hash_ = Hash(value);
   }
 
   /**
-   * Creates an intermediate node, storing the descendants as well as computing the compound hash.
+   * Creates an intermediate node, storing the descendants as well as computing the computed hash.
+   *
+   * <p>Both arguments MUST be pointers allocated on the heap, they can't be pointers to
+   * stack-allocated objects, as the `unique_ptr`s that hold them will try to deallocate
+   * them upon destruction of this node.
+   *
+   * <p>Calling this method means that the caller must relinquish ownership of these pointers.
+   *
+   * @param left one of the children of this node, cannot be `nullptr`
+   * @param right the other children of this node, cannot be `nullptr`
    */
-  MerkleNode(const MerkleNode<T, hash_func, hash_len> *left,
-             const MerkleNode<T, hash_func, hash_len> *right) :
-      left_(left), right_(right), value_(nullptr) {
-
-    // In C++ we cannot invoke `computeHash()` here (where it would make the most sense), even if
-    // this constructor is invoked via the constructor of a derived class, which does implement
-    // `computeHash()`: at this point that object is not yet constructed, and its invocation here
-    // would trigger a "pure virtual function invocation" error.
-    // Call this method instead in the derived class's constructor.
-    //    hash_ = computeHash();
+  MerkleNode(const node_type *left,
+             const node_type *right) {
+    left_.reset(left);
+    right_.reset(right);
+    hash_ = HashNode(std::make_shared<U>(left->hash_),
+        std::make_shared<U>(right->hash_));
   }
 
-  /**
-   * Deletes the memory pointed to by the `hash_` pointer: if your `hash_func()` and/or the
-   * `computeHash()` method implementation do not allocate this memory (or you do not wish to
-   * free the allocated memory) remember to override this destructor's behavior too.
-   */
-  virtual ~MerkleNode() {
-    if (hash_) delete[](hash_);
-  }
+  virtual ~MerkleNode() = default;
+
+  // A MerkleNode is by nature immutable; it makes no sense to copy or move it.
+  MerkleNode(const MerkleNode&) = delete;
+  MerkleNode& operator=(const MerkleNode&) = delete;
+  MerkleNode(MerkleNode&&) = delete;
+  MerkleNode& operator=(MerkleNode&&) = delete;
 
   /**
    * Recursively validate the subtree rooted in this node: if executed at the root of the tree,
    * it will validate the entire tree.
    */
-  virtual bool validate() const;
-
-  /**
-   * The length of the hash, also part of the template instantiation (`hash_len`).
-   *
-   * @see hash_len
-   */
-  size_t len() const { return hash_len; }
-
-  /**
-   * Returns the buffer containing the hash value, of `len()` bytes length.
-   *
-   * @see len()
-   */
-  const char *hash() const { return hash_; }
-
-  bool hasChildren() const {
-    return left_ || right_;
+  bool IsValid() const {
+    // A node is either a leaf (and both descendants' pointers are null) or an intermediate node,
+    // in which case both children are non-null (this is a direct consequence of
+    // how we add nodes: see `AddLeaf`).
+    if (IsLeaf()) {
+      return hash() == Hash(*value_);
+    } else {
+      return left_->IsValid() && right_->IsValid();
+    }
   }
 
-  const MerkleNode * left() const { return left_.get(); }
-  const MerkleNode * right() const { return right_.get(); }
+  /**
+   * *Note* this is *not* the `Hash()` function (case is different).
+   *
+   * @return this node's hash value.
+   */
+  U hash() const { return hash_; }
+
+  /**
+   * Getter for the node's stored value.
+   */
+  T value() const { return *value_; }
+
+  /**
+   * Whether this node is a "leaf node," i.e., it has no descendants.
+   *
+   * <p> Note that, due to the nature of the nodes of a `MerkleTree` (and how
+   * we construct the tree itself) a non-leaf node has _always_ both children
+   * nodes non-null.
+   *
+   * @return whether this is a leaf (terminal) node (from which it is hence possible to
+   *    extract the `value`)
+   * @see AddLeaf()
+   * @see value()
+   */
+  bool IsLeaf() const {
+    return (left_ == nullptr) && (right_ == nullptr);
+  }
+
+  const node_type *left() const { return left_.get(); }
+  const node_type *right() const { return right_.get(); }
+
+  /**
+   * Relinquish ownership of the pointer to the LHS descendant, and will not
+   * attempt to release memory upon destruction; the caller becomes responsible
+   * to manage the pointer's lifecycle.
+   *
+   * @return the "raw" pointer to the LHS node
+   */
+  const node_type *release_left() { return left_.release(); }
+
+  /**
+ * Relinquish ownership of the pointer to the LHS descendant, and will not
+ * attempt to release memory upon destruction; the caller becomes responsible
+ * to manage the pointer's lifecycle.
+ *
+ * @return the "raw" pointer to the LHS node
+ */
+  const node_type *release_right() { return right_.release(); }
+
 };
 
 
-template<typename T, char *(hash_func)(const T &), size_t hash_len>
-bool MerkleNode<T, hash_func, hash_len>::validate() const {
-
-  // If either child is not valid, the entire subtree is invalid too.
-  if (left_ && !left_->validate()) {
-    return false;
-  }
-  if (right_ && !right_->validate()) {
-    return false;
-  }
-
-  std::shared_ptr<const char[]> computedHash {hasChildren() ?
-      computeHash() : hash_func(*value_)
-  };
-  return memcmp(hash_, computedHash.get(), len()) == 0;
-}
-
-
-template<typename T, char *(hash_func)(const T &), size_t hash_len>
-bool operator==(const MerkleNode<T, hash_func, hash_len> &lhs,
-                const MerkleNode<T, hash_func, hash_len> &rhs) {
+template<typename T, typename U,
+     U (Hash)(const T &),
+     U (HashNode)(const shared_ptr<U> &, const shared_ptr<U> &)
+>
+bool operator==(const MerkleNode<T, U, Hash, HashNode> &lhs,
+                const MerkleNode<T, U, Hash, HashNode> &rhs) {
   // First the trivial case of identity.
   if (&lhs == &rhs) {
     return true;
   }
 
-  // If either child is missing, or not equal, the nodes are different.
-  if (*lhs.left() != *rhs.left() || *lhs.right() != *rhs.right()) {
+  // Both nodes must be either leaf, or non-leaf.
+  if (lhs.IsLeaf() != rhs.IsLeaf()) {
     return false;
   }
 
   // Finally, the hash values themselves.
-  return memcmp(lhs.hash(), rhs.hash(), hash_len) == 0;
+  return lhs.hash() == rhs.hash();
 }
 
-
-template<typename T, char *(hash_func)(const T &), size_t hash_len>
-inline bool operator!=(const MerkleNode<T, hash_func, hash_len> &lhs,
-                       const MerkleNode<T, hash_func, hash_len> &rhs) {
+template<typename T, typename U,
+     U (Hash)(const T &),
+     U (HashNode)(const shared_ptr<U> &, const shared_ptr<U> &)
+>
+inline bool operator!=(const MerkleNode<T, U, Hash, HashNode> &lhs,
+                       const MerkleNode<T, U, Hash, HashNode> &rhs) {
   return !(lhs == rhs);
+}
+
+/**
+ * Adds a leaf to the Merkle Tree whose `root` is passed in.
+ *
+ * <p>This method simply creates a new root node, whose left descendant is the original `root`
+ * and the right descendant is the newly created `MerkleNode` with the `T value`.
+ *
+ * <p>This is a very efficient insertion model, but leaves the tree unbalanced: this is not
+ * as important (as, for example, in a sorted tree, where the lookup time is logarithmic only
+ * if the tree is approximately balanced): a Merkle Tree is only usually traversed to visit
+ * all nodes and ensure the validity of the tree.
+ *
+ *
+ * <pre>
+ *   Before:                    After:
+ *          root                              root (returned)
+ *          / \                               /           \
+ *         --  v1                     previous root        value
+ *        / \                         / \
+ *      ...  v2                      --  v1
+ *                                  / \
+ *                                ...  v2
+ * </pre>
+ *
+ * @param root the root of the Merkle Tree; we take ownership of this pointer.
+ * @param value the leaf to append at the end of the tree.
+ * @return the new `root` to the tree.
+ */
+template<typename T, typename U,
+     U (Hash)(const T &),
+     U (HashNode)(const shared_ptr<U> &, const shared_ptr<U> &)
+>
+inline std::unique_ptr<MerkleNode<T, U, Hash, HashNode>> AddLeaf(
+    std::unique_ptr<MerkleNode<T, U, Hash, HashNode>> root, const T &value) {
+  auto right = std::make_unique<MerkleNode<T, U, Hash, HashNode>>(value);
+  return std::make_unique<MerkleNode<T, U, Hash, HashNode>>(root.release(), right.release());
 }
 
 
@@ -191,58 +256,96 @@ inline bool operator!=(const MerkleNode<T, hash_func, hash_len> &lhs,
  *
  * @return the root of the tree.
  */
-template<typename T, char *(hash_func)(const T &), size_t hash_len>
-const MerkleNode<T, hash_func, hash_len> build(const std::list<const T &> &values);
+template<typename T, typename U,
+     U (Hash)(const T &),
+     U (HashNode)(const shared_ptr<U> &, const shared_ptr<U> &)
+>
+std::unique_ptr<MerkleNode<T, U, Hash, HashNode>> Build(const std::vector<T> &values) {
 
+  if (values.empty()) {
+    throw merkle_tree_invalid_state_exception{"Cannot build a MerkleTree with an empty vector"};
+  }
 
-// Recursive implementation of the build algorithm.
-//
-template<typename NodeType>
-const NodeType *build_(NodeType *nodes[], size_t len) {
-
-  if (len == 1) return new NodeType(nodes[0], nullptr);
-  if (len == 2) return new NodeType(nodes[0], nodes[1]);
-
-  size_t half = len % 2 == 0 ? len / 2 : len / 2 + 1;
-  return new NodeType(build_(nodes, half), build_(nodes + half, len - half));
+  auto root = std::make_unique<MerkleNode<T, U, Hash, HashNode>>(values[0]);
+  auto pos = values.begin() + 1;
+  while (pos != values.end()) {
+    root = std::move(AddLeaf<T, U, Hash, HashNode>(std::move(root), *pos));
+    pos++;
+  }
+  return root;
 }
 
-template<typename T, typename NodeType>
-const NodeType *build(const std::list<T> &values) {
-
-  NodeType *leaves[values.size()];
-  int i = 0;
-  for (auto value : values) {
-    leaves[i++] = new NodeType(value);
-  }
-
-  return build_(leaves, values.size());
-};
-
-
-template<typename NodeType>
-const void destroy(const NodeType *node) {
-  if (node->hasChildren()) {
-    auto children = node->getChildren();
-    auto left = std::get<0>(children);
-    auto right = std::get<1>(children);
-    if (left) destroy(left);
-    if (right) destroy(right);
-  }
-  delete node;
-};
 
 /**
- * Adds a leaf to the Merkle Tree whose `root` is passed in.
+ * Traverses the tree and returns all values in insertion order.
  *
- * @param root the root of the Merkle Tree; all hashes in the path to the leaf will be recomputed.
- * @param value the leaf to append to the nearest empty slot.
- *
- * @return `true` if the operation was successful.
+ * @tparam T the type of the nodes' values.
+ * @tparam U the type of the hash for the node
+ * @tparam Hash the hashing function, returns values of type `U`
+ * @tparam HashNode the hashing functions for non-leaf nodes, hashes two `U` objects
+ *      and returns a `U` value
+ * @param root the root of the tree
+ * @return the `list` of all values in the tree, in insertion order.
  */
-template<typename T, char *(hash_func)(const T &), size_t hash_len>
-bool addLeaf(MerkleNode<T, hash_func, hash_len> *root, const T &value);
+template<typename T, typename U,
+     U (Hash)(const T &),
+     U (HashNode)(const shared_ptr<U> &, const shared_ptr<U> &)
+>
+std::list<T> GetAllValues(MerkleNode<T, U, Hash, HashNode> *root) {
+  if (!root->IsValid()) {
+    throw merkle_tree_invalid_state_exception { };
+  }
 
+  return __GetValues(root);
+}
+
+
+/**
+ * Internal function to recursively traverse the tree.
+ *
+ * <p><bold>DO NOT USE</bold>: this is meant for internal use,
+ * use instead `GetAllValues`.
+ *
+ * @param root a "raw" pointer to the head of the tree.
+ * @return a list of values (in insertion order) from the tree.
+ */
+template<typename T, typename U,
+     U (Hash)(const T &),
+     U (HashNode)(const shared_ptr<U> &, const shared_ptr<U> &)
+>
+std::list<T> __GetValues(const MerkleNode<T, U, Hash, HashNode> *root) {
+
+  using NodeType = MerkleNode<T, U, Hash, HashNode>;
+  std::list<T> values;
+
+  const NodeType *current = root;
+  if (current->IsLeaf()) {
+    values.push_front(current->value());
+    return values;
+  }
+
+  // While not guaranteed, currently traversing the tree breadth-first and
+  // checking on the right branch first, guarantees that values are emitted
+  // in the same order as they were inserted, if they are added to the list
+  // in "reverse" order (adding to the front of the list).
+  if (current->right()) {
+      auto others = __GetValues(current->right());
+      // Remember we want to prepend the nodes returned from
+      // a depth-first traversal.
+      // See also: https://stackoverflow.com/questions/1449703/how-to-append-a-listt-object-to-another
+      others.splice(others.end(), values);
+      values = std::move(others);
+  }
+  if (current->left()) {
+      auto others = __GetValues(current->left());
+      // Remember we want to prepend the nodes returned from
+      // a depth-first traversal.
+      // See also: https://stackoverflow.com/questions/1449703/how-to-append-a-listt-object-to-another
+      others.splice(others.end(), values);
+      values = std::move(others);
+  }
+  return values;
+}
 
 char *hash_str_func(const std::string &value) {
   unsigned char *buf;
@@ -251,15 +354,17 @@ char *hash_str_func(const std::string &value) {
   return (char *) buf;
 }
 
+
 /**
  * An implementation of a Merkle Tree with the nodes' elements ``strings`` and their hashes
  * computed using the MD5 algorithm.
  *
- * This is an example of how one can build a Merkle tree given a concrete type and an arbtrary
+ * This is an example of how one can build a Merkle tree given a concrete type and an arbitrary
  * hashing function.
  */
+ /*
 class MD5StringMerkleNode : public MerkleNode<std::string, hash_str_func, MD5_DIGEST_LENGTH> {
-protected:
+ protected:
 
   // This is the only function that we need to implement, in order to specialize the template to
   // our concrete types: the hash is computed using the MD5 algorithm (as implemented by the
@@ -278,11 +383,11 @@ protected:
     return (char *) computedHash;
   }
 
-public:
+ public:
 
   // This constructor does not need to do anything, the parent class will take care of all the
   // necessary initialization.
-  MD5StringMerkleNode(const std::string &value) : MerkleNode(value) { }
+  MD5StringMerkleNode(const std::string &value) : MerkleNode(value) {}
 
   // We need to explictily invoke the ``computeHash()`` method here, or an linker error will be
   // thrown, as the invocation on the parent class will attempt to invoke a 'pure virtual' method.
@@ -293,3 +398,5 @@ public:
 
 //  virtual ~MD5StringMerkleNode() { }
 };
+  */
+} // namespace merkle
