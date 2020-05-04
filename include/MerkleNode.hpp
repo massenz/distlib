@@ -44,7 +44,7 @@ class merkle_tree_invalid_state_exception : public utils::base_error {
  * leaf nodes' values; the children hashes are computed with the `HashNode` function,
  * which in turn takes the hashes and generates a new one.
  *
- * <p>In the most trivial case, two `U` objects can simply concatenated and the same
+ * <p>In the most trivial case, two `U` objects can simply be concatenated and the same
  * `Hash` function can be applied, but this is left to the user of this class to
  * decide and implement.
  *
@@ -291,7 +291,7 @@ template<typename T, typename U,
      U (Hash)(const T &),
      U (HashNode)(const shared_ptr<U> &, const shared_ptr<U> &)
 >
-std::list<T> GetAllValues(MerkleNode<T, U, Hash, HashNode> *root) {
+std::list<T> GetAllValues(const MerkleNode<T, U, Hash, HashNode> *root) {
   if (!root->IsValid()) {
     throw merkle_tree_invalid_state_exception { };
   }
@@ -347,56 +347,45 @@ std::list<T> __GetValues(const MerkleNode<T, U, Hash, HashNode> *root) {
   return values;
 }
 
+/**
+ * Emits all the tree's contents to the output stream.
+ *
+ * It checks first that the tree is valid, otherwise nothing is emitted (but no exception is
+ * thrown either).
+ *
+ * Example usage:
+ *
+ * <code>
+   auto root = merkle::demo::BuildMD5StringMerkleTree(nodes);
+   std::cout << "The tree's contents are: \n" << root.get();
+ * </code>
+ *
+ * @tparam T the type of the node's contents: they must be compatible with `operator<<(out, T)`
+ * @tparam U the type of the hash value
+ * @tparam Hash the hashing function
+ * @tparam HashNode the compound hashing function
+ * @param out the output stream that will receive the nodes' values
+ * @param root the root of a Merkle tree: it will be emitted in insertion order
+ * @return the output stream passed in, so calls can be concatenated.
+ */
+template<typename T, typename U,
+    U (Hash)(const T &),
+    U (HashNode)(const shared_ptr<U> &, const shared_ptr<U> &)
+>
+inline std::ostream& operator<<(std::ostream& out,
+    const MerkleNode<T, U, Hash, HashNode> *root) noexcept {
+  if (root->IsValid()) {
+    auto values = GetAllValues(root);
+    std::for_each(values.begin(), values.end(), [&](const T& value) { out << value << std::endl; });
+  }
+  return out;
+}
+
+
 char *hash_str_func(const std::string &value) {
   unsigned char *buf;
   size_t len = basic_hash(value.c_str(), value.length(), &buf);
   assert(len == MD5_DIGEST_LENGTH);
   return (char *) buf;
 }
-
-
-/**
- * An implementation of a Merkle Tree with the nodes' elements ``strings`` and their hashes
- * computed using the MD5 algorithm.
- *
- * This is an example of how one can build a Merkle tree given a concrete type and an arbitrary
- * hashing function.
- */
- /*
-class MD5StringMerkleNode : public MerkleNode<std::string, hash_str_func, MD5_DIGEST_LENGTH> {
- protected:
-
-  // This is the only function that we need to implement, in order to specialize the template to
-  // our concrete types: the hash is computed using the MD5 algorithm (as implemented by the
-  // OpenSSL library).
-  virtual const char *computeHash() const {
-    char buffer[2 * MD5_DIGEST_LENGTH];
-    unsigned char *computedHash;
-
-    memcpy(buffer, left_->hash(), MD5_DIGEST_LENGTH);
-
-    // If the right node is null, we just double the left node.
-    memcpy(buffer + MD5_DIGEST_LENGTH, right_ ? right_->hash() : left_->hash(), MD5_DIGEST_LENGTH);
-    size_t len = basic_hash(buffer, 2 * MD5_DIGEST_LENGTH, &computedHash);
-    assert(len == MD5_DIGEST_LENGTH);
-
-    return (char *) computedHash;
-  }
-
- public:
-
-  // This constructor does not need to do anything, the parent class will take care of all the
-  // necessary initialization.
-  MD5StringMerkleNode(const std::string &value) : MerkleNode(value) {}
-
-  // We need to explictily invoke the ``computeHash()`` method here, or an linker error will be
-  // thrown, as the invocation on the parent class will attempt to invoke a 'pure virtual' method.
-  MD5StringMerkleNode(const MD5StringMerkleNode *lhs, const MD5StringMerkleNode *rhs) :
-      MerkleNode(lhs, rhs) {
-    hash_ = computeHash();
-  }
-
-//  virtual ~MD5StringMerkleNode() { }
-};
-  */
 } // namespace merkle

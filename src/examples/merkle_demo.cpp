@@ -3,69 +3,90 @@
 
 #include <iostream>
 #include <list>
-
+#include <regex>
 
 #include <glog/logging.h>
 
 #include "version.h"
 
-#include "../../include/ConsistentHash.hpp"
-#include "../../include/MerkleNode.hpp"
+#include "ConsistentHash.hpp"
+#include "MerkleNode.hpp"
 
+using namespace std;
 
-using std::cin;
-using std::cout;
-using std::endl;
-using std::list;
-using std::string;
+namespace merkle {
+namespace demo {
 
+// Simply concatenates the two buffers.
+string ConcatHashes(const shared_ptr<string> &psl,
+                    const shared_ptr<string> &psr) noexcept {
+  if (!(psl || psr)) return "";
+  return !psl ? *psr : !psr ? *psl : *psl + *psr;
+}
+
+/**
+ * An implementation of a Merkle Tree with the nodes' elements ``strings`` and their hashes
+ * computed using the MD5 algorithm.
+ *
+ * This is an example of how one can build a Merkle tree given a concrete type and an arbitrary
+ * hashing function.
+ */
+using MD5StringMerkleNode = MerkleNode<std::string, std::string, ::hash_str, ConcatHashes>;
+
+// Specialization of the generic merkle::Build() method:
+std::unique_ptr<MD5StringMerkleNode>
+BuildMD5StringMerkleTree(const vector<string> &values) {
+  return merkle::Build<string, string, ::hash_str, ConcatHashes>(values);
+}
+
+} // namespace demo
+} // namespace merkle
 
 static unsigned int kNumNodes = 33;
 
+void usage(const std::string &arg) {
+  regex progname { "/?(\\w+)$" };
+  smatch matches;
+  string prog { arg };
 
-void usage(const std::string &prog) {
-
-  cout << "Merkle Tree & Consistent Hash Demo - LibDist ver. " << RELEASE_STR
-       << "\n\nUsage: " << prog.c_str() << " string-to-hash [nodes]" << endl;
+  if (regex_search(arg, matches, progname)) {
+    prog = matches[0];
+  }
+  cout << "Usage: " << prog << " string-to-hash [nodes]" << endl;
 }
 
+void headline() {
+  cout << "Merkle Tree & Consistent Hash Demo - LibDist ver. " << RELEASE_STR << endl << endl;
+}
 
 int main(int argc, char *argv[]) {
 
-  list<string> nodes;
-  const MD5StringMerkleNode* root;
-
-  // Initialize Google Logs and send logs to stderr too (in addition
-  // to the default file location; default: /tmp).
-  google::InitGoogleLogging(argv[0]);
-  FLAGS_logtostderr = 1;
-
+  headline();
   if (argc < 2) {
     usage(argv[0]);
-    LOG(ERROR) << "Missing one required argument `string-to-hash`";
+    std::cerr << "[ERROR] Missing required argument `string-to-hash`" << endl;
     exit(EXIT_FAILURE);
   }
 
-  std::string mesg(argv[1]);
-
-  LOG(INFO) << "'" << mesg << "' hashes to [" << hash_str(mesg) << "]";
-  LOG(INFO) << "Its consistent hash is: " << consistent_hash(mesg);
+  std::string mesg { argv[1] };
+  cout << "'" << mesg << "' hashes to [" << hash_str(mesg) << "]" << endl
+       << "Its consistent hash is: " << consistent_hash(mesg) << endl;
 
   unsigned int num_nodes = kNumNodes;
   if (argc > 2) {
-    num_nodes = static_cast<unsigned int>(atoi(argv[2]));
+    num_nodes = static_cast<unsigned int>(::strtoul(argv[2], nullptr, 10));
   }
 
-  LOG(INFO) << "Building a Merkle Tree with " << num_nodes << " nodes";
+  cout << "Building a Merkle Tree with " << num_nodes << " nodes" << endl;
+  vector<string> nodes;
+  nodes.reserve(num_nodes);
   for (int i = 0; i < num_nodes; ++i) {
     nodes.push_back("node #" + std::to_string(i));
   }
 
-  root = build<std::string, MD5StringMerkleNode>(nodes);
+  auto root = merkle::demo::BuildMD5StringMerkleTree(nodes);
+  cout << "The tree is " << (root->IsValid() ? "" : "not ") << "valid" << endl
+       << "Its contents are: \n" << root.get() << endl << endl;
 
-  bool valid = root->validate();
-  LOG(INFO) << "The tree is " << (valid ? "" : "not ") << "valid" << endl;
-  delete(root);
-
-  return valid ? EXIT_SUCCESS : EXIT_FAILURE;
+  return root->IsValid() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

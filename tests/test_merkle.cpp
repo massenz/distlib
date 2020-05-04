@@ -76,12 +76,21 @@ TEST(MerkleNodeTests, CanNavigateTree) {
 
 // Simply concatenates the two buffers.
 string HashOfHashes(const shared_ptr<string> &psl,
-                        const shared_ptr<string> &psr) {
-  return *psl + *psr;
+                    const shared_ptr<string> &psr) {
+  if (!(psl || psr)) return "";
+  return !psl ? *psr : !psr ? *psl : *psl + *psr;
 }
 
 using MerkleStringNode =
     merkle::MerkleNode<std::string, std::string, ::hash_str, HashOfHashes>;
+
+TEST(MerkleNodeTests, AssertInvariant) {
+  std::shared_ptr<string> myHash  = std::make_shared<string>( ::hash_str("a test string") );
+  VLOG(2) << "The Hash is: " << *myHash;
+
+  ASSERT_EQ(HashOfHashes(myHash, shared_ptr<string> {}),
+      HashOfHashes(shared_ptr<string> {}, myHash));
+}
 
 TEST(MerkleNodeTests, CanCreateStringsTree) {
   std::vector<string> sl { "first", "second", "third", "fourth", "fifth" };

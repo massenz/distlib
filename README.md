@@ -13,25 +13,26 @@ Updated   | 2020-03-22
 
 ## Conan packages
 
-To build the project, you need to first donwload/build the necessary binary dependencies, as
-listed in `conanfile.text`.
+This project use [Conan](https://conan.io) to build dependencies; please see 
+[this post](https://medium.com/swlh/converting-a-c-project-to-cmake-conan-61ba9a998cb4) 
+for more details on how to use inside a CMake project.
 
-This is done as follows:
+To build the project, you need to first download/build the necessary binary dependencies, as
+listed in `conanfile.txt`.
+
+This is done as follows (we highly recommend to use [virtualenvs in Python](https://virtualenv.pypa.io/en/stable/)):
 
 ```bash
-sudo -H pip install -U conan
-mkdir .conan && cd .conan
-conan install .. -s compiler=clang -s compiler.version=4.0 \
+pip install -U conan
+mkdir build && cd build
+conan install . -s compiler=clang -s compiler.version=$VERSION \
     -s compiler.libcxx=libstdc++11 --build=missing
 ```
 
-__note__
-> I've found Conan not to work terribly well inside virtualenvs - but
-if you can make it work there, that'd be the preferred way.
 
-After the dependencies are built, you can see information about them using `conan info ..`
+After the dependencies are built, you can see information about them using `conan info build`
 (the commands above assume that `clang` is configured on the `PATH` and that you have
-version 3.6 installed).
+version `$VERSION` installed).
 
 See also `CMakeLists.txt` for the changes necessary to add Conan's builds to the targets.
 
@@ -47,10 +48,25 @@ See [conan.io](http://conan.io) for more information.
 
 ## Build & testing
 
+### Common utilities
+
+The scripts in this repository take advantage of shared common utility functions
+in [this common utils repository](https://bitbucket.org/marco/common-utils): clone it
+somewhere, and make `$COMMON_UTILS_DIR` point to it:
+
+```shell script
+git clone git@bitbucket.org:marco/common-utils.git
+export COMMON_UTILS_DIR="$(pwd)/common-utils"
+```
+
+### Build libdist
+
 To build the project:
 
-    $ INSTALL_DIR=/some/path
-    $ ./bin/build && ./bin/test
+```shell script
+$ export INSTALL_DIR=/some/path
+$ ./bin/build && ./bin/test
+```
 
 or to simply run a subset of the tests with full debug logging:
 
@@ -62,6 +78,15 @@ and headers so that other projects can find them:
     $ cd build && make install
 
 See the scripts in the `bin` folder for more options.
+
+### Run the examples
+
+There is one example binary that shows how to use consistent hashes and build a Merkle tree:
+see `src/examples/merkle_demo.cpp`.
+
+After [building](#build-libdist) the project, you can run it with:
+
+    ./build/bin/merkle_demo  "some string to hash" 8
 
 
 # Projects

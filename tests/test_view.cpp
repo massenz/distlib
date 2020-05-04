@@ -113,7 +113,7 @@ TEST(ViewTests, RebalanceLoad) {
       map_items_to_hosts[item.first] = bucket;
     }
   }
-  LOG(INFO) << "ADD: " << rebalance_counts;
+  VLOG(2) << "ADD: " << rebalance_counts;
 
   // Adding a node should cause around one C-th of items to be re-shuffled,
   // if C is the number of caches (in this case, 1/10-th).
@@ -126,7 +126,7 @@ TEST(ViewTests, RebalanceLoad) {
   for (const auto &item : map_items_to_hosts) {
     if (v.FindBucket(consistent_hash(item.first)) != item.second) rebalance_counts++;
   }
-  LOG(INFO) << "REMOVE: " << rebalance_counts;
+  VLOG(2) << "REMOVE: " << rebalance_counts;
 
   // Similarly, removing, should only cause the items with the removed node to be rebalanced.
   ASSERT_LT(rebalance_counts, float(NUM_SAMPLES) / NUM_BUCKETS)

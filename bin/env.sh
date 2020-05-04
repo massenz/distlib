@@ -2,15 +2,7 @@
 
 set -eu
 
-# Prints the absolute path of the file given as $1
-#
-function abspath {
-    local path=${1:-}
-    if [[ -z ${path} ]]; then
-        exit 1
-    fi
-    echo $(python -c "import os; print(os.path.abspath(\"${path}\"))")
-}
+source ${COMMON_UTILS_DIR}/utils.sh
 
 BASEDIR="$(abspath $(dirname $0)/..)"
 BUILDDIR="${BASEDIR}/build"
@@ -29,3 +21,4 @@ fi
 if [[ -d ${COMMON_UTILS_DIR} ]]; then
   UTILS="-DCOMMON_UTILS_DIR=${COMMON_UTILS_DIR}"
 fi
+
