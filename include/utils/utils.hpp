@@ -20,6 +20,10 @@
 
 namespace utils {
 
+using std::string;
+
+/********************* Exception Classes ************************************/
+
 /**
  * Base class for all exceptions in this library.
  */
@@ -28,7 +32,7 @@ class base_error : public std::exception {
   std::string what_;
 
  public:
-  explicit base_error(std::string  error) : what_(std::move(error)) {}
+  explicit base_error(string  error) : what_(std::move(error)) {}
 
 #if defined( __linux__ )
   virtual const char* what() const _GLIBCXX_NOTHROW {
@@ -48,17 +52,57 @@ public:
       base_error { method_or_class + " not implemented" } { }
 };
 
+
+/********************* Hashing Functions *************************************/
+
+/**
+ * Converts a char buffer into a hex string.
+ *
+ * It expects the ``digest`` buffer to contain exactly ``MD5_DIGEST_LENGTH``
+ * bytes, that will be converted to hex notation and appended to the returned
+ * string.
+ *
+ * @param digest The MD5 digest to convert into a string; exactly
+ *    `MD5_DIGEST_LENGTH` bytes in length.
+ * @return the hex-encoded string representation of the `digest`.
+ */
+std::string md5_to_string(const unsigned char *digest);
+
+
+/**
+ * Computes the hash of the given ``value`` and puts into the destination buffer,
+ * ``hash_value``, whose length is returned.
+ *
+ * The buffer is newly allocated and it is the caller's responsibility to deallocate it
+ * when done.
+ *
+ * @param value the value to hash.
+ * @param len the length of the value to hash.
+ * @param hash_value the digest from the hash, newly allocated.
+ *
+ * @return the size of the digest buffer.
+ */
+size_t basic_hash(const char* value, size_t len, unsigned char** hash_value);
+/**
+ * Hashes the given string using MD5 and returns the hash.
+ *
+ * @param msg The string to hash.
+ * @return the MD5 hash of `msg`.
+ */
+std::string hash_str(const std::string &msg);
+
+
 /**
  * Convenience method, can be used by projects using this library to emit their version
  * string, alongside the library version.
  *
  * @param server_name the name for the server that uses this library
  * @param version the server's version
- * @param out the stream to write out the version information
+ * @param out the stream to write out the version information (by default, `stdout`)
  * @return the same stream that was passed in, for ease of chaining
  */
-std::ostream& PrintVersion(const std::string& server_name,
-                           const std::string& version, std::ostream &out = std::cout);
+std::ostream& PrintVersion(const string& server_name,
+                           const string& version, std::ostream &out = std::cout);
 
 /**
  * Converts a vector to a string, the concatenation of its element, separated by `sep`.
@@ -80,6 +124,9 @@ std::string Vec2Str(const std::vector<T> &vec, const std::string &sep = "\n") {
   }
   return out.str();
 }
+
+/********************* Network Utilities *************************************/
+
 
 /**
  * Returns the IP address of the host whose name is `hostname`; if `hostname` is empty, the IP

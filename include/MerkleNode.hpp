@@ -380,12 +380,4 @@ inline std::ostream& operator<<(std::ostream& out,
   }
   return out;
 }
-
-
-char *hash_str_func(const std::string &value) {
-  unsigned char *buf;
-  size_t len = basic_hash(value.c_str(), value.length(), &buf);
-  assert(len == MD5_DIGEST_LENGTH);
-  return (char *) buf;
-}
 } // namespace merkle

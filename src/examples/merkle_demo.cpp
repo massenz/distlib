@@ -2,7 +2,6 @@
 // Created by M. Massenzio (marco@alertavert.com) on 3/5/16.
 
 #include <iostream>
-#include <list>
 #include <regex>
 
 #include <glog/logging.h>
@@ -11,6 +10,7 @@
 
 #include "ConsistentHash.hpp"
 #include "MerkleNode.hpp"
+#include "utils/utils.hpp"
 
 using namespace std;
 
@@ -31,12 +31,12 @@ string ConcatHashes(const shared_ptr<string> &psl,
  * This is an example of how one can build a Merkle tree given a concrete type and an arbitrary
  * hashing function.
  */
-using MD5StringMerkleNode = MerkleNode<std::string, std::string, ::hash_str, ConcatHashes>;
+using MD5StringMerkleNode = MerkleNode<std::string, std::string, utils::hash_str, ConcatHashes>;
 
 // Specialization of the generic merkle::Build() method:
 std::unique_ptr<MD5StringMerkleNode>
 BuildMD5StringMerkleTree(const vector<string> &values) {
-  return merkle::Build<string, string, ::hash_str, ConcatHashes>(values);
+  return merkle::Build<string, string, utils::hash_str, ConcatHashes>(values);
 }
 
 } // namespace demo
@@ -56,7 +56,7 @@ void usage(const std::string &arg) {
 }
 
 void headline() {
-  cout << "Merkle Tree & Consistent Hash Demo - LibDist ver. " << RELEASE_STR << endl << endl;
+  cout << "Merkle Tree & Consistent Hash Demo - " << RELEASE_STR << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
   }
 
   std::string mesg { argv[1] };
-  cout << "'" << mesg << "' hashes to [" << hash_str(mesg) << "]" << endl
+  cout << "'" << mesg << "' hashes to [" << utils::hash_str(mesg) << "]" << endl
        << "Its consistent hash is: " << consistent_hash(mesg) << endl;
 
   unsigned int num_nodes = kNumNodes;

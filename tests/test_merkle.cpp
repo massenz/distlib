@@ -82,10 +82,10 @@ string HashOfHashes(const shared_ptr<string> &psl,
 }
 
 using MerkleStringNode =
-    merkle::MerkleNode<std::string, std::string, ::hash_str, HashOfHashes>;
+    merkle::MerkleNode<std::string, std::string, utils::hash_str, HashOfHashes>;
 
 TEST(MerkleNodeTests, AssertInvariant) {
-  std::shared_ptr<string> myHash  = std::make_shared<string>( ::hash_str("a test string") );
+  std::shared_ptr<string> myHash  = std::make_shared<string>( utils::hash_str("a test string") );
   VLOG(2) << "The Hash is: " << *myHash;
 
   ASSERT_EQ(HashOfHashes(myHash, shared_ptr<string> {}),
@@ -95,7 +95,7 @@ TEST(MerkleNodeTests, AssertInvariant) {
 TEST(MerkleNodeTests, CanCreateStringsTree) {
   std::vector<string> sl { "first", "second", "third", "fourth", "fifth" };
 
-  auto root = merkle::Build<std::string, std::string, ::hash_str, HashOfHashes>(sl);
+  auto root = merkle::Build<std::string, std::string, utils::hash_str, HashOfHashes>(sl);
 
   ASSERT_NE(root, nullptr);
   EXPECT_TRUE(root->IsValid());
@@ -105,7 +105,7 @@ TEST(MerkleNodeTests, CanCreateStringsTree) {
 
 TEST(MerkleNodeTests, CanNavigateStringsTree) {
   std::vector<string> sl { "first", "second", "third", "fourth", "fifth" };
-  auto root = merkle::Build<std::string, std::string, ::hash_str, HashOfHashes>(sl);
+  auto root = merkle::Build<std::string, std::string, utils::hash_str, HashOfHashes>(sl);
 
   ASSERT_NE(root, nullptr);
   EXPECT_TRUE(root->IsValid());

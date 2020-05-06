@@ -12,36 +12,6 @@
 
 
 /**
- * Exception thrown when errors encountered using MD5 to hash values.
- */
- class md5_error : public utils::base_error {
-public:
-  explicit md5_error(std::string  reason) : base_error(std::move(reason)) { }
-};
-
-/**
- * Converts a char buffer into a hex string.
- *
- * It expects the ``digest`` buffer to contain exactly ``MD5_DIGEST_LENGTH``
- * bytes, that will be converted to hex notation and appended to the returned
- * string.
- *
- * @param digest The MD5 digest to convert into a string; exactly
- *    `MD5_DIGEST_LENGTH` bytes in length.
- * @return the hex-encoded string representation of the `digest`.
- */
-std::string md5_to_string(const unsigned char *digest);
-
-
-/**
- * Hashes the given string using MD5 and returns the hash.
- *
- * @param msg The string to hash.
- * @return the MD5 hash of `msg`.
- */
-std::string hash_str(const std::string &msg);
-
-/**
  * Computes a "consistent hash" of the given string.
  *
  * For the definition of "consistent hash" see:
@@ -54,20 +24,6 @@ std::string hash_str(const std::string &msg);
  */
 float consistent_hash(const std::string &msg);
 
-/**
- * Computes the hash of the given ``value`` and puts into the destination buffer,
- * ``hash_value``, whose length is returned.
- *
- * The buffer is newly allocated and it is the caller's responsibility to deallocate it
- * when done.
- *
- * @param value the value to hash.
- * @param len the length of the value to hash.
- * @param hash_value the digest from the hash, newly allocated.
- *
- * @return the size of the digest buffer.
- */
-size_t basic_hash(const char* value, size_t len, unsigned char** hash_value);
 
 /**
  * Comparator function object, compares two floats, assuming

@@ -16,8 +16,8 @@ if (${GTEST} STREQUAL GTEST-NOTFOUND)
 endif (${GTEST} STREQUAL GTEST-NOTFOUND)
 
 set(UNIT_TESTS
-        ${TESTS_DIR}/test_consistent_hash.cpp
         ${TESTS_DIR}/test_bucket.cpp
+        ${TESTS_DIR}/test_hash.cpp
         ${TESTS_DIR}/test_merkle.cpp
         ${TESTS_DIR}/test_parse_args.cpp
         ${TESTS_DIR}/test_utils_network.cpp

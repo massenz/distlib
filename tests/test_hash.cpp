@@ -4,10 +4,10 @@
 
 #include <gtest/gtest.h>
 
-#include "../include/ConsistentHash.hpp"
-
+#include "utils/utils.hpp"
 
 using namespace std;
+using namespace utils;
 
 TEST(HashTests, CanHashOneWord) {
   const string mesg = "test";
