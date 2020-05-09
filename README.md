@@ -59,6 +59,13 @@ git clone git@bitbucket.org:marco/common-utils.git
 export COMMON_UTILS_DIR="$(pwd)/common-utils"
 ```
 
+To build/test the project, link to the scripts there:
+
+```shell script
+ln -s ${COMMON_UTILS_DIR}/build.sh build
+ln -s ${COMMON_UTILS_DIR}/test.sh test
+```
+
 ### Build libdist
 
 To build the project:
@@ -70,14 +77,14 @@ $ ./bin/build && ./bin/test
 
 or to simply run a subset of the tests with full debug logging:
 
-    $ GLOG_v=2 ./bin/test --gtest_filter=SwimServer*
+    $ ./bin/test -v --gtest_filter="Bucket*"     
 
 To install the generated binaries (`.so` or `.dylib` shared libraries) 
 and headers so that other projects can find them:
 
     $ cd build && make install
 
-See the scripts in the `bin` folder for more options.
+See the scripts in the `${COMMON_UTILS_DIR}` folder for more options.
 
 ### Run the examples
 

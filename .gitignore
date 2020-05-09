@@ -22,6 +22,8 @@ gen/
 build/
 Debug/
 .conan/
+bin/build
+bin/test
 
 # Compiler intermediate files
 .o
