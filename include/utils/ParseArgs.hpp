@@ -229,7 +229,6 @@ public:
    * <pre>
    *   int main(int argc, const char* argv[]) {
    *     utils::ParseArgs parser(argv, argc);
-   *     parser.parse();
    *
    *     if (parser.has("help")) {
    *       usage();
@@ -244,11 +243,15 @@ public:
    * @param args an array of C-string values.
    * @param len the number of elements in `args`.
    */
-  ParseArgs(const char *args[], size_t len) : progname_(args[0]), parsed_(false) {
-    size_t pos = progname_.rfind("/");
-    if (pos != std::string::npos) {
-      progname_ = progname_.substr(pos + 1);
+  ParseArgs(const char *args[], size_t len) : parsed_(false) {
+    std::regex progname{R"(/?(\w+)$)"};
+    std::smatch matches;
+    string prog { args[0] };
+
+    if (regex_search(prog, matches, progname)) {
+      progname_ = matches[1];
     }
+
     for (int i = 1; i < len; ++i) {
       args_.push_back(std::string(args[i]));
     }
