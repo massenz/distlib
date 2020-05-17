@@ -108,7 +108,7 @@ from the main project directory and all apidocs will be generated in `docs/apido
 
 ## Consistent Hashing
 
-See the [Consistent Hash paper](chash) for more details.
+See the [Consistent Hash paper](http://www.cs.princeton.edu/courses/archive/fall07/cos518/papers/chash.pdf) for more details.
 
 The code implementation here is a simple example of how to implement a set of `buckets` so that
 nodes in a distributed systems could use the consistent hashing algorithm to allow nodes to
@@ -124,10 +124,7 @@ causes a fraction of the items to be re-shuffled.
 
 A Merkle Tree is a tree structure where the individual nodes’ hashes are computed and stored in the parent node, so that the hash stored in the root node is the only value that is required to later validate the contents of the tree (stored in the leaves).
 
-Merkle trees are used in the Blockchain and are described in greater detail in "[Mastering bitcoin](bitcoin)" (Chapter 7, “Merkle Trees”):
+Merkle trees are used in the Blockchain and are described in greater detail in "[Mastering bitcoin](https://amzn.to/32B4jYE)" (Chapter 7, “Merkle Trees”):
 
 See [this post](https://codetrips.com/2016/06/19/implementing-a-merkle-tree-in-c/) for more details.
- 
 
-[bitcoin]: https://amzn.to/32B4jYE
-[chash]: http://www.cs.princeton.edu/courses/archive/fall07/cos518/papers/chash.pdf
