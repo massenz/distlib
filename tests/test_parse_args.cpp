@@ -11,7 +11,7 @@ TEST(ParseArgsTests, canParseSimple) {
   utils::ParseArgs parser(mine, 2);
 
   ASSERT_STREQ("send", parser.progname().c_str());
-  ASSERT_EQ("1023", parser.get("port"));
+  ASSERT_EQ("1023", parser.Get("port"));
 }
 
 
@@ -30,10 +30,10 @@ TEST(ParseArgsTests, canParseMany) {
   };
   utils::ParseArgs parser(mine, sizeof(mine) / sizeof(const char *));
 
-  EXPECT_EQ("google.com", parser.get("server"));
-  EXPECT_EQ("", parser.get("bogus"));
-  EXPECT_EQ("off", parser.get("amend"));
-  EXPECT_EQ("on", parser.get("enable-no-value"));
+  EXPECT_EQ("google.com", parser.Get("server"));
+  EXPECT_EQ("", parser.Get("bogus"));
+  EXPECT_EQ("off", parser.Get("amend"));
+  EXPECT_EQ("on", parser.Get("enable-no-value"));
 
   ASSERT_EQ(2, parser.size());
   EXPECT_STREQ("send", parser.at(0).c_str());
@@ -81,8 +81,8 @@ TEST(ParseArgsTests, canParseFromVector) {
 
   utils::ParseArgs parser(args);
 
-  EXPECT_EQ("google.com", parser.get("server"));
-  EXPECT_EQ("off", parser.get("amend"));
+  EXPECT_EQ("google.com", parser.Get("server"));
+  EXPECT_EQ("off", parser.Get("amend"));
 
   ASSERT_EQ(2, parser.size());
   EXPECT_STREQ("send", parser.at(0).c_str());
@@ -108,9 +108,9 @@ TEST(ParseArgsTests, canUseHelperMethods) {
   ASSERT_EQ("fillme.png", parser[3]);
 
   ASSERT_STREQ("localhost:2181", parser["zk"].c_str());
-  ASSERT_EQ(5, parser.getNames().size());
-  ASSERT_STREQ("amend", parser.getNames()[0].c_str());
-  ASSERT_STREQ("zk", parser.getNames()[4].c_str());
+  ASSERT_EQ(5, parser.GetNames().size());
+  ASSERT_STREQ("amend", parser.GetNames()[0].c_str());
+  ASSERT_STREQ("zk", parser.GetNames()[4].c_str());
 }
 
 TEST(ParseArgsTests, getsDefaultValueForMissing) {
@@ -122,12 +122,12 @@ TEST(ParseArgsTests, getsDefaultValueForMissing) {
       }
   );
 
-  ASSERT_EQ(8088, parser.getInt("port", 9099));
-  ASSERT_EQ(9099, parser.getInt("port-no", 9099));
-  ASSERT_EQ(0, parser.getInt("foo"));
+  ASSERT_EQ(8088, parser.GetInt("port", 9099));
+  ASSERT_EQ(9099, parser.GetInt("port-no", 9099));
+  ASSERT_EQ(0, parser.GetInt("foo"));
 
-  ASSERT_EQ("defaultValue", parser.get("none", "defaultValue"));
-  ASSERT_TRUE(parser.get("missing").empty());
+  ASSERT_EQ("defaultValue", parser.Get("none", "defaultValue"));
+  ASSERT_TRUE(parser.Get("missing").empty());
 }
 
 
@@ -140,8 +140,8 @@ TEST(ParseArgsTests, boolFlags) {
           "myfile.txt"
       }
   );
-  ASSERT_FALSE(parser.enabled("edit"));
-  ASSERT_TRUE(parser.enabled("debug"));
+  ASSERT_FALSE(parser.Enabled("edit"));
+  ASSERT_TRUE(parser.Enabled("debug"));
 }
 
 
@@ -157,12 +157,12 @@ TEST(ParseArgsTests, throwsIfUnexpected)
   );
 
   // First, the happy path.
-  EXPECT_NO_THROW(parser.enabled("fail"));
+  EXPECT_NO_THROW(parser.Enabled("fail"));
 
   // Unfortunately Google Test gets mightily confused about the type of exception thrown,
   // so we can't be more specific here (even though, debugging through the code, one can
   // verify the correct type of exception is thrown).
-  EXPECT_ANY_THROW(parser.enabled("port"));
+  EXPECT_ANY_THROW(parser.Enabled("port"));
   EXPECT_ANY_THROW(parser[2]);
 
 }

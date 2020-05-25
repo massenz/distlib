@@ -27,7 +27,7 @@ endif()
 
 # Version number
 set(RELEASE_MAJOR 0)
-set(RELEASE_MINOR 14)
+set(RELEASE_MINOR 16)
 set(RELEASE_PATCH 0)
 
 IF (${COMMONS_FILE} STREQUAL NOTFOUND)
@@ -86,7 +86,7 @@ link_directories(
 set(UTILS_SOURCES
         ${SOURCE_DIR}/utils/misc.cpp
         ${SOURCE_DIR}/utils/network.cpp
-)
+        ${SOURCE_DIR}/utils/ParseArgs.cpp)
 
 set(SOURCES
         ${SOURCE_DIR}/Bucket.cpp
