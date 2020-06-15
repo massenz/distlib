@@ -3,7 +3,9 @@
 
 
 #include <gtest/gtest.h>
-#include <ConsistentHash.hpp>
+#include <gmock/gmock-matchers.h>
+
+#include "ConsistentHash.hpp"
 #include "View.hpp"
 
 using namespace std;
@@ -102,7 +104,7 @@ TEST(ViewTests, RebalanceLoad) {
   }
 
   auto new_bucket = std::make_shared<Bucket>("new-host.example.com",
-      std::vector<float>{0.3, 0.6, 0.9});
+                                             std::vector<float>{0.3, 0.6, 0.9});
   v.Add(new_bucket);
 
   int rebalance_counts = 0;
@@ -154,5 +156,65 @@ TEST(ViewTests, CreateBalancedView) {
 
   } catch (const std::invalid_argument &ex) {
     FAIL() << "Creating the view throws: " << ex.what();
+  }
+}
+
+TEST(ViewTests, CanGetBucketsAndUse) {
+  auto pv = make_balanced_view(5, 15);
+  auto buckets = pv->buckets();
+  ASSERT_EQ(5, buckets.size());
+
+  auto pos = buckets.begin();
+  (*pos)->set_name("new bucket");
+  pos++;
+  pos++;
+  (*pos)->set_name("new bucket");
+
+  int count = 0;
+  auto new_buckets = pv->buckets();
+  std::for_each(new_buckets.begin(), new_buckets.end(),
+                [&count](const BucketPtr &bucket_ptr) {
+                  if (bucket_ptr->name() == "new bucket") {
+                    count++;
+                  }
+                });
+  ASSERT_EQ(2, count);
+
+}
+
+TEST(ViewTests, RenameBuckets) {
+  auto pv = make_balanced_view(3, 10);
+  ASSERT_EQ(3, pv->num_buckets());
+
+  std::vector<std::string> names{"pippo", "pluto", "paperino"};
+  pv->RenameBuckets(names.cbegin(), names.cend());
+
+  auto buckets = pv->buckets();
+  std::vector<string> bucket_names;
+  bucket_names.reserve(buckets.size());
+  for (auto b : buckets) {
+    bucket_names.push_back(b->name());
+  }
+  ASSERT_THAT(bucket_names, ::testing::UnorderedElementsAreArray(names));
+}
+
+TEST(ViewTests, RenameBucketsNotEnoughNames) {
+  auto pv = make_balanced_view(5, 10);
+  ASSERT_EQ(5, pv->num_buckets());
+
+  std::vector<std::string> names{"Qui", "Quo", "Qua"};
+  pv->RenameBuckets(names.cbegin(), names.cend());
+
+  std::vector<string> buckets_names;
+  auto buckets = pv->buckets();
+  ASSERT_EQ(buckets.size(), pv->num_buckets());
+
+  for (const auto &b : buckets) {
+    buckets_names.push_back(b->name());
+  }
+
+  for (const auto& name : names) {
+    auto pos = std::find(buckets_names.cbegin(), buckets_names.cend(), name);
+    ASSERT_NE(pos, buckets_names.cend());
   }
 }

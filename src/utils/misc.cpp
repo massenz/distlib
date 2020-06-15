@@ -2,6 +2,7 @@
 // Created by M. Massenzio (marco@alertavert.com) on 8/6/17.
 
 #include <openssl/md5.h>
+#include <chrono>
 
 #include "utils/utils.hpp"
 
@@ -11,11 +12,16 @@ std::ostream& PrintVersion(const string& server_name,
                            const string& version,
                            std::ostream &out) {
   out << server_name << " Ver. " << version
-      << " (libdist ver. " << RELEASE_STR << ")"
-      << std::endl;
-
+      << " (libdist ver. " << RELEASE_STR << ")" << std::endl;
   return out;
 }
+
+std::ostream& PrintCurrentTime(std::ostream &out) {
+  auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  out << std::ctime(&now);
+  return out;
+}
+
 
 
 string md5_to_string(const unsigned char *digest) {

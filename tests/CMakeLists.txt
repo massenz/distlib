@@ -11,9 +11,11 @@ conan_basic_setup()
 
 
 find_library(GTEST gtest ${INSTALL_DIR}/lib)
+find_library(GMOCK gmock ${INSTALL_DIR}/lib)
+
 if (${GTEST} STREQUAL GTEST-NOTFOUND)
     message(FATAL_ERROR "Could not locate a valid Google Test library installed.")
-endif (${GTEST} STREQUAL GTEST-NOTFOUND)
+endif ()
 
 set(UNIT_TESTS
         ${TESTS_DIR}/test_bucket.cpp
@@ -35,6 +37,7 @@ add_executable(unit_tests
 
 target_link_libraries(unit_tests
         ${GTEST}
+        ${GMOCK}
         distutils
 )
 

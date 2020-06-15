@@ -1,14 +1,12 @@
 // Copyright (c) 2016 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 3/6/16.
 
-
-
-#ifndef BRICK_BUCKET_HPP
-#define BRICK_BUCKET_HPP
+#pragma once
 
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <glog/logging.h>
@@ -36,32 +34,32 @@
  */
 class Bucket {
 private:
-  const std::string name_;
+  std::string name_;
   std::vector<float> hash_points_;
 
 public:
   Bucket(std::string name, std::vector<float> hash_points);
 
-  virtual ~Bucket() {}
+  Bucket(const Bucket&) = default;
+  Bucket& operator=(const Bucket& other) = default;
+  virtual ~Bucket() = default;
 
   void add_partition_point(float point);
 
   void remove_partition_point(unsigned int i);
-
-  // Explicitly disallow copy & assignment
-  Bucket(const Bucket&) = delete;
-  Bucket operator=(const Bucket&) = delete;
-
 
   /**
    * Every `Bucket` should have a unique name that can be used to identify it.
    *
    * @return the bucket's name
    */
-  const std::string name() const {
+  std::string name() const {
     return name_;
   }
 
+  void set_name(std::string name) {
+    name_ = std::move(name);
+  }
 
   /**
    * The partition points for this bucket will determine which items will be "allocated" to it,
@@ -69,14 +67,16 @@ public:
    *
    * @return the set of {@link partitions()} points that define this bucket
    */
-  const std::vector<float> partition_points() const {
+  std::vector<float> partition_points() const {
     return hash_points_;
   }
 
   float partition_point(int i) const {
-    if (i >= partitions()) {
-      LOG(FATAL) << "Out of bound: requesting partition point #" << i << ", when only "
-                 << partitions() << " are available ('" << name_ << "')";
+    if (i < 0 || i >= partitions()) {
+      std::ostringstream msg;
+      msg << "Out of bound: requesting partition point #" << i << ", when only "
+           << partitions() << " are available ('" << name_ << "')";
+      throw std::out_of_range(msg.str());
     }
     return hash_points_[i];
   }
@@ -105,5 +105,3 @@ public:
  * @return the passed in stream, to which the bucket has been streamed to.
  */
 std::ostream& operator<<(std::ostream& out, const Bucket &bucket);
-
-#endif //BRICK_BUCKET_HPP

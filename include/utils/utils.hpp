@@ -105,6 +105,13 @@ std::ostream& PrintVersion(const string& server_name,
                            const string& version, std::ostream &out = std::cout);
 
 /**
+ * Convenience method, to print the current time.
+ *
+ * @return the same stream that was passed in, for ease of chaining
+ */
+std::ostream& PrintCurrentTime(std::ostream &out = std::cout);
+
+/**
  * Converts a vector to a string, the concatenation of its element, separated by `sep`.
  * Only really useful for debugging purposes.
  *

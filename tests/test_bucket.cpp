@@ -5,8 +5,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "../include/ConsistentHash.hpp"
-#include "../include/Bucket.hpp"
+#include "Bucket.hpp"
+#include "ConsistentHash.hpp"
+
 
 TEST(BucketTests, CanCreate) {
   Bucket b("test_bucket", {0.3, 0.6, 0.9});
@@ -96,7 +97,6 @@ TEST(BucketTests, CanFindNearest) {
     if ((points)[i] > hv) break;
   }
   ASSERT_EQ(std::make_pair(i, b.partition_point(i)), b.partition_point(hv));
-
 }
 
 
@@ -105,4 +105,19 @@ TEST(BucketTests, CanPrint) {
   Bucket b("fancy bucket", {0.065193, 0.052362, 0.19673, 0.2551, 0.9553});
   os << b;
   ASSERT_THAT(os.str(), ::testing::StartsWith("'fancy bucket' ["));
+}
+
+TEST(BucketTests, CanSetName) {
+  Bucket b("bucket", {0.065193, 0.052362, 0.19673, 0.2551, 0.9553});
+  ASSERT_EQ(b.name(), "bucket");
+
+  b.set_name("another");
+  ASSERT_EQ(b.name(), "another");
+}
+
+
+TEST(BucketTests, ThrowsOutOfRange) {
+  Bucket b("bucket", {0.065193, 0.052362});
+  ASSERT_EQ(b.partitions(), 2);
+  ASSERT_THROW(b.partition_point(b.partitions() + 2), std::out_of_range);
 }

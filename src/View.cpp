@@ -14,6 +14,7 @@ void View::Add(const BucketPtr& bucket) {
     return;
   }
 
+  buckets_.insert(bucket);
   for (int i = 0; i < bucket->partitions(); i++) {
     float point = bucket->partition_point(i);
     partition_to_bucket_[point] = bucket;
@@ -70,13 +71,7 @@ std::ostream &operator<<(std::ostream &out, const View &view) {
 }
 
 std::set<BucketPtr> View::buckets() const {
-  std::set<BucketPtr> buckets;
-
-  for (const auto& item : partition_to_bucket_) {
-    buckets.insert(item.second);
-  }
-
-  return buckets;
+  return buckets_;
 }
 
 void View::Clear() {
@@ -87,8 +82,6 @@ void View::Clear() {
  * Creates a new `View` (and associated `num_buckets` `Bucket`s) with each bucket having
  * `partitions_per_bucket` partitions points, equidistant on the unit circle and each bucket
  * overlaps, so that the partition points are uniformly distributed across buckets.
- *
- * **NOTE**: it is the caller's responsibility to deallocate the `Bucket`s created by this method.
  *
  * @param num_buckets how many buckets to create and associate to the view
  * @param partitions_per_bucket how many partition points in each bucket

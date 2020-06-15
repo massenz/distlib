@@ -1,10 +1,8 @@
 // Copyright (c) 2016 Marco Massenzio.  All rights reserved.
 
-#include "../include/ConsistentHash.hpp"
-
-#include <iostream>
 #include <string>
 
+#include "ConsistentHash.hpp"
 
 using std::string;
 

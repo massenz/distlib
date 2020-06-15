@@ -52,6 +52,8 @@ class View {
    */
    MapWithTolerance partition_to_bucket_;
 
+  std::set<BucketPtr> buckets_;
+
   /**
    * Streams a view, listing all the intervals and associated buckets; then emits a list of all
    * the buckets.
@@ -107,6 +109,20 @@ public:
   BucketPtr FindBucket(float hash) const;
 
   std::set<BucketPtr> buckets() const;
+
+  using cstriter = const std::vector<std::string>::const_iterator;
+
+  void RenameBuckets(cstriter &beg, cstriter& end ) {
+    auto pos = beg;
+    for (auto b : buckets_) {
+      VLOG(2) << "Renaming bucket `" << b->name() << "` to `" << *pos << "`";
+      if (pos == end) {
+        break;
+      }
+      b->set_name(*pos++);
+    }
+  }
+
 };
 
 std::unique_ptr<View> make_balanced_view(int num_buckets, int partitions_per_bucket = 5);
