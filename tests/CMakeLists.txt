@@ -2,7 +2,7 @@
 
 project(distlib_test)
 enable_testing()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fPIC")
 
 
 # Conan Packaging support
@@ -23,6 +23,7 @@ set(UNIT_TESTS
         ${TESTS_DIR}/test_merkle.cpp
         ${TESTS_DIR}/test_parse_args.cpp
         ${TESTS_DIR}/test_utils_network.cpp
+        ${TESTS_DIR}/test_queue.cpp
         ${TESTS_DIR}/test_view.cpp
 )
 

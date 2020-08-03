@@ -19,8 +19,25 @@ TEST(ViewTests, CanAddBucket) {
                                      std::vector<float>{0.2, 0.4, 0.6, 0.8, 0.9});
   View v;
   ASSERT_NO_FATAL_FAILURE(v.Add(pb));
-
   ASSERT_EQ(1, v.num_buckets());
+}
+
+TEST(ViewTests, CanAddBuckets) {
+  auto pb = std::make_shared<Bucket>("test_bucket",
+                                     std::vector<float>{0.2, 0.4, 0.6, 0.8, 0.9});
+  View v;
+  ASSERT_NO_FATAL_FAILURE(v.Add(pb));
+  ASSERT_EQ(1, v.num_buckets());
+
+  auto pb2 = std::make_shared<Bucket>("test_bucket-2",
+                                std::vector<float>{0.3, 0.5, 0.7});
+
+  ASSERT_NO_FATAL_FAILURE(v.Add(pb2));
+  ASSERT_EQ(2, v.num_buckets());
+
+  ASSERT_EQ(pb, v.FindBucket(0.35));
+  ASSERT_EQ(pb, v.FindBucket(0.77));
+  ASSERT_EQ(pb2, v.FindBucket(0.4856));
 }
 
 TEST(ViewTests, CanFindBucket) {

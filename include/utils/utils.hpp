@@ -121,7 +121,7 @@ std::ostream& PrintCurrentTime(std::ostream &out = std::cout);
  * @return the string resulting from the concatenation of all elements
  */
 template<typename T>
-std::string Vec2Str(const std::vector<T> &vec, const std::string &sep = "\n") {
+inline std::string Vec2Str(const std::vector<T> &vec, const std::string &sep = "\n") {
   bool first = true;
   std::ostringstream out;
 
@@ -130,6 +130,25 @@ std::string Vec2Str(const std::vector<T> &vec, const std::string &sep = "\n") {
     out << t;
   }
   return out.str();
+}
+
+/**
+ * Streams a collection `C`'s contents to `out`, optionally inserting a `coda`.
+ */
+template <typename C,
+          typename T = typename C::value_type>
+inline std::ostream& Print(
+    const C &items,
+    const std::string &coda = "\n",
+    const char sep = ',',
+    std::ostream& out = std::ref(std::cout)
+) {
+  out << '[';
+  for (const auto &item : items) {
+    out << item << sep;
+  }
+  out << '\b' << ']' << coda;
+  return out;
 }
 
 /********************* Network Utilities *************************************/

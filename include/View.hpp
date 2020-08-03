@@ -17,6 +17,22 @@
  */
 using BucketPtr = std::shared_ptr<Bucket>;
 
+inline std::ostream& operator<<(std::ostream& out, const BucketPtr& ptr) {
+  out << *ptr;
+  return out;
+}
+
+/**
+ * Bucket pointer should be sorted (when in ordered collections) by the buckets' names.
+ *
+ * @param lhs
+ * @param rhs
+ * @return whether the name of `lhs` precedes `rhs`'s name
+ */
+inline bool operator<(const BucketPtr &lhs, const BucketPtr &rhs) {
+  return lhs->name() < rhs->name();
+}
+
 /**
  * A `map` which compares its `float` keys with a given `Tolerance`.
  *
