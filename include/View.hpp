@@ -4,6 +4,7 @@
 #pragma once
 
 #include <set>
+#include <shared_mutex>
 
 #include <glog/logging.h>
 #include <map>
@@ -16,6 +17,12 @@
  * Alias for a `shared_ptr<Bucket>`.
  */
 using BucketPtr = std::shared_ptr<Bucket>;
+
+/**
+ * A shared lock to allow multiple reader/single writer pattern.
+ */
+using SharedLock = std::shared_lock<std::shared_mutex>;
+using UniqueLock = std::lock_guard<std::shared_mutex>;
 
 inline std::ostream& operator<<(std::ostream& out, const BucketPtr& ptr) {
   out << *ptr;
@@ -61,14 +68,14 @@ using MapWithTolerance = std::map<float, BucketPtr, FloatLessWithTolerance<>>;
  */
 class View {
 
-  int num_buckets_ {0};
-
   /**
    * Maps each bucket's partition point to the respective bucket.
    */
-   MapWithTolerance partition_to_bucket_;
+  MapWithTolerance partition_to_bucket_;
+  mutable std::shared_mutex partition_map_mx_;
 
   std::set<BucketPtr> buckets_;
+  mutable std::shared_mutex buckets_mx_;
 
   /**
    * Streams a view, listing all the intervals and associated buckets; then emits a list of all
@@ -94,18 +101,18 @@ public:
    *
    * @param bucket the bucket to remove from this view and delete
    */
-  bool Remove(BucketPtr bucket);
+  bool Remove(const BucketPtr& bucket);
 
   /**
    * @return the total number of buckets available in this view.
    */
-  int num_buckets() const { return num_buckets_; }
+  int num_buckets() const {
+    SharedLock lk(buckets_mx_);
+    return buckets_.size();
+  }
 
   /**
-   * Removes all buckets and deallocates the associated pointers.
-   *
-   * The `~View` destructor does not delete the buckets' pointers (as the caller may
-   * still hold references to them); if you want to clear all the memory, use this method.
+   * Removes all buckets.
    */
   void Clear();
 
@@ -129,16 +136,16 @@ public:
   using cstriter = const std::vector<std::string>::const_iterator;
 
   void RenameBuckets(cstriter &beg, cstriter& end ) {
+    UniqueLock lk(partition_map_mx_);
     auto pos = beg;
-    for (auto b : buckets_) {
-      VLOG(2) << "Renaming bucket `" << b->name() << "` to `" << *pos << "`";
+    for (const auto& b : buckets_) {
       if (pos == end) {
         break;
       }
+      VLOG(2) << "Renaming bucket `" << b->name() << "` to `" << *pos << "`";
       b->set_name(*pos++);
     }
   }
-
 };
 
 std::unique_ptr<View> make_balanced_view(int num_buckets, int partitions_per_bucket = 5);

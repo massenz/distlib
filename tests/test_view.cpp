@@ -1,6 +1,7 @@
 // Copyright (c) 2016 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 3/6/16.
 
+#include <thread>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
@@ -234,4 +235,58 @@ TEST(ViewTests, RenameBucketsNotEnoughNames) {
     auto pos = std::find(buckets_names.cbegin(), buckets_names.cend(), name);
     ASSERT_NE(pos, buckets_names.cend());
   }
+}
+
+TEST(MultithreadViewTests, CanAddRemoveBuckets) {
+  auto pv = make_balanced_view(5, 10);
+  ASSERT_EQ(5, pv->num_buckets());
+
+  std::thread t1([&pv]() {
+    auto new_bucket = std::make_shared<Bucket>("new-host.example.com",
+                                               std::vector<float>{0.3, 0.6, 0.9});
+    ASSERT_EQ(5, pv->num_buckets());
+    pv->Add(new_bucket);
+  });
+
+  std::thread t2([&pv]() {
+    auto buckets = pv->buckets();
+    pv->Remove(*buckets.begin());
+  });
+
+  t1.join();
+  t2.join();
+  ASSERT_EQ(5, pv->num_buckets());
+}
+
+TEST(MultithreadViewTests, CanRenameBuckets) {
+  auto pv = make_balanced_view(5, 10);
+  ASSERT_EQ(5, pv->num_buckets());
+
+  BucketPtr bucket_ptr;
+  for (const auto &bp : pv->buckets()) {
+    if (bp->name() == "bucket-3") bucket_ptr = bp;
+  }
+
+  std::thread t1([&pv]() {
+    std::vector<std::string> names{"b1", "b2", "b3", "b4", "b5"};
+    pv->RenameBuckets(names.cbegin(), names.cend());
+    // Depending on which thread gets here first, it may be 4 or 5.
+    ASSERT_GE(pv->num_buckets(), 4);
+    VLOG(2) << "Done renaming, " << pv->num_buckets() << " buckets";
+  });
+
+  std::thread t2([&pv](const BucketPtr& ptr) {
+    VLOG(2) << "Removing bucket: " << ptr->name();
+    pv->Remove(ptr);
+    VLOG(2) << "Done, left: " << pv->num_buckets() << " buckets";
+  }, std::ref(bucket_ptr));
+
+  t1.join();
+  t2.join();
+  ASSERT_EQ(4, pv->num_buckets());
+  std::vector<std::string> actual;
+  auto buckets = pv->buckets();
+  std::for_each(buckets.begin(), buckets.end(),
+                 [&actual](auto bp) { actual.push_back(bp->name()); });
+  ASSERT_THAT(actual, ::testing::ElementsAreArray({"b1", "b2", "b3", "b5"}));
 }

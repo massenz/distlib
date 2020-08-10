@@ -54,6 +54,18 @@ TEST(QueueTests, WorksWithSharedPtrs) {
   ASSERT_EQ(0, my_buckets.size());
 }
 
+
+// TODO(marco): figure out how to support move-only objects
+TEST(QueueTests, DISABLED_WorksWithMovableNonCopyable) {
+  ThreadsafeQueue<std::unique_ptr<int>> ints;
+  auto p1 = std::make_unique<int>(99);
+  std::unique_ptr<int> p2;
+
+//  ints.push(p1);
+//  ASSERT_TRUE(ints.pop(p2));
+  ASSERT_EQ(99, *p2);
+}
+
 class ThreadingTests : public ::testing::Test {
  protected:
   utils::ThreadsafeQueue<std::string> stringsq_;

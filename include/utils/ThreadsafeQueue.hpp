@@ -4,6 +4,7 @@
 #include <optional>
 #include <queue>
 #include <thread>
+#include <shared_mutex>
 
 using namespace std;
 
@@ -19,7 +20,7 @@ class non_empty_queue : public std::exception {
 template<typename T>
 class ThreadsafeQueue {
   std::queue<T> queue_;
-  mutable std::mutex mutex_;
+  mutable std::shared_mutex mutex_;
 
   // Moved out of public interface to prevent races between this
   // and pop().
@@ -33,27 +34,30 @@ class ThreadsafeQueue {
   ThreadsafeQueue &operator=(const ThreadsafeQueue<T> &) = delete;
 
   ThreadsafeQueue(ThreadsafeQueue<T> &&other) noexcept(false) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::shared_mutex> lock(mutex_);
     if (!empty()) {
       throw non_empty_queue("Moving into a non-empty queue"s);
     }
+    // We need write, exclusive access on the other, as we are moving
+    // it, which will mutate its state.
+    std::lock_guard<std::shared_timed_mutex> rhs(other.mutex_);
     queue_ = std::move(other.queue_);
   }
 
   virtual ~ThreadsafeQueue() noexcept(false) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::shared_mutex> lock(mutex_);
     if (!empty()) {
       throw non_empty_queue("Destroying a non-empty queue"s);
     }
   }
 
   [[nodiscard]] unsigned long size() const {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::shared_lock<std::shared_mutex> lock(mutex_);
     return queue_.size();
   }
 
   std::optional<T> pop() {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::shared_mutex> lock(mutex_);
     if (queue_.empty()) {
       return {};
     }
@@ -62,8 +66,18 @@ class ThreadsafeQueue {
     return tmp;
   }
 
+  bool pop(T& value) {
+    std::lock_guard<std::shared_mutex> lock(mutex_);
+    if (queue_.empty()) {
+      return false;
+    }
+    value = queue_.front();
+    queue_.pop();
+    return true;
+  }
+
   void push(const T &item) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::shared_mutex> lock(mutex_);
     queue_.push(item);
   }
 };

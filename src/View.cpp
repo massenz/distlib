@@ -9,37 +9,44 @@
 #include <iostream>
 
 void View::Add(const BucketPtr& bucket) {
-  if (bucket == nullptr) {
+  if (!bucket) {
     LOG(FATAL) << "Cannot add a null Bucket to a View";
     return;
   }
 
-  buckets_.insert(bucket);
+  {
+    UniqueLock lk(buckets_mx_);
+    buckets_.insert(bucket);
+  }
+  UniqueLock lk(partition_map_mx_);
   for (int i = 0; i < bucket->partitions(); i++) {
     float point = bucket->partition_point(i);
     partition_to_bucket_[point] = bucket;
   }
-  num_buckets_++;
 }
 
-bool View::Remove(BucketPtr bucket) {
+bool View::Remove(const BucketPtr& bucket) {
   bool found = false;
 
-  for (auto item : bucket->partition_points()) {
-    if (partition_to_bucket_[item] == bucket) {
-      auto res = partition_to_bucket_.erase(item);
-      if (res > 0) {
-        found = true;
-        VLOG(2) << "Found matching partition point: " << item
-                << ", removed bucket: " << *bucket;
+  {
+    UniqueLock lk(partition_map_mx_);
+    for (auto item : bucket->partition_points()) {
+      if (partition_to_bucket_[item] == bucket) {
+        auto res = partition_to_bucket_.erase(item);
+        if (res > 0) {
+          found = true;
+          VLOG(2) << "Found matching partition point: " << item
+                  << ", removed bucket: " << *bucket;
+        }
       }
     }
   }
   // It is possible we were asked to remove a non-existent bucket;
   // in this case, we should not decrement the count.
   if (found) {
-    num_buckets_--;
-    VLOG(2) << "Removed bucket from View, left " << num_buckets_;
+    UniqueLock lk(buckets_mx_);
+    buckets_.erase(bucket);
+    VLOG(2) << "Removed bucket from View: " << *bucket;
   } else {
     VLOG(2) << "Bucket " << *bucket << " not found, not removed";
   }
@@ -48,6 +55,7 @@ bool View::Remove(BucketPtr bucket) {
 
 BucketPtr View::FindBucket(float hash) const {
 
+  SharedLock lk(partition_map_mx_);
   if (partition_to_bucket_.empty()) {
     throw std::invalid_argument("No buckets in this View");
   }
@@ -64,17 +72,19 @@ std::ostream &operator<<(std::ostream &out, const View &view) {
   out.setf(std::ios_base::fixed);
   out.precision(6);
 
-  for (auto b : view.buckets()) {
+  for (const auto& b : view.buckets()) {
     out << *b << std::endl;
   }
   return out;
 }
 
 std::set<BucketPtr> View::buckets() const {
+  SharedLock lk(buckets_mx_);
   return buckets_;
 }
 
 void View::Clear() {
+  UniqueLock lk(buckets_mx_);
   partition_to_bucket_.clear();
 }
 
