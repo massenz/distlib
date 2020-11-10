@@ -105,7 +105,7 @@ class ThreadingTests : public ::testing::Test {
 
  public:
   // Needed to make the compiler happy, as ThreadsafeQueue has a noexcept(false) destructor.
-  ~ThreadingTests() noexcept override = default;
+  ~ThreadingTests() noexcept override {}
 };
 
 TEST_F(ThreadingTests, CanFillFlushSeparately) {

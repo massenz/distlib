@@ -186,18 +186,21 @@ TEST(ViewTests, CanGetBucketsAndUse) {
   (*pos)->set_name("new bucket");
   pos++;
   pos++;
+  // Note that `buckets_` is a set, hashed on the name, so
+  // this will effectively remove one of the buckets.
   (*pos)->set_name("new bucket");
 
   int count = 0;
   auto new_buckets = pv->buckets();
+  ASSERT_EQ(4, new_buckets.size());
+
   std::for_each(new_buckets.begin(), new_buckets.end(),
                 [&count](const BucketPtr &bucket_ptr) {
                   if (bucket_ptr->name() == "new bucket") {
                     count++;
                   }
                 });
-  ASSERT_EQ(2, count);
-
+  ASSERT_EQ(1, count);
 }
 
 TEST(ViewTests, RenameBuckets) {

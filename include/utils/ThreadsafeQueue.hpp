@@ -61,7 +61,7 @@ class ThreadsafeQueue {
     if (queue_.empty()) {
       return {};
     }
-    T tmp = queue_.front();
+    T tmp = std::move(queue_.front());
     queue_.pop();
     return tmp;
   }
@@ -80,5 +80,11 @@ class ThreadsafeQueue {
     std::lock_guard<std::shared_mutex> lock(mutex_);
     queue_.push(item);
   }
+
+  void push(T &&item) {
+    std::lock_guard<std::shared_mutex> lock(mutex_);
+    queue_.push(std::forward<T>(item));
+  }
+
 };
 } // namespace utils
