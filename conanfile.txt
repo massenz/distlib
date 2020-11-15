@@ -12,6 +12,19 @@ openssl/1.1.1d
 [options]
 glog:with_gflags=False
 gtest:shared=False
+openssl:shared=True
+
+[imports]
+#
+# Copies all shared libraries (*.so, *.dylib) files from packages lib
+# folder to the "lib" folder, and headers to "include".
+#
+# This is useful for the `install` step to move them to $INSTALL_DIR
+# if defined.
+#
+lib, *.dylib* -> ./lib
+lib, *.so* -> ./lib
+include, * -> ./include
 
 [generators]
 cmake

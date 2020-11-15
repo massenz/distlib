@@ -1,19 +1,25 @@
-# This file (c) 2016-2017 AlertAvert.com.  All rights reserved.
+# This file (c) 2016-2020 AlertAvert.com.  All rights reserved.
 
 project(distlib)
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.16)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fPIC")
 
+# Conan Packaging support
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
 
-# Include common cmake utilities:
+##
+# Include common cmake utilities.
+# See: https://bitbucket.org/marco/common-utils
+#
 include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 
 ##
-#
 # Installation directory; this is both used to access
 # required libraries as well as to install the compiled artifacts.
 #
 # The INSTALL_DIR env variable must be set, unless -DINSTALL_DIR is used.
+#
 if(NOT DEFINED INSTALL_DIR)
     if(DEFINED ENV{INSTALL_DIR})
         set(INSTALL_DIR $ENV{INSTALL_DIR})
@@ -23,27 +29,20 @@ if(NOT DEFINED INSTALL_DIR)
     endif()
 endif()
 
-### Setting up common configuration variables
-
-# Version number
+##
+# Release version management
+#
 set(RELEASE_MAJOR 0)
 set(RELEASE_MINOR 17)
-set(RELEASE_PATCH 0)
+set(RELEASE_PATCH 1)
 
-IF (${COMMONS_FILE} STREQUAL NOTFOUND)
-    message(WARNING "Not using CMake utilities")
-    set(BUILD_ID 0)
-ELSE (${COMMONS_FILE} STREQUAL NOTFOUND)
+set(RELEASE "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}")
+if(DEFINED COMMONS_FILE)
     get_build_id(BUILD_ID)
-ENDIF (${COMMONS_FILE} STREQUAL NOTFOUND)
-
-# Conan Packaging support
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
-
-
-
-set(RELEASE_STRING "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}-${BUILD_ID}")
+    set(RELEASE_STRING "${RELEASE}-${BUILD_ID}")
+else()
+    set(RELEASE_STRING "${RELEASE}")
+endif()
 message(STATUS "Building Release: ${RELEASE_STRING} (${CMAKE_BUILD_TYPE})")
 
 ##
@@ -52,8 +51,6 @@ message(STATUS "Building Release: ${RELEASE_STRING} (${CMAKE_BUILD_TYPE})")
 # Both the value of CMAKE_BUILD_TYPE and the `build_type` setting
 # in `~/.conan/profiles/default` need to match.
 #
-message("Build type: ${CMAKE_BUILD_TYPE}")
-
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     set(GLOG glogd)
 else()
@@ -112,24 +109,31 @@ add_library(distutils SHARED
 target_link_libraries(distutils ${UTILS_LIBS})
 
 
-if (NOT ${INSTALL_DIR})
-    message(STATUS "Installing shared libraries to ${INSTALL_DIR}/lib "
-                   "and include files to ${INSTALL_DIR}/include/${PROJECT_NAME}")
-    install(TARGETS distutils DESTINATION ${INSTALL_DIR}/lib)
+##
+# Installation
+#
+message("Installing shared library libdistutils.so to ${INSTALL_DIR}/lib")
+install(TARGETS distutils DESTINATION ${INSTALL_DIR}/lib)
+config_install(${INSTALL_DIR} INSTALL_RESULT)
 
-    # Generated configuration file, containing version and build number.
-    install(FILES ${PROJECT_BINARY_DIR}/version.h DESTINATION
-            "${INSTALL_DIR}/include/${PROJECT_NAME}")
 
-    # Install Library headers.
-    install(DIRECTORY ${INCLUDE_DIR}/ DESTINATION ${INSTALL_DIR}/include/${PROJECT_NAME}
-            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+## Generated configuration file, containing version and build number.
+#install(FILES ${PROJECT_BINARY_DIR}/version.h DESTINATION
+#        "${INSTALL_DIR}/include/${PROJECT_NAME}")
+#
+## Install Library headers.
+#install(DIRECTORY ${INCLUDE_DIR}/ DESTINATION ${INSTALL_DIR}/include/${PROJECT_NAME}
+#        FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+#
+## Install all dependencies
+#install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION
+#        ${INSTALL_DIR}
+#        FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+#install(DIRECTORY ${PROJECT_BINARY_DIR}/lib DESTINATION
+#        ${INSTALL_DIR}
+#        FILES_MATCHING PATTERN "*.so*" PATTERN "*.dylib*")
 
-else (NOT ${INSTALL_DIR})
-    message(WARNING "INSTALL_DIR is not defined, files will not be installed."
-                    " Use -DINSTALL_DIR=/path/to/install to enable")
-endif (NOT ${INSTALL_DIR})
-
+##
 # Unit tests build is defined in the tests/ folder
 add_subdirectory(${TESTS_DIR})
 
