@@ -1,4 +1,4 @@
-// Copyright (c) 2016 AlertAvert.com. All rights reserved.
+// Copyright (c) 2016-2020 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 11/22/16.
 
 #pragma once

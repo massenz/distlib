@@ -1,4 +1,4 @@
-// Copyright (c) 2017 AlertAvert.com. All rights reserved.
+// Copyright (c) 2016-2020 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 4/15/17.
 
 #pragma once
@@ -19,7 +19,7 @@ static bool seeded = false;
  * Random number generator engine; using the default for the system, it will be
  * seeded during static initialization and the sequence will be used by every test.
  */
-static std::default_random_engine DRE;
+static std::default_random_engine DRE; // NOLINT(cert-err58-cpp)
 
 /**
  * Uniform distribution for port numbers to be used during tests.

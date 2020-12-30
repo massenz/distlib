@@ -1,3 +1,5 @@
+// Copyright (c) 2016-2020 AlertAvert.com. All rights reserved.
+
 #include <algorithm>
 #include <iostream>
 #include <mutex>

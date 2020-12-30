@@ -1,4 +1,4 @@
-# This file (c) 2016-2017 AlertAvert.com.  All rights reserved.
+# Copyright (c) 2016-2020 AlertAvert.com. All rights reserved.
 
 project(distlib_test)
 enable_testing()

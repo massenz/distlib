@@ -1,5 +1,8 @@
-// Copyright (c) 2016 AlertAvert.com. All rights reserved.
+// Copyright (c) 2016-2020 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 3/6/16.
+
+// Ignore CLion warning caused by GTest TEST() macro.
+#pragma ide diagnostic ignored "cert-err58-cpp"
 
 #include <thread>
 
@@ -31,7 +34,7 @@ TEST(ViewTests, CanAddBuckets) {
   ASSERT_EQ(1, v.num_buckets());
 
   auto pb2 = std::make_shared<Bucket>("test_bucket-2",
-                                std::vector<float>{0.3, 0.5, 0.7});
+                                      std::vector<float>{0.3, 0.5, 0.7});
 
   ASSERT_NO_FATAL_FAILURE(v.Add(pb2));
   ASSERT_EQ(2, v.num_buckets());
@@ -107,11 +110,13 @@ TEST(ViewTests, RebalanceLoad) {
   float delta = 1.0 / (NUM_BUCKETS * NUM_PARTS);
 
   for (int i = 0; i < NUM_BUCKETS; ++i) {
+    auto x = static_cast<float>(i);
     buckets[i] = std::make_shared<Bucket>(
         "host-" + std::to_string(i) + ".example.com",
-        std::vector<float>{static_cast<float>(i * delta),
-                           static_cast<float>(0.34 + i * delta),
-                           static_cast<float>(0.67 + i * delta)}
+        std::vector<float>{x * delta,
+                           0.34f + x * delta,
+                           0.67f + x * delta
+        }
     );
     v.Add(buckets[i]);
   }
@@ -186,13 +191,11 @@ TEST(ViewTests, CanGetBucketsAndUse) {
   (*pos)->set_name("new bucket");
   pos++;
   pos++;
-  // Note that `buckets_` is a set, hashed on the name, so
-  // this will effectively remove one of the buckets.
   (*pos)->set_name("new bucket");
 
   int count = 0;
   auto new_buckets = pv->buckets();
-  ASSERT_EQ(4, new_buckets.size());
+  ASSERT_EQ(5, new_buckets.size());
 
   std::for_each(new_buckets.begin(), new_buckets.end(),
                 [&count](const BucketPtr &bucket_ptr) {
@@ -200,7 +203,7 @@ TEST(ViewTests, CanGetBucketsAndUse) {
                     count++;
                   }
                 });
-  ASSERT_EQ(1, count);
+  ASSERT_EQ(2, count);
 }
 
 TEST(ViewTests, RenameBuckets) {
@@ -213,7 +216,7 @@ TEST(ViewTests, RenameBuckets) {
   auto buckets = pv->buckets();
   std::vector<string> bucket_names;
   bucket_names.reserve(buckets.size());
-  for (auto b : buckets) {
+  for (const auto &b : buckets) {
     bucket_names.push_back(b->name());
   }
   ASSERT_THAT(bucket_names, ::testing::UnorderedElementsAreArray(names));
@@ -230,11 +233,12 @@ TEST(ViewTests, RenameBucketsNotEnoughNames) {
   auto buckets = pv->buckets();
   ASSERT_EQ(buckets.size(), pv->num_buckets());
 
+  buckets_names.reserve(buckets.size());
   for (const auto &b : buckets) {
     buckets_names.push_back(b->name());
   }
 
-  for (const auto& name : names) {
+  for (const auto &name : names) {
     auto pos = std::find(buckets_names.cbegin(), buckets_names.cend(), name);
     ASSERT_NE(pos, buckets_names.cend());
   }
@@ -278,7 +282,7 @@ TEST(MultithreadViewTests, CanRenameBuckets) {
     VLOG(2) << "Done renaming, " << pv->num_buckets() << " buckets";
   });
 
-  std::thread t2([&pv](const BucketPtr& ptr) {
+  std::thread t2([&pv](const BucketPtr &ptr) {
     VLOG(2) << "Removing bucket: " << ptr->name();
     pv->Remove(ptr);
     VLOG(2) << "Done, left: " << pv->num_buckets() << " buckets";
@@ -290,6 +294,6 @@ TEST(MultithreadViewTests, CanRenameBuckets) {
   std::vector<std::string> actual;
   auto buckets = pv->buckets();
   std::for_each(buckets.begin(), buckets.end(),
-                 [&actual](auto bp) { actual.push_back(bp->name()); });
+                [&actual](auto bp) { actual.push_back(bp->name()); });
   ASSERT_THAT(actual, ::testing::ElementsAreArray({"b1", "b2", "b3", "b5"}));
 }

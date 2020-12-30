@@ -12,7 +12,6 @@ openssl/1.1.1d
 [options]
 glog:with_gflags=False
 gtest:shared=False
-openssl:shared=True
 
 [imports]
 #

@@ -1,4 +1,4 @@
-// Copyright (c) 2016 AlertAvert.com. All rights reserved.
+// Copyright (c) 2016-2020 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 3/6/16.
 
 #pragma once
@@ -53,7 +53,7 @@ public:
    *
    * @return the bucket's name
    */
-  std::string name() const {
+  [[nodiscard]] std::string name() const {
     return name_;
   }
 

@@ -1,6 +1,9 @@
 // Copyright (c) 2020 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 2020-08-01.
 
+// Ignore CLion warning caused by GTest TEST() macro.
+#pragma ide diagnostic ignored "cert-err58-cpp"
+
 #include <atomic>
 #include <chrono>
 #include <thread>
@@ -105,7 +108,7 @@ class ThreadingTests : public ::testing::Test {
 
  public:
   // Needed to make the compiler happy, as ThreadsafeQueue has a noexcept(false) destructor.
-  ~ThreadingTests() noexcept override {}
+  ~ThreadingTests() noexcept override = default;
 };
 
 TEST_F(ThreadingTests, CanFillFlushSeparately) {
@@ -135,8 +138,10 @@ TEST_F(ThreadingTests, CanFillFlushConcurrentlyHigh) {
   std::thread fetch1(&ThreadingTests::Fetch, this);
   std::thread fetch2(&ThreadingTests::Fetch, this);
   std::vector<std::thread> threads;
+
+  threads.reserve(5);
   for (int j = 0; j < 5; j++) {
-    threads.push_back(std::thread(&ThreadingTests::PutN, this, 15));
+    threads.emplace_back(&ThreadingTests::PutN, this, 15);
   }
   std::for_each(threads.begin(), threads.end(), [] (auto &t) { t.join(); });
   done.store(true);

@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Marco Massenzio.  All rights reserved.
+// Copyright (c) 2016-2020 AlertAvert.com. All rights reserved.
 
 #include <string>
 

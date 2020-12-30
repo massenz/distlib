@@ -1,6 +1,8 @@
-// Copyright (c) 2016 AlertAvert.com. All rights reserved.
+// Copyright (c) 2016-2020 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 10/7/16.
 
+// Ignore CLion warning caused by GTest TEST() macro.
+#pragma ide diagnostic ignored "cert-err58-cpp"
 
 #include <gtest/gtest.h>
 

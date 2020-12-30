@@ -1,4 +1,4 @@
-// Copyright (c) 2020 AlertAvert.com. All rights reserved.
+// Copyright (c) 2016-2020 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com)
 
 #include <utils/ParseArgs.hpp>

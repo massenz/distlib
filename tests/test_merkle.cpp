@@ -1,5 +1,8 @@
-// Copyright (c) 2016 AlertAvert.com. All rights reserved.
+// Copyright (c) 2016-2020 AlertAvert.com. All rights reserved.
 // Created by M. Massenzio (marco@alertavert.com) on 3/20/16.
+
+// Ignore CLion warning caused by GTest TEST() macro.
+#pragma ide diagnostic ignored "cert-err58-cpp"
 
 
 #include <gtest/gtest.h>
@@ -80,9 +83,6 @@ string HashOfHashes(const shared_ptr<string> &psl,
   if (!(psl || psr)) return "";
   return !psl ? *psr : !psr ? *psl : *psl + *psr;
 }
-
-using MerkleStringNode =
-    merkle::MerkleNode<std::string, std::string, utils::hash_str, HashOfHashes>;
 
 TEST(MerkleNodeTests, AssertInvariant) {
   std::shared_ptr<string> myHash  = std::make_shared<string>( utils::hash_str("a test string") );
