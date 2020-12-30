@@ -33,8 +33,8 @@ endif()
 # Release version management
 #
 set(RELEASE_MAJOR 0)
-set(RELEASE_MINOR 17)
-set(RELEASE_PATCH 1)
+set(RELEASE_MINOR 18)
+set(RELEASE_PATCH 0)
 
 set(RELEASE "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}")
 if(DEFINED COMMONS_FILE)
@@ -115,23 +115,6 @@ target_link_libraries(distutils ${UTILS_LIBS})
 message("Installing shared library libdistutils.so to ${INSTALL_DIR}/lib")
 install(TARGETS distutils DESTINATION ${INSTALL_DIR}/lib)
 config_install(${INSTALL_DIR} INSTALL_RESULT)
-
-
-## Generated configuration file, containing version and build number.
-#install(FILES ${PROJECT_BINARY_DIR}/version.h DESTINATION
-#        "${INSTALL_DIR}/include/${PROJECT_NAME}")
-#
-## Install Library headers.
-#install(DIRECTORY ${INCLUDE_DIR}/ DESTINATION ${INSTALL_DIR}/include/${PROJECT_NAME}
-#        FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
-#
-## Install all dependencies
-#install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION
-#        ${INSTALL_DIR}
-#        FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
-#install(DIRECTORY ${PROJECT_BINARY_DIR}/lib DESTINATION
-#        ${INSTALL_DIR}
-#        FILES_MATCHING PATTERN "*.so*" PATTERN "*.dylib*")
 
 ##
 # Unit tests build is defined in the tests/ folder
