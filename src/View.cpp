@@ -88,6 +88,26 @@ void View::Clear() {
   partition_to_bucket_.clear();
 }
 
+View::operator json() const {
+  std::vector<Bucket> buckets;
+  buckets.reserve(num_buckets());
+
+  {
+    UniqueLock lk(buckets_mx_);
+    for (const auto& bpt : buckets_) {
+      buckets.push_back(*bpt);
+    }
+  }
+
+  return json{
+      {
+        "view", {
+          {"buckets", buckets}
+        }
+      }
+  };
+}
+
 /**
  * Creates a new `View` (and associated `num_buckets` `Bucket`s) with each bucket having
  * `partitions_per_bucket` partitions points, equidistant on the unit circle and each bucket

@@ -146,6 +146,23 @@ public:
       b->set_name(*pos++);
     }
   }
+
+  /**
+   * Renders a `View` as a JSON object (essentially, the array of `buckets` that this view acts
+   * as a container for.
+   *
+   * <p>This can be rendered in "pretty print" via:</p>
+   *
+   <code>
+         auto pv = make_balanced_view(...);
+         json vj = *pv;
+         std::cout << vj.dump(4) << std::endl;
+   </code>
+   *
+   * @return a JSON rendering of the `View`: <code>{"view": { "buckets": [ ... ] }}</code>
+   * @see Bucket::operator json()
+   */
+  operator json() const;
 };
 
 std::unique_ptr<View> make_balanced_view(int num_buckets, int partitions_per_bucket = 5);

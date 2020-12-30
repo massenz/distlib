@@ -49,23 +49,22 @@ TEST(QueueTests, WorksWithSharedPtrs) {
 
   x = my_buckets.pop();
   ASSERT_TRUE(x);
+
   bp = *x;
   ASSERT_EQ(bp2, bp);
-
   ASSERT_EQ("b2", bp2->name());
-
   ASSERT_EQ(0, my_buckets.size());
 }
 
 
-// TODO(marco): figure out how to support move-only objects
-TEST(QueueTests, DISABLED_WorksWithMovableNonCopyable) {
+TEST(QueueTests, WorksWithMovableNonCopyable) {
   ThreadsafeQueue<std::unique_ptr<int>> ints;
-  auto p1 = std::make_unique<int>(99);
-  std::unique_ptr<int> p2;
+  ints.push(std::move(std::make_unique<int>(99)));
 
-//  ints.push(p1);
-//  ASSERT_TRUE(ints.pop(p2));
+  auto maybeInt = ints.pop();
+  ASSERT_TRUE(maybeInt);
+
+  auto p2 = std::move(*maybeInt);
   ASSERT_EQ(99, *p2);
 }
 

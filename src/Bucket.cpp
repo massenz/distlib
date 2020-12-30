@@ -55,3 +55,10 @@ void Bucket::remove_partition_point(unsigned int i) {
     hash_points_.erase(hash_points_.cbegin() + i);
   }
 }
+
+Bucket::operator json() const {
+  return nlohmann::json {
+      {"name", name()},
+      {"partition_points", partition_points()}
+  };
+}

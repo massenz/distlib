@@ -11,6 +11,10 @@
 
 #include <glog/logging.h>
 
+#include "json.hpp"
+
+using json = nlohmann::json;
+
 /**
  * A "bucket" abstracts the concept of a hashed partition, using consistent hashing.
  *
@@ -47,6 +51,14 @@ public:
   void add_partition_point(float point);
 
   void remove_partition_point(unsigned int i);
+
+  /**
+ * Converts a `Bucket` to JSON.
+ *
+ * @param bp the `Bucket` to render in JSON
+ * @return the JSON representation of the `Bucket` pointed to by `bp`
+ */
+  operator json() const;
 
   /**
    * Every `Bucket` should have a unique name that can be used to identify it.

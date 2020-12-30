@@ -124,3 +124,32 @@ TEST(BucketTests, ThrowsOutOfRange) {
   ASSERT_EQ(b.partitions(), 2);
   ASSERT_THROW(b.partition_point(b.partitions() + 2), std::out_of_range);
 }
+
+
+TEST(BucketTests, Json) {
+
+  json bj = Bucket {"my-bucket", {0.5f, 0.8f}};
+
+  ASSERT_EQ("my-bucket", bj["name"]);
+  ASSERT_TRUE(bj["partition_points"].is_array());
+
+  ASSERT_EQ(0.5f, bj["partition_points"][0]);
+  ASSERT_EQ(0.8f, bj["partition_points"][1]);
+}
+
+
+TEST(BucketTests, JsonArray) {
+
+  std::vector<Bucket> buckets = {
+      Bucket {"my-bucket", {0.5f, 0.8f}},
+      Bucket {"another", {0.6f, 0.9f}},
+      Bucket {"last", {0.7f, 0.1f}},
+  };
+
+  json myBuckets;
+  myBuckets["buckets"] = buckets;
+
+  ASSERT_TRUE(myBuckets["buckets"].is_array());
+  ASSERT_EQ(3, myBuckets["buckets"].size());
+  ASSERT_EQ("another", myBuckets["buckets"][1]["name"]);
+}

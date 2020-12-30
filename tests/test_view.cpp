@@ -244,6 +244,16 @@ TEST(ViewTests, RenameBucketsNotEnoughNames) {
   }
 }
 
+TEST(ViewTests, JsonView) {
+  auto pv = make_balanced_view(3, 3);
+  ASSERT_EQ(3, pv->num_buckets());
+
+  json vj = *pv;
+  ASSERT_TRUE(vj["view"]["buckets"].is_array());
+  ASSERT_EQ(3, vj["view"]["buckets"].size());
+  ASSERT_EQ("bucket-0", vj["view"]["buckets"][0]["name"]);
+}
+
 TEST(MultithreadViewTests, CanAddRemoveBuckets) {
   auto pv = make_balanced_view(5, 10);
   ASSERT_EQ(5, pv->num_buckets());
