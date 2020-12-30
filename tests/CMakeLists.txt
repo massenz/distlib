@@ -20,6 +20,7 @@ endif ()
 set(UNIT_TESTS
         ${TESTS_DIR}/test_bucket.cpp
         ${TESTS_DIR}/test_hash.cpp
+        ${TESTS_DIR}/test_keystore.cpp
         ${TESTS_DIR}/test_merkle.cpp
         ${TESTS_DIR}/test_parse_args.cpp
         ${TESTS_DIR}/test_utils_network.cpp

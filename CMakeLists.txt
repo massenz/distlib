@@ -154,3 +154,9 @@ link_directories(
 #
 add_executable(merkle_demo ${EXAMPLES_DIR}/merkle_demo.cpp)
 target_link_libraries(merkle_demo distutils ${UTILS_LIBS})
+
+##
+# KeyValue Store Demo
+#
+add_executable(keystore_demo ${EXAMPLES_DIR}/keystore_example.cpp)
+target_link_libraries(keystore_demo distutils ${UTILS_LIBS})
