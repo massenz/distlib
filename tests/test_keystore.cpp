@@ -122,11 +122,6 @@ class SinkDelegate : public keystore::KeyStore<long, long> {
     num_items_--;
     return true;
   }
- protected:
-  [[nodiscard]] optional<MapPtr<long, long>> FindMap(const long &key) const override {
-    return {};
-  }
-
 };
 
 
@@ -147,8 +142,9 @@ class MultiKeyStoreTests : public ::testing::Test {
       std::string b1 { "bucket-" + std::to_string(2 * i) },
         b2 { "bucket-" + std::to_string(2 * i + 1)};
 
-      auto store = std::make_shared<KSll>("test", pv_, std::unordered_set<std::string>{ b1, b2 });
-      store->set_name("TestStore[" + std::to_string(i) + "]");
+      auto store = std::make_shared<KSll>(
+          "TestStore[" + std::to_string(i) + "]", pv_, std::unordered_set<std::string>{ b1, b2 }
+      );
       stores_.push_back(store);
       store_lookup_by_bkt_[b1] = store;
       store_lookup_by_bkt_[b2] = store;
@@ -215,17 +211,19 @@ TEST_F(MultiKeyStoreTests, AddsBucket) {
   for (auto ppt : new_bkt->partition_points()) {
     rebalance_bkts.insert(pv_->FindBucket(ppt));
   }
+  ASSERT_EQ(2, rebalance_bkts.size());
 
   // Given the partition points chosen, we know them to be bucket-0 and -4
   auto pos = rebalance_bkts.begin();
   ASSERT_EQ("bucket-0", (*pos++)->name());
-  ASSERT_EQ("bucket-4", (*pos)->name());
+  ASSERT_EQ("bucket-4", (*pos++)->name());
+  ASSERT_TRUE(pos == rebalance_bkts.end());
 
   pv_->Add(new_bkt);
   stores_[0]->AddBucket(new_bkt);
 
   // If we don't re-balance, we will not be able to find data, as the new buckets' maps will
-  // have not data stored (still stored in the ones that were "overlapping" with the new ones).
+  // have no data stored (still stored in the ones that were "overlapping" with the new ones).
   for (const auto &source_bkt : rebalance_bkts) {
     auto source_store = store_lookup_by_bkt_[source_bkt->name()];
     bool success = source_store->Rebalance(source_bkt, stores_[0]);

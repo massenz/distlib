@@ -47,6 +47,8 @@ using MapPtr = std::shared_ptr<std::unordered_map<Key, Value>>;
 template<typename Key, typename Value>
 using KeyStorePtr = std::shared_ptr<KeyStore<Key, Value>>;
 
+using MutexPtr = std::shared_ptr<std::shared_mutex>;
+
 
 /**
  * Abstract interface for a distributed KeyValue Store.
@@ -66,16 +68,6 @@ template<typename K, typename V>
 class KeyStore {
  protected:
   std::string self_;
-
-  /**
-   * Given a `key` it hashes it, finds the appropriate `Bucket` and returns the corresponding
-   * associative container which may contain the data.
-   *
-   * @param key
-   * @return a pointer to the map where the `data` *may* be stored; or `None` if the key hashes
-   *        to a bucket that does not belong to this store
-   */
-  virtual std::optional<MapPtr<K, V>> FindMap(const K &key) const = 0;
 
  public:
   explicit KeyStore(std::string name) : self_{ std::move(name) } {}
@@ -142,6 +134,17 @@ class KeyStore {
  */
 template<typename Key, typename Value>
 class PartitionedKeyStore : public KeyStore<Key, Value> {
+ protected:
+  /**
+   * Given a `key` it hashes it, finds the appropriate `Bucket` and returns the corresponding
+   * associative container which may contain the data.
+   *
+   * @param key
+   * @return a pointer to the map where the `data` *may* be stored; or `None` if the key hashes
+   *        to a bucket that does not belong to this store
+   */
+  virtual std::optional<std::pair<MutexPtr, MapPtr<Key, Value>>> FindMap(const Key &key) const = 0;
+
  public:
   explicit PartitionedKeyStore(const std::string& name) : KeyStore<Key, Value>(name) { }
 

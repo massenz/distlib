@@ -85,8 +85,8 @@ int main(int argc, const char **argv) {
   for (int i = 0; i < buckets; ++i) {
     bucket_names.insert("bucket-" + std::to_string(i));
   }
-  InMemoryKeyStore<std::string, std::string> store {pv, bucket_names};
-  store.set_name("Test Store");
+  InMemoryKeyStore<std::string, std::string> store {"KeyStore Demo "s + RELEASE_STR, pv,
+                                                    bucket_names};
 
   long chunk_size = inserts / num_threads;
 

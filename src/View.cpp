@@ -54,6 +54,10 @@ bool View::Remove(const BucketPtr& bucket) {
 }
 
 BucketPtr View::FindBucket(float hash) const {
+  if (hash < 0.0f || hash > 1.10000001f) {
+    throw std::invalid_argument(
+        "Hash should always be in the [0, 1] interval, was: " + std::to_string(hash));
+  }
 
   SharedLock lk(partition_map_mx_);
   if (partition_to_bucket_.empty()) {
