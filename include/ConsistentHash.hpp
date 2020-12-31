@@ -11,6 +11,16 @@
 
 #include "utils/utils.hpp"
 
+/**
+ * All consistent hashes are computed modulo this constant.
+ */
+inline const unsigned long kModulo = 65535;
+
+/**
+ * Used to compute the consistent hash: this is the base
+ * for each digit pair.
+ */
+inline const unsigned long kBase = 13;
 
 /**
  * Computes a "consistent hash" of the given string.

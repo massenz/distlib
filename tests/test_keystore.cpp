@@ -26,7 +26,7 @@ class KeyStoreTests : public ::testing::Test {
 
   void SetUp() override {
     pv_ = std::move(make_balanced_view(2, 3));
-    store_ = std::make_unique<KSsl>(
+    store_ = std::make_unique<KSsl>("test",
         pv_, std::unordered_set<std::string>{"bucket-0", "bucket-1"});
   }
 
@@ -107,7 +107,7 @@ using KSllPtr = std::shared_ptr<KSll>;
  */
 class SinkDelegate : public keystore::KeyStore<long, long> {
  public:
-  SinkDelegate() = default;
+  SinkDelegate() : KeyStore("test") {};
 
   unsigned long num_items_ = 0;
 
@@ -147,7 +147,7 @@ class MultiKeyStoreTests : public ::testing::Test {
       std::string b1 { "bucket-" + std::to_string(2 * i) },
         b2 { "bucket-" + std::to_string(2 * i + 1)};
 
-      auto store = std::make_shared<KSll>(pv_, std::unordered_set<std::string>{ b1, b2 });
+      auto store = std::make_shared<KSll>("test", pv_, std::unordered_set<std::string>{ b1, b2 });
       store->set_name("TestStore[" + std::to_string(i) + "]");
       stores_.push_back(store);
       store_lookup_by_bkt_[b1] = store;

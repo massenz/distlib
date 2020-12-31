@@ -93,7 +93,7 @@ class InMemoryKeyStore : public PartitionedKeyStore<K, V> {
    * responsible for storing: this is described by the name of the buckets (in the `view`) that
    * are allocated to this store, matched by `name`.
    */
-  InMemoryKeyStore(const std::shared_ptr<View> &view,
+  InMemoryKeyStore(const std::string& name, const std::shared_ptr<View> &view,
                    const std::unordered_set<std::string> &buckets);
 
   virtual ~InMemoryKeyStore() = default;
@@ -135,9 +135,10 @@ class InMemoryKeyStore : public PartitionedKeyStore<K, V> {
 
 template<typename K, typename V>
 InMemoryKeyStore<K, V>::InMemoryKeyStore(
+    const std::string& name,
     const std::shared_ptr<View> &view,
     const std::unordered_set<std::string> &buckets
-) {
+) : PartitionedKeyStore<K, V>(name) {
   VLOG(2) << "Creating InMemoryKeyStore with "
           << buckets.size() << " buckets (of " << view->num_buckets() << ")";
 
