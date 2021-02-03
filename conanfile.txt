@@ -7,11 +7,21 @@
 cryptopp/5.6.5@bincrafters/stable
 glog/0.4.0@bincrafters/stable
 gtest/1.8.0@bincrafters/stable
-openssl/1.1.1d
+
+#libzmq/4.1.5@memsharded/stable
+#zmq/4.3.2@bincrafters/stable
+
+OpenSSL/1.0.2@conan/stable
+
+#Protobuf/2.6.1@memsharded/testing
+#Protobuf/3.1.0@inexorgame/stable
+protobuf/3.9.1@bincrafters/stable
+
 
 [options]
 glog:with_gflags=False
 gtest:shared=False
+protobuf:shared=True
 
 [imports]
 #
