@@ -12,6 +12,13 @@ Issues    | [Jira](https://kapsules.atlassian.net/secure/RapidBoard.jspa?rapidVi
 ![C++](https://img.shields.io/badge/C++-17-red)
 ![OS Linux](https://img.shields.io/badge/OS-Linux,%20MacOS-green)
 
+# License
+
+This code is licensed under the [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) open source license.
+
+See the `LICENSE` file for more details.
+
+
 # Motivation
 
 This is a collection of C++ advanced building blocks to implement distributed systems; they are mostly meant to learn about advanced algorithms, or modern C++ (up to C++17, currently) features.
@@ -50,7 +57,7 @@ $ ./bin/build && ./bin/test
 
 or to simply run a subset of the tests with full debug logging:
 
-    $ ./bin/test -v --gtest_filter="Bucket*"     
+    $ ./bin/test -v --gtest_filter="Bucket*"
 
 To install the generated binaries (`.so` or `.dylib` shared libraries) and headers so that other projects can find them:
 
