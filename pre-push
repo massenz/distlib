@@ -15,5 +15,5 @@ remote="$1"
 url="$2"
 branch=$(git rev-parse --abbrev-ref HEAD)
 
-./bin/build && ./bin/test
+build && runtests
 echo -e "[SUCCESS] Pushing branch ${branch} to remote '${remote}' (${url})"
