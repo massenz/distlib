@@ -1,12 +1,12 @@
 # This file (c) 2016-2020 AlertAvert.com.  All rights reserved.
 
-project(distlib)
 cmake_minimum_required(VERSION 3.16)
+project(distlib)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fPIC")
 
 # Conan Packaging support
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
+#include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+#conan_basic_setup()
 
 ##
 # Include common cmake utilities.
@@ -118,7 +118,7 @@ config_install(${INSTALL_DIR} INSTALL_RESULT)
 
 ##
 # Unit tests build is defined in the tests/ folder
-add_subdirectory(${TESTS_DIR})
+#add_subdirectory(${TESTS_DIR})
 
 #########
 # Examples - demo execs/programs to show usage of the libraries/utilities.

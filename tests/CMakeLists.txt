@@ -6,16 +6,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fPIC")
 
 
 # Conan Packaging support
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
+#include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+#conan_basic_setup()
 
 
-find_library(GTEST gtest ${INSTALL_DIR}/lib)
-find_library(GMOCK gmock ${INSTALL_DIR}/lib)
+find_package(GTest REQUIRED)
+#find_library(GMOCK gmock ${INSTALL_DIR}/lib)
 
-if (${GTEST} STREQUAL GTEST-NOTFOUND)
-    message(FATAL_ERROR "Could not locate a valid Google Test library installed.")
-endif ()
+#if (${GTEST} STREQUAL GTEST-NOTFOUND)
+#    message(FATAL_ERROR "Could not locate a valid Google Test library installed.")
+#endif ()
 
 set(UNIT_TESTS
         ${TESTS_DIR}/test_bucket.cpp
@@ -38,8 +38,8 @@ add_executable(unit_tests
 )
 
 target_link_libraries(unit_tests
-        ${GTEST}
-        ${GMOCK}
+        gtest::gtest
+        #${GMOCK}
         distutils
 )
 
