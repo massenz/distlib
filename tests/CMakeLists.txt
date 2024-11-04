@@ -5,11 +5,6 @@ enable_testing()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fPIC")
 
 
-# Conan Packaging support
-#include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-#conan_basic_setup()
-
-
 find_package(GTest REQUIRED)
 #find_library(GMOCK gmock ${INSTALL_DIR}/lib)
 

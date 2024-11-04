@@ -29,21 +29,46 @@ A detailed description of the library's features follows the [Install & build](#
 
 ## Build & testing
 
-### Common utilities
+### Temporary Solution
 
-The build/test scripts in this repository take advantage of shared common utility functions in [this common utils repository](https://bitbucket.org/marco/common-utils): clone it
-somewhere, and make `$COMMON_UTILS_DIR` point to it:
+The change to Conan V2 has upset a lot of the automation.
+**Temporarily** this is the sequence of commands to invoke to build the project:
 
 ```shell
-git clone git@bitbucket.org:marco/common-utils.git
-export COMMON_UTILS_DIR="$(pwd)/common-utils"
+conan install . --output-folder=build --build=missing
+cmake --preset conan-release -DCOMMON_UTILS_DIR=$USR_LOCAL/common-utils
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake \
+    -DINSTALL_DIR=${HOME}/local \
+    -DCOMMON_UTILS_DIR=$COMMON_UTILS
+cmake --build build
+```
+The build targets are currently just `distutils` lib and the `merkle_demo` binary, in the `build` directory:
+    
+```shell
+./build/merkle_demo "this is the string to hash"
+```
+
+**TODO** Update the build script to reflect the new Conan V2 changes.
+
+### Common utilities
+
+The build/test scripts in this repository take advantage of shared common utility functions in
+[the Common Utils repository](https://bitbucket.org/marco/common-utils): follow the instructions there to install the utilities and  
+set the `COMMON_UTILS` environment variable to point to the directory where you installed them.
+
+That is done as part of the installation process anyway:
+
+```shell
+export COMMON_UTILS=/path/to/common-utils
+export VERSION=...
+curl -s -L https://cdn.githubraw.com/massenz/common-utils/$VERSION/install.sh | zsh -s
 ```
 
 To build/test the project, link to the scripts there:
 
 ```shell
-ln -s ${COMMON_UTILS_DIR}/build.sh build && \
-    ln -s ${COMMON_UTILS_DIR}/test.sh test
+ln -s ${COMMON_UTILS_DIR}/build.sh bin/build && \
+    ln -s ${COMMON_UTILS_DIR}/test.sh bin/test
 ```
 
 ### Build & Install libdistutils.so

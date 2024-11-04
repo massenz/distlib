@@ -1,18 +1,15 @@
-# This file (c) 2016-2020 AlertAvert.com.  All rights reserved.
+# This file (c) 2016-2024 AlertAvert.com.  All rights reserved.
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.23)
 project(distlib)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fPIC")
-
-# Conan Packaging support
-#include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-#conan_basic_setup()
 
 ##
 # Include common cmake utilities.
 # See: https://bitbucket.org/marco/common-utils
 #
 include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
+message(STATUS "Using Common Utilities: ${COMMONS_FILE}")
 
 ##
 # Installation directory; this is both used to access
@@ -23,6 +20,7 @@ include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 if(NOT DEFINED INSTALL_DIR)
     if(DEFINED ENV{INSTALL_DIR})
         set(INSTALL_DIR $ENV{INSTALL_DIR})
+        message(STATUS "INSTALL_DIR set to: ${INSTALL_DIR}")
     else()
         message(FATAL_ERROR
                 "INSTALL_DIR should be defined as an environment variable, or via -D notation")
@@ -33,7 +31,7 @@ endif()
 # Release version management
 #
 set(RELEASE_MAJOR 0)
-set(RELEASE_MINOR 18)
+set(RELEASE_MINOR 19)
 set(RELEASE_PATCH 0)
 
 set(RELEASE "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}")
@@ -51,11 +49,12 @@ message(STATUS "Building Release: ${RELEASE_STRING} (${CMAKE_BUILD_TYPE})")
 # Both the value of CMAKE_BUILD_TYPE and the `build_type` setting
 # in `~/.conan/profiles/default` need to match.
 #
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set(GLOG glogd)
-else()
-    set(GLOG glog)
-endif()
+# TODO: review to confirm whether this is still necessary with Conan V2
+#if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+#    set(GLOG glogd)
+#else()
+#    set(GLOG glog)
+#endif()
 
 set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
@@ -91,9 +90,16 @@ set(SOURCES
         ${SOURCE_DIR}/View.cpp
 )
 
+# Add Conan build folder to CMAKE_PREFIX_PATH for dependency resolution
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
+
+find_package(cryptopp REQUIRED)
+find_package(glog)
+find_package(OpenSSL REQUIRED)
 set(UTILS_LIBS
-        crypto
-        ${GLOG}
+        cryptopp::cryptopp
+        glog::glog
+        openssl::openssl
         pthread
 )
 

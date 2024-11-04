@@ -4,18 +4,17 @@
 # See the README for more information or http://conan.io
 
 [requires]
-libsodium/cci.20220430
 cryptopp/8.9.0
 glog/0.4.0
-gtest/1.15.0
+#gtest/1.15.0
 openssl/3.3.2
-protobuf/5.27.0
+#protobuf/5.27.0
 #cppzmq/4.10.0
 
 [options]
 glog/*:with_gflags=False
-gtest/*:shared=False
-protobuf/*:shared=True
+#gtest/*:shared=False
+#protobuf/*:shared=True
 
 [imports]
 #
@@ -25,9 +24,9 @@ protobuf/*:shared=True
 # This is useful for the `install` step to move them to $INSTALL_DIR
 # if defined.
 #
-lib, *.dylib* -> ./lib
-lib, *.so* -> ./lib
-include, * -> ./include
+#lib, *.dylib* -> ./lib
+#lib, *.so* -> ./lib
+#include, * -> ./include
 
 [generators]
 CMakeDeps
