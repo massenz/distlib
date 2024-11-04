@@ -1,0 +1,9 @@
+cmake_minimum_required(VERSION 3.15)
+project(MyProject)
+
+# Find the glog package installed by Conan
+find_package(glog REQUIRED)
+
+# Set up the target and link glog
+add_executable(use-glog src/examples/use_glog.cpp)
+target_link_libraries(use-glog PRIVATE glog::glog)
