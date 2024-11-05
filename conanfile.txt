@@ -6,14 +6,14 @@
 [requires]
 cryptopp/8.9.0
 glog/0.4.0
-#gtest/1.15.0
+gtest/1.15.0
 openssl/3.3.2
 #protobuf/5.27.0
 #cppzmq/4.10.0
 
 [options]
 glog/*:with_gflags=False
-#gtest/*:shared=False
+gtest/*:shared=False
 #protobuf/*:shared=True
 
 [imports]

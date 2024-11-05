@@ -29,26 +29,22 @@ A detailed description of the library's features follows the [Install & build](#
 
 ## Build & testing
 
-### Temporary Solution
-
-The change to Conan V2 has upset a lot of the automation.
-**Temporarily** this is the sequence of commands to invoke to build the project:
+The sequence of commands to build the project:
 
 ```shell
-conan install . --output-folder=build --build=missing
-cmake --preset conan-release -DCOMMON_UTILS_DIR=$USR_LOCAL/common-utils
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake \
-    -DINSTALL_DIR=${HOME}/local \
-    -DCOMMON_UTILS_DIR=$COMMON_UTILS
-cmake --build build
+conan install . -s build_type=Debug --build=missing
+cmake --preset conan-debug -DCOMMON_UTILS=$COMMON_UTILS
+cmake --build --preset conan-debug -DCOMMON_UTILS_DIR=$COMMON_UTILS
 ```
-The build targets are currently just `distutils` lib and the `merkle_demo` binary, in the `build` directory:
+The build targets are currently just `distutils` lib and the `merkle_demo` and
+`keystore_demo` examples, in the `build/Debug` directory:
     
 ```shell
-./build/merkle_demo "this is the string to hash"
+./build/Debug/merkle_demo "this is the string to hash"
 ```
 
-**TODO** Update the build script to reflect the new Conan V2 changes.
+For the `Release` build, use the `conan-release` preset and `Release` build type.
+See [#Common utilities](#common-utilities) for a simpler way.
 
 ### Common utilities
 

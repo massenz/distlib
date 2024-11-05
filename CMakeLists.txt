@@ -74,10 +74,10 @@ include_directories(
         ${INSTALL_DIR}/include
 )
 
-link_directories(
-        ${INSTALL_DIR}/lib
-        ${PROJECT_BINARY_DIR}/lib
-)
+#link_directories(
+#        ${INSTALL_DIR}/lib
+#        ${PROJECT_BINARY_DIR}/lib
+#)
 
 set(UTILS_SOURCES
         ${SOURCE_DIR}/utils/misc.cpp
@@ -96,7 +96,7 @@ list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
 find_package(cryptopp REQUIRED)
 find_package(glog)
 find_package(OpenSSL REQUIRED)
-set(UTILS_LIBS
+set(LIBS
         cryptopp::cryptopp
         glog::glog
         openssl::openssl
@@ -112,19 +112,19 @@ add_library(distutils SHARED
         ${SOURCES}
         ${UTILS_SOURCES}
 )
-target_link_libraries(distutils ${UTILS_LIBS})
+target_link_libraries(distutils ${LIBS})
 
 
 ##
 # Installation
 #
-message("Installing shared library libdistutils.so to ${INSTALL_DIR}/lib")
-install(TARGETS distutils DESTINATION ${INSTALL_DIR}/lib)
-config_install(${INSTALL_DIR} INSTALL_RESULT)
+#message("Installing shared library libdistutils.so to ${INSTALL_DIR}/lib")
+#install(TARGETS distutils DESTINATION ${INSTALL_DIR}/lib)
+#config_install(${INSTALL_DIR} INSTALL_RESULT)
 
 ##
 # Unit tests build is defined in the tests/ folder
-#add_subdirectory(${TESTS_DIR})
+add_subdirectory(${TESTS_DIR})
 
 #########
 # Examples - demo execs/programs to show usage of the libraries/utilities.
@@ -134,7 +134,7 @@ set(EXAMPLES_DIR ${SOURCE_DIR}/examples)
 
 # Examples will use the latest build for the shared libraries
 link_directories(
-        ${CMAKE_BINARY_DIR}/lib
+        ${CMAKE_BINARY_DIR}
         ${INSTALL_DIR}/lib
 )
 
@@ -142,10 +142,10 @@ link_directories(
 # Merkle Tree Demo
 #
 add_executable(merkle_demo ${EXAMPLES_DIR}/merkle_demo.cpp)
-target_link_libraries(merkle_demo distutils ${UTILS_LIBS})
+target_link_libraries(merkle_demo distutils ${LIBS})
 
 ##
 # KeyValue Store Demo
 #
 add_executable(keystore_demo ${EXAMPLES_DIR}/keystore_example.cpp)
-target_link_libraries(keystore_demo distutils ${UTILS_LIBS})
+target_link_libraries(keystore_demo distutils ${LIBS})
