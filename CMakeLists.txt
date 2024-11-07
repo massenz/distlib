@@ -2,11 +2,12 @@
 
 cmake_minimum_required(VERSION 3.23)
 project(distlib)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fPIC")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 ##
 # Include common cmake utilities.
-# See: https://bitbucket.org/marco/common-utils
+# See: https://github.com/massenz/common-utils
 #
 include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 message(STATUS "Using Common Utilities: ${COMMONS_FILE}")
@@ -31,7 +32,7 @@ endif()
 # Release version management
 #
 set(RELEASE_MAJOR 0)
-set(RELEASE_MINOR 19)
+set(RELEASE_MINOR 20)
 set(RELEASE_PATCH 0)
 
 set(RELEASE "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}")
@@ -118,9 +119,9 @@ target_link_libraries(distutils ${LIBS})
 ##
 # Installation
 #
-#message("Installing shared library libdistutils.so to ${INSTALL_DIR}/lib")
-#install(TARGETS distutils DESTINATION ${INSTALL_DIR}/lib)
-#config_install(${INSTALL_DIR} INSTALL_RESULT)
+message("Installing shared library libdistutils.so to ${INSTALL_DIR}/lib")
+install(TARGETS distutils DESTINATION ${INSTALL_DIR}/lib)
+config_install(${INSTALL_DIR} INSTALL_RESULT)
 
 ##
 # Unit tests build is defined in the tests/ folder
