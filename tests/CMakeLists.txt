@@ -20,6 +20,14 @@ add_executable(unit_tests
         tests.h
         all_tests.cpp
 )
+
+message(STATUS "Libraries will be linkde from
+    ${CMAKE_BINARY_DIR} and ${INSTALL_DIR}/lib")
+link_directories(
+        ${CMAKE_BINARY_DIR}
+        ${INSTALL_DIR}/lib
+)
+
 find_package(GTest REQUIRED)
 target_link_libraries(unit_tests
         gtest::gtest

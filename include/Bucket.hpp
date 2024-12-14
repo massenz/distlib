@@ -3,7 +3,6 @@
 
 #pragma once
 
-
 #include <memory>
 #include <string>
 #include <utility>
@@ -14,6 +13,14 @@
 #include "json.hpp"
 
 using json = nlohmann::json;
+class Bucket;
+
+/**
+ * Utility function to stream a string representation of a bucket.
+ *
+ * @return the passed in stream, to which the bucket has been streamed to.
+ */
+std::ostream& operator<<(std::ostream& out, const Bucket &bucket);
 
 /**
  * A "bucket" abstracts the concept of a hashed partition, using consistent hashing.
@@ -79,15 +86,15 @@ public:
    *
    * @return the set of {@link partitions()} points that define this bucket
    */
-  std::vector<float> partition_points() const {
+  [[nodiscard]] std::vector<float> partition_points() const {
     return hash_points_;
   }
 
-  float partition_point(int i) const {
+  [[nodiscard]] float partition_point(int i) const {
     if (i < 0 || i >= partitions()) {
       std::ostringstream msg;
-      msg << "Out of bound: requesting partition point #" << i << ", when only "
-           << partitions() << " are available ('" << name_ << "')";
+      msg << "Requesting partition point #" << i << ", when only "
+           << partitions() << " are available in " << *this;
       throw std::out_of_range(msg.str());
     }
     return hash_points_[i];
@@ -103,17 +110,29 @@ public:
    *
    * @param x a point in the [0, 1] interval.
    * @return a pair of {index, point} values that determine which partition point is
-   *    the immediately greater than `x`.
+   *    the one immediately greater than `x`.
    */
-  std::pair<int, float> partition_point(float x) const;
+  [[nodiscard]] std::pair<int, float> partition_point(float x) const;
 
-  int partitions() const { return hash_points_.size(); }
+  [[nodiscard]] int partitions() const { return hash_points_.size(); }
 };
 
 
+
 /**
- * Utility function to stream a string representation of a bucket.
+ * Equality operator for `Bucket` objects.
+ * Uses the name and partition points to determine equality.
  *
- * @return the passed in stream, to which the bucket has been streamed to.
+ * This method actully uses the ordering operator to compare the two buckets, using
+ * the usual approach that (a == b) iff !(a < b) && !(b < a).
  */
-std::ostream& operator<<(std::ostream& out, const Bucket &bucket);
+bool operator==(const Bucket &lhs, const Bucket &rhs);
+
+/**
+ * Ordering operator for `Bucket` objects.
+ * Uses the name and partition points to define a total order on the Buckets.
+ *
+ * To compare partition points (which are floats), we use a tolerance of 1e-6.
+ * TODO: this should actually be a configurable (static) attribute of the class.
+ */
+bool operator<(const Bucket &lhs, const Bucket &rhs);

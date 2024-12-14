@@ -6,59 +6,80 @@
 
 #include <algorithm>
 #include <ios>
+#include <math.h>
 #include <utility>
 
+// Tolerance for comparing floating point numbers.
+constexpr float kEpsilon = 1e-6;
 
-std::ostream& operator<<(std::ostream& out, const Bucket &bucket) {
-  out << "'" << bucket.name() << "' [";
-  out.setf(std::ios_base::fixed);
-  out.precision(5);
+std::ostream &operator<<(std::ostream &out, const Bucket &bucket) {
+    out << "'" << bucket.name() << "' [";
+    out.setf(std::ios_base::fixed);
+    out.precision(5);
 
-  for (int i = 0; i < bucket.partitions(); ++i) {
-    if (i > 0) out << ", ";
-    out << bucket.partition_point(i);
-  }
-  out << "]";
+    for (int i = 0; i < bucket.partitions(); ++i) {
+        if (i > 0) out << ", ";
+        out << bucket.partition_point(i);
+    }
+    out << "]";
 
-  return out;
+    return out;
 }
 
 Bucket::Bucket(std::string name, std::vector<float> hash_points) :
-  name_(std::move(name)), hash_points_(std::move(hash_points)) {
+        name_(std::move(name)), hash_points_(std::move(hash_points)) {
     std::sort(hash_points_.begin(), hash_points_.end());
 }
 
 std::pair<int, float> Bucket::partition_point(float x) const {
-  auto pos = std::upper_bound(hash_points_.begin(), hash_points_.end(), x);
-  if (pos == hash_points_.end()) {
-    return std::make_pair(0, hash_points_[0]);
-  }
-  return std::make_pair(std::distance(hash_points_.cbegin(), pos), *pos);
+    auto pos = std::upper_bound(hash_points_.begin(), hash_points_.end(), x);
+    if (pos == hash_points_.end()) {
+        return std::make_pair(0, hash_points_[0]);
+    }
+    return std::make_pair(std::distance(hash_points_.cbegin(), pos), *pos);
 }
 
 void Bucket::add_partition_point(float point) {
-  auto pos = hash_points_.begin();
-  for(auto x : hash_points_) {
-    if (x > point) {
-      break;
+    auto pos = hash_points_.begin();
+    for (auto x: hash_points_) {
+        if (x > point) {
+            break;
+        }
+        pos++;
     }
-    pos++;
-  }
-  if (pos != hash_points_.end()) {
-    hash_points_.insert(pos, point);
-  } else {
-    hash_points_.push_back(point);
-  }
+    if (pos != hash_points_.end()) {
+        hash_points_.insert(pos, point);
+    } else {
+        hash_points_.push_back(point);
+    }
 }
+
 void Bucket::remove_partition_point(unsigned int i) {
-  if (i < partitions()) {
-    hash_points_.erase(hash_points_.cbegin() + i);
-  }
+    if (i < partitions()) {
+        hash_points_.erase(hash_points_.cbegin() + i);
+    }
 }
 
 Bucket::operator json() const {
-  return nlohmann::json {
-      {"name", name()},
-      {"partition_points", partition_points()}
-  };
+    return nlohmann::json{
+            {"name",             name()},
+            {"partition_points", partition_points()}
+    };
+}
+
+bool operator<(const Bucket &lhs, const Bucket &rhs) {
+    if (lhs.name() != rhs.name()) {
+        return lhs.name() < rhs.name();
+    }
+    int count = std::min(lhs.partitions(), rhs.partitions());
+    for (int i = 0; i < count; ++i) {
+        if (std::abs(lhs.partition_point(i) - rhs.partition_point(i)) > kEpsilon) {
+            return lhs.partition_point(i) < rhs.partition_point(i);
+        }
+    }
+    return false;
+}
+
+bool operator==(const Bucket &lhs, const Bucket &rhs) {
+    return !(lhs < rhs) && !(rhs < lhs);
 }

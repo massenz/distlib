@@ -45,9 +45,7 @@ float consistent_hash(const std::string &msg);
 template<int Tolerance = 5>
 class FloatLessWithTolerance {
 public:
-    FloatLessWithTolerance() {
-        epsilon_ = pow(10, -Tolerance);
-    }
+    explicit FloatLessWithTolerance(double eps = pow(10, -Tolerance)) : epsilon_(eps) { }
 
     bool operator()(const float &left, const float &right) const {
         return (std::abs(left - right) > epsilon_) && (left < right);

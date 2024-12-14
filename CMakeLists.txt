@@ -133,7 +133,8 @@ add_subdirectory(${TESTS_DIR})
 
 set(EXAMPLES_DIR ${SOURCE_DIR}/examples)
 
-# Examples will use the latest build for the shared libraries
+message(STATUS "Libraries will be linked from
+    ${CMAKE_BINARY_DIR} and ${INSTALL_DIR}/lib")
 link_directories(
         ${CMAKE_BINARY_DIR}
         ${INSTALL_DIR}/lib
