@@ -30,14 +30,16 @@ inline std::ostream& operator<<(std::ostream& out, const BucketPtr& ptr) {
 }
 
 /**
- * Bucket pointer should be sorted (when in ordered collections) by the buckets' names.
+ * Bucket pointers should be sorted (when in ordered collections) by the buckets'
+ * ordering criteria.
  *
  * @param lhs
  * @param rhs
- * @return whether the name of `lhs` precedes `rhs`'s name
+ * @return whether `lhs` precedes `rhs` in the ordering.
+ * @see Bucket::operator<(const Bucket&, const Bucket&)
  */
 inline bool operator<(const BucketPtr &lhs, const BucketPtr &rhs) {
-  return lhs->name() < rhs->name();
+  return *lhs < *rhs;
 }
 
 /**
@@ -65,6 +67,9 @@ using MapWithTolerance = std::map<float, BucketPtr, FloatLessWithTolerance<>>;
  *
  * For more details, see the paper on Consistent Hashing, referred to in the documentation for
  * the `consistent_hash()` method.
+ *
+ * **Note**: in order to avoid issues with ordering and (crucially) when adding to the sets
+ * of buckets, we actually disallow two buckets with the same name to be added to the same view.
  */
 class View {
 
@@ -90,7 +95,11 @@ public:
   View(const View&) = delete;
   View(View&&) = delete;
 
-  /** Adds a bucket to this `View` */
+  /**
+   * Adds a bucket to this `View`, avoiding duplicates.
+   *
+   * @see Bucket::operator==(const BucketPtr&, const BucketPtr&)
+   */
   void Add(const BucketPtr& bucket);
 
   /**

@@ -31,3 +31,4 @@ bin/test
 .la
 
 cmake-build-debug
+logs/

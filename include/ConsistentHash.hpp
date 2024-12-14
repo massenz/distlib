@@ -42,17 +42,15 @@ float consistent_hash(const std::string &msg);
  *
  * See Item 40 of Effective STL.
  */
-template <int Tolerance = 5>
-class FloatLessWithTolerance :
-    public std::binary_function<float, float, bool> {
+template<int Tolerance = 5>
+class FloatLessWithTolerance {
+public:
+    explicit FloatLessWithTolerance(double eps = pow(10, -Tolerance)) : epsilon_(eps) { }
 
-  double epsilon_;
- public:
-  FloatLessWithTolerance() {
-    epsilon_ = pow(10, -Tolerance);
-  }
+    bool operator()(const float &left, const float &right) const {
+        return (std::abs(left - right) > epsilon_) && (left < right);
+    }
 
-  bool operator()( const float &left, const float &right  ) const {
-    return (std::abs(left - right) > epsilon_) && (left < right);
-  }
+private:
+    double epsilon_;
 };

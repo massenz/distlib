@@ -185,21 +185,22 @@ TEST(ViewTests, CreateBalancedView) {
 TEST(ViewTests, CanGetBucketsAndUse) {
   auto pv = make_balanced_view(5, 15);
   auto buckets = pv->buckets();
-  ASSERT_EQ(5, buckets.size());
+  ASSERT_EQ(buckets.size(), 5);
 
   auto pos = buckets.begin();
-  (*pos)->set_name("new bucket");
+  (*pos)->set_name("test bucket");
   pos++;
   pos++;
-  (*pos)->set_name("new bucket");
+  (*pos)->set_name("test bucket");
+
+  ASSERT_EQ(buckets.size(), 5);
+  auto new_buckets = pv->buckets();
+  ASSERT_EQ(new_buckets.size(), 5);
 
   int count = 0;
-  auto new_buckets = pv->buckets();
-  ASSERT_EQ(5, new_buckets.size());
-
   std::for_each(new_buckets.begin(), new_buckets.end(),
                 [&count](const BucketPtr &bucket_ptr) {
-                  if (bucket_ptr->name() == "new bucket") {
+                  if (bucket_ptr->name() == "test bucket") {
                     count++;
                   }
                 });

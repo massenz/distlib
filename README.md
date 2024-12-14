@@ -29,21 +29,42 @@ A detailed description of the library's features follows the [Install & build](#
 
 ## Build & testing
 
-### Common utilities
-
-The build/test scripts in this repository take advantage of shared common utility functions in [this common utils repository](https://bitbucket.org/marco/common-utils): clone it
-somewhere, and make `$COMMON_UTILS_DIR` point to it:
+The sequence of commands to build the project:
 
 ```shell
-git clone git@bitbucket.org:marco/common-utils.git
-export COMMON_UTILS_DIR="$(pwd)/common-utils"
+conan install . -s build_type=Debug --build=missing
+cmake --preset conan-debug -DCOMMON_UTILS=$COMMON_UTILS
+cmake --build --preset conan-debug -DCOMMON_UTILS_DIR=$COMMON_UTILS
+```
+The build targets are currently just `distutils` lib and the `merkle_demo` and
+`keystore_demo` examples, in the `build/Debug` directory:
+    
+```shell
+./build/Debug/merkle_demo "this is the string to hash"
+```
+
+For the `Release` build, use the `conan-release` preset and `Release` build type.
+See [#Common utilities](#common-utilities) for a simpler way.
+
+### Common utilities
+
+The build/test scripts in this repository take advantage of shared common utility functions in
+[the Common Utils repository](https://bitbucket.org/marco/common-utils): follow the instructions there to install the utilities and  
+set the `COMMON_UTILS` environment variable to point to the directory where you installed them.
+
+That is done as part of the installation process anyway:
+
+```shell
+export COMMON_UTILS=/path/to/common-utils
+export VERSION=...
+curl -s -L https://cdn.githubraw.com/massenz/common-utils/$VERSION/install.sh | zsh -s
 ```
 
 To build/test the project, link to the scripts there:
 
 ```shell
-ln -s ${COMMON_UTILS_DIR}/build.sh build && \
-    ln -s ${COMMON_UTILS_DIR}/test.sh test
+ln -s ${COMMON_UTILS_DIR}/build.sh bin/build && \
+    ln -s ${COMMON_UTILS_DIR}/test.sh bin/test
 ```
 
 ### Build & Install libdistutils.so
